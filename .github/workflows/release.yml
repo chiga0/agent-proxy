@@ -4,6 +4,11 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to (re)build and upload (e.g. v0.3.2)'
+        required: true
 
 permissions:
   contents: write
@@ -15,6 +20,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref }}
 
       - uses: actions/setup-go@v5
         with:
@@ -27,3 +33,94 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  upload-oss:
+    needs: goreleaser
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Set version
+        id: ver
+        run: |
+          TAG="${{ inputs.tag || github.ref_name }}"
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: Download release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p dist
+          gh release download "${{ steps.ver.outputs.tag }}" \
+            --repo chiga0/agent-proxy \
+            --dir dist \
+            --pattern '*.tar.gz' \
+            --pattern '*.zip' \
+            --pattern 'checksums.txt' \
+            --clobber
+          ls -la dist/
+
+      - name: Install aliyun CLI
+        run: |
+          curl -fsSL https://aliyuncli.alicdn.com/aliyun-cli-linux-latest-amd64.tgz \
+            | tar xz -C /usr/local/bin
+
+      - name: Assume RAM Role (STS)
+        env:
+          AK_ID: ${{ secrets.ALIBABA_CLOUD_ACCESS_KEY_ID }}
+          AK_SECRET: ${{ secrets.ALIBABA_CLOUD_ACCESS_KEY_SECRET }}
+          ROLE_ARN: ${{ secrets.ALIBABA_CLOUD_ROLE_ARN }}
+          SESSION_NAME: ${{ secrets.ALIBABA_CLOUD_ROLE_SESSION_NAME }}
+        run: |
+          aliyun configure set --profile sts-base --mode AK \
+            --region cn-hangzhou \
+            --access-key-id "$AK_ID" \
+            --access-key-secret "$AK_SECRET"
+
+          CREDS=$(aliyun sts AssumeRole \
+            --RoleArn "$ROLE_ARN" \
+            --RoleSessionName "${SESSION_NAME:-github-action}" \
+            --DurationSeconds 3600 \
+            --profile sts-base)
+
+          echo "TMP_AK=$(echo "$CREDS" | jq -r .Credentials.AccessKeyId)" >> $GITHUB_ENV
+          echo "TMP_SK=$(echo "$CREDS" | jq -r .Credentials.AccessKeySecret)" >> $GITHUB_ENV
+          echo "TMP_TOKEN=$(echo "$CREDS" | jq -r .Credentials.SecurityToken)" >> $GITHUB_ENV
+
+          echo "::add-mask::$(echo "$CREDS" | jq -r .Credentials.AccessKeyId)"
+          echo "::add-mask::$(echo "$CREDS" | jq -r .Credentials.AccessKeySecret)"
+          echo "::add-mask::$(echo "$CREDS" | jq -r .Credentials.SecurityToken)"
+
+      - name: Upload to OSS
+        env:
+          TAG: ${{ steps.ver.outputs.tag }}
+          OSS_BUCKET: agent-proxy
+          OSS_REGION: cn-hangzhou
+        run: |
+          OSS_OPTS="--region $OSS_REGION \
+            --access-key-id $TMP_AK \
+            --access-key-secret $TMP_SK \
+            --sts-token $TMP_TOKEN"
+
+          for f in dist/*.tar.gz dist/*.zip dist/checksums.txt; do
+            [ -f "$f" ] || continue
+            echo "↑ $(basename $f)"
+            aliyun oss cp "$f" "oss://${OSS_BUCKET}/releases/${TAG}/$(basename $f)" \
+              $OSS_OPTS --force
+          done
+
+          aliyun oss cp install.sh "oss://${OSS_BUCKET}/install.sh" $OSS_OPTS --force
+          aliyun oss cp install.sh "oss://${OSS_BUCKET}/releases/${TAG}/install.sh" $OSS_OPTS --force
+
+          jq -n --arg v "$TAG" \
+            --arg base "https://${OSS_BUCKET}.oss-cn-hangzhou.aliyuncs.com/releases/${TAG}" \
+            --argjson assets "$(cd dist && ls *.tar.gz *.zip checksums.txt 2>/dev/null | jq -R . | jq -s .)" \
+            '{version: $v, base_url: $base, assets: $assets}' > dist/manifest.json
+
+          aliyun oss cp dist/manifest.json "oss://${OSS_BUCKET}/releases/${TAG}/manifest.json" $OSS_OPTS --force
+          aliyun oss cp dist/manifest.json "oss://${OSS_BUCKET}/releases/latest/manifest.json" $OSS_OPTS --force
+
+          echo "✓ Uploaded to oss://${OSS_BUCKET}/releases/${TAG}/"
