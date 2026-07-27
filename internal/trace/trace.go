@@ -106,34 +106,34 @@ func parseTraceroute(output string) []Hop {
 		// numeric RTT value and the "ms" unit are separate whitespace-delimited
 		// tokens. Some implementations emit them joined ("1.234ms"), so we
 		// handle both forms.
-		var prevVal float64
-		var hasPrev bool
+		var pendingRttVal float64
+		var hasPendingRtt bool
 		for _, f := range fields[1:] {
 			if f == "*" {
-				hasPrev = false
+				hasPendingRtt = false
 				continue
 			}
-			if f == "ms" && hasPrev {
-				hop.RTT = append(hop.RTT, time.Duration(prevVal*float64(time.Millisecond)))
-				hasPrev = false
+			if f == "ms" && hasPendingRtt {
+				hop.RTT = append(hop.RTT, time.Duration(pendingRttVal*float64(time.Millisecond)))
+				hasPendingRtt = false
 				continue
 			}
 			if net.ParseIP(f) != nil {
 				hop.IP = f
 				hop.Host = f
-				hasPrev = false
+				hasPendingRtt = false
 			} else if strings.HasSuffix(f, "ms") {
 				var ms float64
 				fmt.Sscanf(f, "%fms", &ms)
 				hop.RTT = append(hop.RTT, time.Duration(ms*float64(time.Millisecond)))
-				hasPrev = false
+				hasPendingRtt = false
 			} else {
 				var ms float64
 				if n, _ := fmt.Sscanf(f, "%f", &ms); n == 1 {
-					prevVal = ms
-					hasPrev = true
+					pendingRttVal = ms
+					hasPendingRtt = true
 				} else {
-					hasPrev = false
+					hasPendingRtt = false
 				}
 			}
 		}
