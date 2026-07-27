@@ -3,25 +3,40 @@ package proxy
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/chiga0/agent-proxy/internal/config"
 	"github.com/chiga0/agent-proxy/internal/pac"
 	"github.com/chiga0/agent-proxy/internal/platform"
+	"github.com/chiga0/agent-proxy/internal/tunnel"
 )
 
 func On(cfg *config.Config) error {
-	// 1. Generate PAC
+	// 1. Start SSH tunnel if enabled
+	if cfg.Proxy.Tunnel {
+		fmt.Print("  → SSH tunnel... ")
+		if err := tunnel.Start(cfg); err != nil {
+			fmt.Println("✗")
+			return fmt.Errorf("start SSH tunnel: %w", err)
+		}
+		fmt.Println("✓")
+	}
+
+	// 2. Generate PAC
 	if err := pac.Write(cfg); err != nil {
 		return fmt.Errorf("generate PAC: %w", err)
 	}
 
-	// 2. Start local PAC HTTP server
-	if err := pac.StartServer(); err != nil {
+	// 3. Start PAC HTTP server (background daemon)
+	fmt.Print("  → PAC server... ")
+	if err := startPACDaemon(); err != nil {
+		fmt.Println("✗")
 		return fmt.Errorf("start PAC server: %w", err)
 	}
+	fmt.Println("✓")
 
-	// 3. Set macOS system PAC proxy
+	// 4. Set system PAC proxy
 	service, err := platform.DetectNetworkService()
 	if err != nil {
 		return fmt.Errorf("detect network: %w", err)
@@ -31,15 +46,22 @@ func On(cfg *config.Config) error {
 		return fmt.Errorf("set PAC proxy: %w", err)
 	}
 
-	// 4. Write CLI env file
+	// 5. Write CLI env file
 	if err := writeEnvFile(cfg); err != nil {
 		return fmt.Errorf("write env file: %w", err)
 	}
 
-	fmt.Printf("✓ Proxy enabled\n")
+	// 6. Install auto-start
+	platform.InstallAutoStart(cfg)
+
+	fmt.Printf("\n✓ Proxy enabled\n")
 	fmt.Printf("  PAC (browser/desktop): %s\n", pacURL)
 	fmt.Printf("  CLI env:               %s\n", config.EnvPath())
-	fmt.Printf("  Proxy:                 %s:%d\n", cfg.Proxy.Host, cfg.Proxy.Port)
+	fmt.Printf("  Proxy:                 %s:%d", cfg.Proxy.EffectiveHost(), cfg.Proxy.Port)
+	if cfg.Proxy.Tunnel {
+		fmt.Printf(" (via SSH tunnel → %s)", cfg.Proxy.Host)
+	}
+	fmt.Println()
 	fmt.Printf("  Network service:       %s\n", service)
 	fmt.Printf("  Whitelist:             %d domains (presets: %v)\n", len(cfg.EffectiveWhitelist()), cfg.Presets)
 	fmt.Printf("\nCurrent terminal: source %s\n", config.EnvPath())
@@ -47,21 +69,76 @@ func On(cfg *config.Config) error {
 }
 
 func Off(cfg *config.Config) error {
-	// 1. Disable macOS PAC proxy
+	// 1. Disable system PAC proxy
 	service, err := platform.DetectNetworkService()
 	if err == nil {
 		platform.ClearAutoProxy(service)
 	}
 
-	// 2. Stop local PAC HTTP server
-	pac.StopServer()
+	// 2. Stop PAC HTTP server daemon
+	stopPACDaemon()
 
-	// 3. Remove CLI env file
+	// 3. Stop SSH tunnel
+	if cfg.Proxy.Tunnel {
+		tunnel.Stop(cfg)
+	}
+
+	// 4. Remove auto-start
+	platform.UninstallAutoStart()
+
+	// 5. Remove CLI env file
 	os.Remove(config.EnvPath())
 
 	fmt.Println("✓ Proxy disabled")
 	fmt.Println("  Current terminal: unset https_proxy http_proxy no_proxy NO_PROXY")
 	return nil
+}
+
+func startPACDaemon() error {
+	if pac.ServerRunning() {
+		return nil
+	}
+
+	self, err := os.Executable()
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command(self, "serve-pac")
+	cmd.Stdout = nil
+	cmd.Stderr = nil
+	cmd.Stdin = nil
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	// Detach: don't Wait, let it run independently
+	go cmd.Wait()
+
+	for i := 0; i < 20; i++ {
+		if pac.ServerRunning() {
+			return nil
+		}
+		// sleep 50ms
+		exec.Command("sleep", "0.05").Run()
+	}
+	if pac.ServerRunning() {
+		return nil
+	}
+	return fmt.Errorf("PAC server did not start within 1s")
+}
+
+func stopPACDaemon() {
+	out, err := exec.Command("pgrep", "-f", "serve-pac").Output()
+	if err != nil {
+		return
+	}
+	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		exec.Command("kill", line).Run()
+	}
 }
 
 func writeEnvFile(cfg *config.Config) error {

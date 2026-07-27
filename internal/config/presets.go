@@ -20,8 +20,9 @@ var Presets = map[string]PresetInfo{
 			"ai.google.dev",
 			// OpenRouter
 			"openrouter.ai",
-			// GitHub Copilot
+			// GitHub Copilot / Codex
 			"copilot.github.com",
+			"githubcopilot.com",
 			// Mistral
 			"mistral.ai",
 			// Perplexity
@@ -83,10 +84,34 @@ var Presets = map[string]PresetInfo{
 			"learn.microsoft.com",
 		},
 	},
+	"media": {
+		Description: "Video and social media (YouTube, Twitter/X, Instagram)",
+		Domains: []string{
+			// YouTube
+			"youtube.com",
+			"googlevideo.com",
+			"ytimg.com",
+			"youtu.be",
+			// Twitter / X
+			"twitter.com",
+			"x.com",
+			"twimg.com",
+			"t.co",
+			// Instagram
+			"instagram.com",
+			"cdninstagram.com",
+			// Facebook
+			"facebook.com",
+			"fbcdn.net",
+			// Telegram
+			"telegram.org",
+			"t.me",
+		},
+	},
 }
 
 // PresetOrder defines the display order.
-var PresetOrder = []string{"ai", "dev", "search", "cloud"}
+var PresetOrder = []string{"ai", "dev", "search", "cloud", "media"}
 
 type PresetInfo struct {
 	Description string

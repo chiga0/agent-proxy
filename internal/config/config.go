@@ -30,10 +30,20 @@ type Config struct {
 type ProxyConfig struct {
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
+	User     string `yaml:"user,omitempty"`
+	Password string `yaml:"password,omitempty"`
 	SSHKey   string `yaml:"ssh_key,omitempty"`
 	SSHUser  string `yaml:"ssh_user,omitempty"`
+	Tunnel   bool   `yaml:"tunnel,omitempty"`
+}
+
+// EffectiveHost returns the proxy host for client connections.
+// When tunnel is enabled, traffic goes through 127.0.0.1 (local SSH tunnel end).
+func (p *ProxyConfig) EffectiveHost() string {
+	if p.Tunnel {
+		return "127.0.0.1"
+	}
+	return p.Host
 }
 
 func ConfigPath() string {
@@ -205,13 +215,21 @@ func (c *Config) DisablePreset(name string) bool {
 	return false
 }
 
+func (c *Config) HasAuth() bool {
+	return c.Proxy.User != "" && c.Proxy.Password != ""
+}
+
 func (c *Config) ProxyURL() string {
-	return fmt.Sprintf("http://%s:%s@%s:%d",
-		c.Proxy.User, c.Proxy.Password, c.Proxy.Host, c.Proxy.Port)
+	host := c.Proxy.EffectiveHost()
+	if c.HasAuth() {
+		return fmt.Sprintf("http://%s:%s@%s:%d",
+			c.Proxy.User, c.Proxy.Password, host, c.Proxy.Port)
+	}
+	return c.ProxyURLNoAuth()
 }
 
 func (c *Config) ProxyURLNoAuth() string {
-	return fmt.Sprintf("http://%s:%d", c.Proxy.Host, c.Proxy.Port)
+	return fmt.Sprintf("http://%s:%d", c.Proxy.EffectiveHost(), c.Proxy.Port)
 }
 
 func (c *Config) NoProxyString() string {

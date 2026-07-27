@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-07-28
+
+### Added
+- **Built-in SSH tunnel** — `proxy.tunnel: true` in config; `on`/`off` auto-manage the tunnel process, encrypting proxy traffic to bypass GFW SNI filtering
+- **Media preset** — YouTube, Twitter/X, Instagram, Facebook, Telegram (14 domains)
+- **Auto-start** — `on` registers LaunchAgent (macOS) / systemd user unit (Linux) for SSH tunnel + PAC server; survives reboot
+- **PAC server daemon** — PAC HTTP server now runs as a detached background process (`serve-pac`), no longer dies when the command exits
+- **`init` wizard redesign** — one command does everything: SSH check → Squid deploy → tunnel setup → PAC + env → auto-start → connectivity verify
+- **PEM path validation** — warns when SSH key is in macOS TCC-protected directories (~/Documents, ~/Desktop), offers auto-copy to ~/.ssh/
+- **`doctor` actionable diagnosis** — each failure now prints a specific fix command; SNI filtering detection
+- `githubcopilot.com` added to ai preset (fixes Codex desktop)
+- `HasAuth()`, `EffectiveHost()` config helpers
+
+### Changed
+- **Auth is now optional** — Squid trusts 127.0.0.1 (SSH tunnel) + IP whitelist by default; username/password only needed for direct mode without tunnel
+- `proxy.user`/`proxy.password` are optional in config.yaml
+- Squid config template always includes 127.0.0.1 in trusted IPs
+- `status` shows SSH tunnel check when tunnel is enabled
+- Default presets now include `media` (5 presets, 62 domains)
+- Version bumped to v0.4.0
+
+### Fixed
+- PAC server no longer stops when `agent-proxy on` exits
+- Browser proxy auth prompt (407) when using SSH tunnel — Squid now trusts localhost
+
 ## [0.3.0] - 2026-07-27
 
 ### Added

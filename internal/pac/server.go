@@ -80,3 +80,25 @@ func StopServer() {
 	srv.Shutdown(ctx)
 	srv = nil
 }
+
+// ServeForeground runs the PAC HTTP server in the foreground (blocking).
+// Used by the hidden "serve-pac" command for daemon mode.
+func ServeForeground() error {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/proxy.pac", func(w http.ResponseWriter, r *http.Request) {
+		data, err := os.ReadFile(config.PACPath())
+		if err != nil {
+			http.Error(w, "PAC not found", 404)
+			return
+		}
+		w.Header().Set("Content-Type", "application/x-ns-proxy-autoconfig")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Write(data)
+	})
+
+	s := &http.Server{
+		Addr:    fmt.Sprintf("127.0.0.1:%d", config.PACPort),
+		Handler: mux,
+	}
+	return s.ListenAndServe()
+}

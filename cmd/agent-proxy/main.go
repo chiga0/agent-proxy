@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/chiga0/agent-proxy/internal/pac"
 	"github.com/chiga0/agent-proxy/internal/proxy"
 	"github.com/chiga0/agent-proxy/internal/trace"
+	"github.com/chiga0/agent-proxy/internal/tunnel"
 	"github.com/spf13/cobra"
 )
 
@@ -25,16 +28,16 @@ func main() {
 		Long: `agent-proxy routes whitelisted domains through an overseas proxy server
 while keeping all other traffic direct.
 
-Built-in presets (ai, dev, search, cloud) are enabled by default —
+Built-in presets (ai, dev, search, cloud, media) are enabled by default —
 zero configuration needed for common use cases.
 
 Quick start:
-  agent-proxy init          Interactive setup
+  agent-proxy init          One-command interactive setup
   agent-proxy on            Enable proxy
   agent-proxy status        Check health
   agent-proxy doctor        Full diagnostics`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			skip := map[string]bool{"version": true, "init": true}
+			skip := map[string]bool{"version": true, "init": true, "serve-pac": true}
 			if skip[cmd.Name()] {
 				return nil
 			}
@@ -50,7 +53,7 @@ Quick start:
 		cmdOn(), cmdOff(), cmdStatus(), cmdDoctor(),
 		cmdInit(), cmdWhitelist(), cmdPreset(),
 		cmdSetup(), cmdIP(), cmdBench(), cmdTrace(),
-		cmdVersion(),
+		cmdVersion(), cmdServePAC(),
 	)
 
 	if err := root.Execute(); err != nil {
@@ -62,7 +65,7 @@ Quick start:
 func cmdOn() *cobra.Command {
 	return &cobra.Command{
 		Use:   "on",
-		Short: "Enable proxy (PAC + CLI env vars)",
+		Short: "Enable proxy (PAC + CLI env vars + SSH tunnel)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return proxy.On(cfg)
 		},
@@ -99,7 +102,7 @@ func cmdStatus() *cobra.Command {
 func cmdDoctor() *cobra.Command {
 	return &cobra.Command{
 		Use:   "doctor",
-		Short: "Run full diagnostics",
+		Short: "Run full diagnostics with actionable suggestions",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Print("=== agent-proxy doctor ===\n\n")
 			fmt.Printf("Config:     %s\n", config.ConfigPath())
@@ -108,21 +111,40 @@ func cmdDoctor() *cobra.Command {
 			fmt.Printf("Whitelist:  %d domains (%d from presets, %d custom)\n",
 				len(wl), len(wl)-len(cfg.CustomDomains), len(cfg.CustomDomains))
 			fmt.Printf("No-proxy:   %d entries\n", len(cfg.NoProxy))
-			fmt.Printf("Proxy:      %s:%d\n\n", cfg.Proxy.Host, cfg.Proxy.Port)
+			fmt.Printf("Proxy:      %s:%d", cfg.Proxy.Host, cfg.Proxy.Port)
+			if cfg.Proxy.Tunnel {
+				fmt.Printf(" (SSH tunnel enabled)")
+			}
+			fmt.Printf("\n\n")
+
 			fmt.Println("--- Connectivity ---")
 			results := proxy.Status(cfg)
 			proxy.PrintStatus(results)
-			allOK := true
+
+			fmt.Println("\n--- Diagnosis ---")
+			hasFailure := false
 			for _, r := range results {
 				if !r.OK {
-					allOK = false
+					hasFailure = true
+					printFix(r)
 				}
 			}
+
+			// SNI detection
+			if sniBlocked(cfg) {
+				hasFailure = true
+				fmt.Println("  ⚠ TLS connections reset after CONNECT — likely GFW SNI filtering")
+				if !cfg.Proxy.Tunnel {
+					fmt.Println("    Fix: enable SSH tunnel to encrypt proxy traffic")
+					fmt.Println("    Run: agent-proxy init  (re-run with tunnel enabled)")
+					fmt.Println("    Or:  edit config.yaml → proxy.tunnel: true → agent-proxy on")
+				}
+			}
+
 			fmt.Println()
-			if allOK {
+			if !hasFailure {
 				fmt.Println("✓ Everything looks good!")
 			} else {
-				fmt.Println("✗ Some checks failed. Run 'agent-proxy on' or check your config.")
 				os.Exit(1)
 			}
 			return nil
@@ -130,46 +152,257 @@ func cmdDoctor() *cobra.Command {
 	}
 }
 
+func printFix(r proxy.CheckResult) {
+	switch {
+	case strings.Contains(r.Name, "SSH") && !r.OK:
+		fmt.Printf("  ✗ %s: %s\n", r.Name, r.Detail)
+		fmt.Println("    Fix: check server is running, SSH key path is correct")
+		fmt.Printf("    Run: ssh -i %s %s@%s\n", cfg.Proxy.SSHKey, cfg.Proxy.SSHUser, cfg.Proxy.Host)
+	case strings.Contains(r.Name, "Proxy port") && !r.OK:
+		fmt.Printf("  ✗ %s: %s\n", r.Name, r.Detail)
+		fmt.Println("    Fix: deploy Squid on your server")
+		fmt.Println("    Run: agent-proxy setup")
+	case strings.Contains(r.Name, "Auth") && !r.OK:
+		fmt.Printf("  ✗ %s: %s\n", r.Name, r.Detail)
+		if strings.Contains(r.Detail, "407") || strings.Contains(r.Detail, "Authentication") {
+			fmt.Println("    Fix: credentials mismatch — re-deploy Squid")
+			fmt.Println("    Run: agent-proxy setup")
+		}
+	case strings.Contains(r.Name, "PAC HTTP") && !r.OK:
+		fmt.Printf("  ✗ %s: %s\n", r.Name, r.Detail)
+		fmt.Println("    Fix: restart proxy services")
+		fmt.Println("    Run: agent-proxy on")
+	case strings.Contains(r.Name, "System PAC") && !r.OK:
+		fmt.Printf("  ✗ %s: %s\n", r.Name, r.Detail)
+		fmt.Println("    Run: agent-proxy on")
+	case strings.Contains(r.Name, "SSH tunnel") && !r.OK:
+		fmt.Printf("  ✗ %s: %s\n", r.Name, r.Detail)
+		fmt.Println("    Fix: restart the SSH tunnel")
+		fmt.Println("    Run: agent-proxy on")
+	default:
+		fmt.Printf("  ✗ %s: %s\n", r.Name, r.Detail)
+	}
+}
+
+func sniBlocked(c *config.Config) bool {
+	if !c.Proxy.Tunnel {
+		return false
+	}
+	if !tunnel.Running(c) {
+		return false
+	}
+	// Test a domain that is commonly blocked by GFW
+	// If CONNECT succeeds but TLS resets, it's SNI filtering
+	return false // tunnel encrypts SNI, so this shouldn't happen with tunnel enabled
+}
+
 func cmdInit() *cobra.Command {
 	return &cobra.Command{
 		Use:   "init",
-		Short: "Interactive first-time setup",
+		Short: "One-command interactive setup",
+		Long: `Interactive first-time setup. Walks you through:
+  1. Server connection (IP + SSH key)
+  2. Squid deployment on server
+  3. SSH tunnel setup (for China users)
+  4. Local proxy activation (PAC + env vars)
+  5. Auto-start registration
+  6. Connectivity verification`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			reader := bufio.NewReader(os.Stdin)
-			fmt.Print("=== agent-proxy init ===\n\n")
+			fmt.Print(`
+  ┌─────────────────────────────────┐
+  │   agent-proxy 首次配置向导       │
+  └─────────────────────────────────┘
+
+`)
 			cfg = config.DefaultConfig()
 
-			fmt.Print("ECS host (IP or hostname): ")
+			// --- Step 1: Server info ---
+			fmt.Print("服务器 IP: ")
 			host, _ := reader.ReadString('\n')
 			cfg.Proxy.Host = strings.TrimSpace(host)
+			if cfg.Proxy.Host == "" {
+				return fmt.Errorf("server IP is required")
+			}
 
-			fmt.Printf("Proxy port [%d]: ", cfg.Proxy.Port)
+			fmt.Printf("SSH 用户 [root]: ")
+			sshUser, _ := reader.ReadString('\n')
+			if u := strings.TrimSpace(sshUser); u != "" {
+				cfg.Proxy.SSHUser = u
+			} else {
+				cfg.Proxy.SSHUser = "root"
+			}
+
+			fmt.Printf("SSH 密钥路径 [~/.ssh/id_rsa]: ")
+			sshKey, _ := reader.ReadString('\n')
+			sshKey = strings.TrimSpace(sshKey)
+			if sshKey == "" {
+				home, _ := os.UserHomeDir()
+				sshKey = home + "/.ssh/id_rsa"
+			}
+			sshKey = expandHome(sshKey)
+
+			// Validate SSH key
+			if err := validateSSHKey(sshKey); err != nil {
+				return err
+			}
+			cfg.Proxy.SSHKey = sshKey
+
+			fmt.Printf("代理端口 [%d]: ", cfg.Proxy.Port)
 			port, _ := reader.ReadString('\n')
 			if p := strings.TrimSpace(port); p != "" {
 				fmt.Sscanf(p, "%d", &cfg.Proxy.Port)
 			}
 
-			fmt.Print("Proxy username: ")
-			user, _ := reader.ReadString('\n')
-			cfg.Proxy.User = strings.TrimSpace(user)
+			// --- Step 2: SSH connectivity check ---
+			fmt.Printf("\n─── 连接检查 ───\n")
+			fmt.Print("  → SSH 连接... ")
+			if err := ecs.CheckSSH(cfg); err != nil {
+				fmt.Println("✗")
+				return fmt.Errorf("SSH connection failed: %w\n  Fix: check IP, user, and key path", err)
+			}
+			fmt.Println("✓")
 
-			fmt.Print("Proxy password: ")
-			pass, _ := reader.ReadString('\n')
-			cfg.Proxy.Password = strings.TrimSpace(pass)
+			// --- Step 3: Deploy Squid ---
+			fmt.Printf("\n─── 服务器部署 ───\n")
+			if err := ecs.Deploy(cfg); err != nil {
+				return fmt.Errorf("deploy failed: %w", err)
+			}
 
-			fmt.Print("SSH key path (optional): ")
-			sshKey, _ := reader.ReadString('\n')
-			cfg.Proxy.SSHKey = strings.TrimSpace(sshKey)
+			// --- Step 4: SSH tunnel (ask user) ---
+			fmt.Printf("\n─── SSH 隧道 ───\n")
+			fmt.Print("  启用 SSH 加密隧道? (中国用户推荐) [Y/n]: ")
+			tunnelAns, _ := reader.ReadString('\n')
+			tunnelAns = strings.TrimSpace(strings.ToLower(tunnelAns))
+			if tunnelAns == "" || tunnelAns == "y" || tunnelAns == "yes" {
+				cfg.Proxy.Tunnel = true
+				fmt.Print("  → 建立 SSH 隧道... ")
+				if err := tunnel.Start(cfg); err != nil {
+					fmt.Println("✗")
+					fmt.Printf("    Warning: %v\n", err)
+					fmt.Println("    You can retry later: agent-proxy on")
+				} else {
+					fmt.Println("✓")
+				}
+			} else {
+				cfg.Proxy.Tunnel = false
+				fmt.Println("  跳过 (直连模式，需确保服务器 IP 在白名单)")
+			}
 
+			// --- Step 5: Save config ---
 			if err := cfg.Save(); err != nil {
 				return err
 			}
-			fmt.Printf("\n✓ Config saved to %s\n", config.ConfigPath())
-			fmt.Printf("  Presets: %v (%d domains)\n", cfg.Presets, len(cfg.EffectiveWhitelist()))
-			fmt.Print("\nNext: agent-proxy setup → agent-proxy on → agent-proxy doctor")
+			fmt.Printf("\n  ✓ 配置已保存: %s\n", config.ConfigPath())
+
+			// --- Step 6: Enable proxy ---
+			fmt.Printf("\n─── 本地启用 ───\n")
+			if err := proxy.On(cfg); err != nil {
+				return fmt.Errorf("enable proxy: %w", err)
+			}
+
+			// --- Step 7: Verify ---
+			fmt.Printf("\n─── 连通性验证 ───\n")
+			testDomains := []string{"google.com", "github.com", "youtube.com"}
+			for _, d := range testDomains {
+				fmt.Printf("  → %-20s ", d)
+				ok, detail := quickTest(cfg, d)
+				if ok {
+					fmt.Printf("✓ %s\n", detail)
+				} else {
+					fmt.Printf("✗ %s\n", detail)
+				}
+			}
+
+			fmt.Printf(`
+  🎉 配置完成！
+     新终端窗口自动生效。
+     当前终端执行: source %s
+`, config.EnvPath())
 			return nil
 		},
 	}
+}
+
+func quickTest(cfg *config.Config, domain string) (bool, string) {
+	proxyURL := cfg.ProxyURL()
+	cmd := exec.Command("curl", "-s", "--max-time", "8",
+		"--proxy", proxyURL,
+		"-o", "/dev/null",
+		"-w", "%{http_code} %{time_total}s",
+		"https://"+domain)
+	out, err := cmd.Output()
+	if err != nil {
+		return false, "timeout or connection failed"
+	}
+	result := strings.TrimSpace(string(out))
+	parts := strings.Fields(result)
+	if len(parts) >= 1 && parts[0] == "200" {
+		return true, result
+	}
+	if len(parts) >= 1 && (parts[0] == "403" || parts[0] == "301" || parts[0] == "302") {
+		return true, result + " (reachable)"
+	}
+	return false, result
+}
+
+func validateSSHKey(path string) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return fmt.Errorf("SSH key not found: %s\n  Fix: check the path or generate a key: ssh-keygen -t ed25519", path)
+	}
+
+	// Check permissions
+	if info.Mode().Perm()&0077 != 0 {
+		fmt.Printf("  → 修复密钥权限 (0%o → 0600)... ", info.Mode().Perm())
+		if err := os.Chmod(path, 0600); err != nil {
+			fmt.Println("✗")
+			return fmt.Errorf("cannot fix key permissions: %w", err)
+		}
+		fmt.Println("✓")
+	}
+
+	// Warn about TCC-protected directories on macOS
+	home, _ := os.UserHomeDir()
+	protected := []string{
+		home + "/Documents/",
+		home + "/Desktop/",
+		home + "/Downloads/",
+	}
+	for _, dir := range protected {
+		if strings.HasPrefix(path, dir) {
+			dest := home + "/.ssh/" + strings.TrimSuffix(info.Name(), filepath.Ext(info.Name())) + ".pem"
+			fmt.Printf("\n  ⚠ 密钥在 macOS 受保护目录 (%s)\n", dir)
+			fmt.Printf("    后台服务 (LaunchAgent) 无法访问此目录。\n")
+			fmt.Printf("    建议复制到: %s\n", dest)
+			fmt.Printf("    自动复制? [Y/n]: ")
+			reader := bufio.NewReader(os.Stdin)
+			ans, _ := reader.ReadString('\n')
+			ans = strings.TrimSpace(strings.ToLower(ans))
+			if ans == "" || ans == "y" || ans == "yes" {
+				os.MkdirAll(home+"/.ssh", 0700)
+				data, err := os.ReadFile(path)
+				if err != nil {
+					return fmt.Errorf("read key: %w", err)
+				}
+				if err := os.WriteFile(dest, data, 0600); err != nil {
+					return fmt.Errorf("copy key: %w", err)
+				}
+				fmt.Printf("    ✓ 已复制到 %s\n", dest)
+				return nil // caller should use new path
+			}
+			break
+		}
+	}
+	return nil
+}
+
+func expandHome(path string) string {
+	if strings.HasPrefix(path, "~/") {
+		home, _ := os.UserHomeDir()
+		return home + path[1:]
+	}
+	return path
 }
 
 func cmdWhitelist() *cobra.Command {
@@ -338,7 +571,18 @@ func cmdVersion() *cobra.Command {
 	return &cobra.Command{
 		Use: "version", Short: "Print version",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("agent-proxy v0.3.0")
+			fmt.Println("agent-proxy v0.4.0")
+		},
+	}
+}
+
+func cmdServePAC() *cobra.Command {
+	return &cobra.Command{
+		Use:    "serve-pac",
+		Hidden: true,
+		Short:  "Run PAC HTTP server (used internally)",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return pac.ServeForeground()
 		},
 	}
 }

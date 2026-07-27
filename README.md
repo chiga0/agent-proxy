@@ -60,18 +60,12 @@ The installer auto-detects OS/arch and picks the fastest mirror (GitHub or OSS).
 ## Quick Start
 
 ```bash
-# 1. Interactive setup (enter ECS host, port, credentials)
+# One command does everything:
+# SSH check → Squid deploy → SSH tunnel → PAC + env → auto-start → verify
 agent-proxy init
-
-# 2. Deploy Squid on your ECS
-agent-proxy setup
-
-# 3. Enable proxy
-agent-proxy on
-
-# 4. Verify
-agent-proxy doctor
 ```
+
+That's it. `init` walks you through server IP + SSH key, deploys Squid, sets up an encrypted SSH tunnel (bypasses GFW SNI filtering), enables system PAC, configures CLI env vars, and registers auto-start on boot.
 
 Add to your `~/.zshrc` or `~/.bashrc` for auto-loading CLI env vars:
 
@@ -105,10 +99,11 @@ All presets are **enabled by default**. You get 50+ domains out of the box:
 
 | Preset | Domains | Examples |
 |--------|---------|---------|
-| `ai` | AI services | OpenAI, ChatGPT, Anthropic, Claude, Gemini, OpenRouter, Copilot, Mistral, Perplexity |
+| `ai` | AI services | OpenAI, ChatGPT, Anthropic, Claude, Gemini, OpenRouter, Copilot, Codex, Mistral, Perplexity |
 | `dev` | Developer tools | GitHub, StackOverflow, npm, PyPI, crates.io, Go, Rust, Docker, HuggingFace |
 | `search` | Search engines | Google, DuckDuckGo, Bing, Wikipedia |
 | `cloud` | Cloud providers | AWS, GCP, Azure docs & consoles |
+| `media` | Video & social | YouTube, Twitter/X, Instagram, Facebook, Telegram |
 
 Manage presets:
 
@@ -177,16 +172,18 @@ Config file: `~/.config/agent-proxy/config.yaml` (auto-created with defaults)
 proxy:
   host: 1.2.3.4          # Your ECS IP
   port: 18443
-  user: proxyuser
-  password: your-password
-  ssh_key: ~/.ssh/key.pem # For setup/ip commands
+  ssh_key: ~/.ssh/key.pem # SSH key for tunnel + setup
   ssh_user: root
+  tunnel: true            # SSH tunnel (recommended for China users)
+  # user: proxyuser       # Optional: only needed for direct mode without tunnel
+  # password: your-pass
 
 presets:                  # Enabled preset groups
   - ai
   - dev
   - search
   - cloud
+  - media
 
 custom_domains: []        # Extra domains beyond presets
 

@@ -20,9 +20,10 @@ func Generate(cfg *config.Config) (string, error) {
 	fmt.Fprintf(&b, "// Effective whitelist: %d domains (presets: %v)\n", len(domains), cfg.Presets)
 	b.WriteString("function FindProxyForURL(url, host) {\n")
 
+	proxyHost := cfg.Proxy.EffectiveHost()
 	for _, d := range domains {
 		fmt.Fprintf(&b, "    if (dnsDomainIs(host, \".%s\") || host == \"%s\") return \"PROXY %s:%d\";\n",
-			d, d, cfg.Proxy.Host, cfg.Proxy.Port)
+			d, d, proxyHost, cfg.Proxy.Port)
 	}
 
 	b.WriteString("    return \"DIRECT\";\n")

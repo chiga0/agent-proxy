@@ -1,6 +1,8 @@
 package proxy
 
 import (
+	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,6 +16,7 @@ import (
 	"github.com/chiga0/agent-proxy/internal/config"
 	"github.com/chiga0/agent-proxy/internal/pac"
 	"github.com/chiga0/agent-proxy/internal/platform"
+	"github.com/chiga0/agent-proxy/internal/tunnel"
 )
 
 type CheckResult struct {
@@ -23,15 +26,23 @@ type CheckResult struct {
 }
 
 func Status(cfg *config.Config) []CheckResult {
-	return []CheckResult{
+	results := []CheckResult{
 		checkSSH(cfg),
 		checkPort(cfg),
+	}
+
+	if cfg.Proxy.Tunnel {
+		results = append(results, checkTunnel(cfg))
+	}
+
+	results = append(results,
 		checkAuth(cfg),
-		checkNoAuth(cfg),
 		checkPAC(cfg),
 		checkPACFile(cfg),
 		checkPACServer(),
-	}
+	)
+
+	return results
 }
 
 func checkSSH(cfg *config.Config) CheckResult {
@@ -53,6 +64,13 @@ func checkPort(cfg *config.Config) CheckResult {
 	return CheckResult{fmt.Sprintf("Proxy port (%d)", cfg.Proxy.Port), true, ""}
 }
 
+func checkTunnel(cfg *config.Config) CheckResult {
+	if tunnel.Running(cfg) {
+		return CheckResult{"SSH tunnel", true, fmt.Sprintf("127.0.0.1:%d → %s", cfg.Proxy.Port, cfg.Proxy.Host)}
+	}
+	return CheckResult{"SSH tunnel", false, "not running — run: agent-proxy on"}
+}
+
 func checkAuth(cfg *config.Config) CheckResult {
 	proxyURL, _ := url.Parse(cfg.ProxyURL())
 	client := &http.Client{
@@ -61,33 +79,69 @@ func checkAuth(cfg *config.Config) CheckResult {
 	}
 	resp, err := client.Get("https://ipinfo.io/json")
 	if err != nil {
-		return CheckResult{"Auth + forwarding", false, err.Error()}
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return CheckResult{"Auth + forwarding", false, fmt.Sprintf("HTTP %d", resp.StatusCode)}
-	}
-	body, _ := io.ReadAll(resp.Body)
-	var info struct{ IP string `json:"ip"` }
-	json.Unmarshal(body, &info)
-	return CheckResult{"Auth + forwarding", true, "exit IP: " + info.IP}
-}
-
-func checkNoAuth(cfg *config.Config) CheckResult {
-	proxyURL, _ := url.Parse(cfg.ProxyURLNoAuth())
-	client := &http.Client{
-		Timeout:   10 * time.Second,
-		Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)},
-	}
-	resp, err := client.Get("https://ipinfo.io/json")
-	if err != nil {
-		return CheckResult{"No-auth rejection", true, "connection refused"}
+		detail := err.Error()
+		if strings.Contains(detail, "connection reset") {
+			detail = "TLS reset — possible SNI filtering (try enabling SSH tunnel)"
+		}
+		return CheckResult{"Proxy forwarding", false, detail}
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == 407 {
-		return CheckResult{"No-auth rejection", true, "407"}
+		return CheckResult{"Proxy forwarding", false, "407 auth required — run: agent-proxy setup"}
 	}
-	return CheckResult{"No-auth rejection", false, fmt.Sprintf("HTTP %d", resp.StatusCode)}
+	if resp.StatusCode != 200 {
+		return CheckResult{"Proxy forwarding", false, fmt.Sprintf("HTTP %d", resp.StatusCode)}
+	}
+	body, _ := io.ReadAll(resp.Body)
+	var info struct {
+		IP string `json:"ip"`
+	}
+	json.Unmarshal(body, &info)
+	return CheckResult{"Proxy forwarding", true, "exit IP: " + info.IP}
+}
+
+// DetectSNIBlock tests whether TLS connections are being reset by GFW SNI filtering.
+// Returns true if CONNECT succeeds but TLS handshake is reset.
+func DetectSNIBlock(cfg *config.Config) bool {
+	proxyHost := cfg.Proxy.EffectiveHost()
+	addr := fmt.Sprintf("%s:%d", proxyHost, cfg.Proxy.Port)
+
+	conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
+	if err != nil {
+		return false
+	}
+	defer conn.Close()
+
+	// Send CONNECT request
+	connectReq := fmt.Sprintf("CONNECT google.com:443 HTTP/1.1\r\nHost: google.com:443\r\n")
+	if cfg.HasAuth() {
+		connectReq += fmt.Sprintf("Proxy-Authorization: Basic %s\r\n",
+			basicAuth(cfg.Proxy.User, cfg.Proxy.Password))
+	}
+	connectReq += "\r\n"
+	conn.Write([]byte(connectReq))
+
+	buf := make([]byte, 1024)
+	n, err := conn.Read(buf)
+	if err != nil || !strings.Contains(string(buf[:n]), "200") {
+		return false
+	}
+
+	// CONNECT succeeded — now try TLS handshake
+	tlsConn := tls.Client(conn, &tls.Config{
+		ServerName:         "google.com",
+		InsecureSkipVerify: true,
+	})
+	tlsConn.SetDeadline(time.Now().Add(5 * time.Second))
+	err = tlsConn.Handshake()
+	if err != nil && strings.Contains(err.Error(), "reset") {
+		return true
+	}
+	return false
+}
+
+func basicAuth(user, pass string) string {
+	return base64.StdEncoding.EncodeToString([]byte(user + ":" + pass))
 }
 
 func checkPAC(cfg *config.Config) CheckResult {

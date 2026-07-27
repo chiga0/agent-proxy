@@ -103,6 +103,65 @@ func TestProxyURL(t *testing.T) {
 	}
 }
 
+func TestProxyURLNoCredentials(t *testing.T) {
+	cfg := &Config{Proxy: ProxyConfig{Host: "1.2.3.4", Port: 18443}}
+	if cfg.HasAuth() {
+		t.Error("HasAuth should be false without credentials")
+	}
+	if cfg.ProxyURL() != "http://1.2.3.4:18443" {
+		t.Errorf("ProxyURL without auth = %q, want no-auth URL", cfg.ProxyURL())
+	}
+}
+
+func TestEffectiveHost(t *testing.T) {
+	p := ProxyConfig{Host: "1.2.3.4", Port: 18443}
+	if p.EffectiveHost() != "1.2.3.4" {
+		t.Errorf("EffectiveHost without tunnel = %q", p.EffectiveHost())
+	}
+	p.Tunnel = true
+	if p.EffectiveHost() != "127.0.0.1" {
+		t.Errorf("EffectiveHost with tunnel = %q, want 127.0.0.1", p.EffectiveHost())
+	}
+}
+
+func TestProxyURLWithTunnel(t *testing.T) {
+	cfg := &Config{Proxy: ProxyConfig{Host: "1.2.3.4", Port: 18443, Tunnel: true}}
+	if cfg.ProxyURL() != "http://127.0.0.1:18443" {
+		t.Errorf("ProxyURL with tunnel = %q, want 127.0.0.1", cfg.ProxyURL())
+	}
+}
+
+func TestMediaPreset(t *testing.T) {
+	info, ok := Presets["media"]
+	if !ok {
+		t.Fatal("media preset not found")
+	}
+	if len(info.Domains) == 0 {
+		t.Error("media preset should have domains")
+	}
+	found := false
+	for _, d := range info.Domains {
+		if d == "youtube.com" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("media preset should include youtube.com")
+	}
+	// media should be in default presets
+	defaults := DefaultPresets()
+	hasMedia := false
+	for _, p := range defaults {
+		if p == "media" {
+			hasMedia = true
+		}
+	}
+	if !hasMedia {
+		t.Error("media should be in default presets")
+	}
+}
+
 func TestSaveAndLoad(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("HOME", tmpDir)
