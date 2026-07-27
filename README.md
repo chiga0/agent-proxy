@@ -140,12 +140,19 @@ ECS:
 - Your public IP is whitelisted on Squid for PAC/browser access (no auth prompt)
 - No credentials in the repository
 
+## Platform Support
+
+| Platform | System PAC proxy | CLI env vars | ECS setup |
+|----------|-----------------|--------------|-----------|
+| macOS    | ✅ `networksetup` | ✅ | ✅ |
+| Linux    | ✅ GNOME/gsettings | ✅ | ✅ |
+| Windows  | ✅ Registry (IE/Edge) | ✅ | ✅ |
+
 ## Requirements
 
-- macOS (for `networksetup` PAC support)
-- Go 1.22+ (for building)
-- Python 3 (for local PAC HTTP server)
+- Go 1.22+ (for building from source)
 - SSH access to your ECS (for `setup` and `ip refresh`)
+- No external runtime dependencies (PAC server is built-in)
 
 ## License
 
