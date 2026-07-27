@@ -135,6 +135,12 @@ main() {
     sudo chmod +x "${INSTALL_DIR}/${BINARY}"
   fi
 
+  # macOS: remove quarantine attribute to avoid Gatekeeper block
+  if [[ "$os" == "darwin" ]]; then
+    xattr -d com.apple.quarantine "${INSTALL_DIR}/${BINARY}" 2>/dev/null || \
+    sudo xattr -d com.apple.quarantine "${INSTALL_DIR}/${BINARY}" 2>/dev/null || true
+  fi
+
   echo ""
   info "Installed ${BINARY} ${tag} to ${INSTALL_DIR}/${BINARY}"
   echo ""

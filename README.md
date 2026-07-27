@@ -207,6 +207,38 @@ no_proxy:                 # Domains/IPs that bypass proxy
 - PAC HTTP server binds to `127.0.0.1` only
 - No credentials in the repository
 
+## Troubleshooting
+
+### macOS: "cannot be opened because the developer cannot be verified"
+
+The binary is not Apple-signed. Remove the quarantine attribute:
+
+```bash
+xattr -d com.apple.quarantine /usr/local/bin/agent-proxy
+```
+
+The `install.sh` script does this automatically.
+
+### `go install` fails with sum.golang.org 500
+
+New modules may not be indexed by the Go checksum database yet. Skip verification:
+
+```bash
+GONOSUMDB=github.com/chiga0/agent-proxy go install github.com/chiga0/agent-proxy/cmd/agent-proxy@latest
+```
+
+Or use the `install.sh` script which downloads directly from GitHub Releases.
+
+### Proxy env vars break `go build` / `go install`
+
+Go module domains are in the default `no_proxy` list. If you have an older config, regenerate:
+
+```bash
+agent-proxy on   # regenerates env.sh with updated no_proxy
+```
+
+Or temporarily unset: `unset https_proxy http_proxy && go build ...`
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Please read our [Code of Conduct](CODE_OF_CONDUCT.md).
