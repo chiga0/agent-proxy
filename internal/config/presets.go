@@ -65,6 +65,11 @@ var Presets = map[string]PresetInfo{
 		Domains: []string{
 			"google.com",
 			"www.google.com",
+			"gstatic.com",
+			"googleusercontent.com",
+			"google-analytics.com",
+			"googletagmanager.com",
+			"ggpht.com",
 			"duckduckgo.com",
 			"bing.com",
 			"wikipedia.org",
