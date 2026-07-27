@@ -101,18 +101,40 @@ func parseTraceroute(output string) []Hop {
 			continue
 		}
 
-		// Parse IP and RTTs
+		// Parse IP and RTTs.
+		// Standard traceroute emits "IP  RTT ms  RTT ms  RTT ms" where the
+		// numeric RTT value and the "ms" unit are separate whitespace-delimited
+		// tokens. Some implementations emit them joined ("1.234ms"), so we
+		// handle both forms.
+		var prevVal float64
+		var hasPrev bool
 		for _, f := range fields[1:] {
-			if f == "*" || f == "ms" {
+			if f == "*" {
+				hasPrev = false
+				continue
+			}
+			if f == "ms" && hasPrev {
+				hop.RTT = append(hop.RTT, time.Duration(prevVal*float64(time.Millisecond)))
+				hasPrev = false
 				continue
 			}
 			if net.ParseIP(f) != nil {
 				hop.IP = f
 				hop.Host = f
+				hasPrev = false
 			} else if strings.HasSuffix(f, "ms") {
 				var ms float64
 				fmt.Sscanf(f, "%fms", &ms)
 				hop.RTT = append(hop.RTT, time.Duration(ms*float64(time.Millisecond)))
+				hasPrev = false
+			} else {
+				var ms float64
+				if n, _ := fmt.Sscanf(f, "%f", &ms); n == 1 {
+					prevVal = ms
+					hasPrev = true
+				} else {
+					hasPrev = false
+				}
 			}
 		}
 		if hop.IP != "" || len(hop.RTT) > 0 {
@@ -123,7 +145,7 @@ func parseTraceroute(output string) []Hop {
 }
 
 func sshExec(cfg *config.Config, cmd string) (string, error) {
-	args := []string{"-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=10"}
+	args := []string{"-o", "StrictHostKeyChecking=accept-new", "-o", "ConnectTimeout=10"}
 	if cfg.Proxy.SSHKey != "" {
 		args = append(args, "-i", cfg.Proxy.SSHKey)
 	}

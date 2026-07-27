@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httptrace"
 	"net/url"
 	"strings"
 	"time"
@@ -58,19 +59,19 @@ func benchDomain(cfg *config.Config, domain, mode string, runs int) Summary {
 
 func measure(cfg *config.Config, domain, mode string) Result {
 	r := Result{Domain: domain, Mode: mode}
-	target := "https://" + domain
 
-	var transport *http.Transport
+	var proxyFunc func(*http.Request) (*url.URL, error)
 	if mode == "proxy" {
 		proxyURL, _ := url.Parse(cfg.ProxyURL())
-		transport = &http.Transport{
-			Proxy:           http.ProxyURL(proxyURL),
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
-		}
-	} else {
-		transport = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
-		}
+		proxyFunc = http.ProxyURL(proxyURL)
+	}
+
+	transport := &http.Transport{
+		Proxy: proxyFunc,
+		DialContext: (&net.Dialer{
+			Timeout: 10 * time.Second,
+		}).DialContext,
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
 	}
 
 	client := &http.Client{
@@ -81,18 +82,28 @@ func measure(cfg *config.Config, domain, mode string) Result {
 		},
 	}
 
-	// Custom dialer to measure TCP
-	var dnsStart, dnsEnd, tcpStart, tcpEnd, tlsStart, tlsEnd time.Time
-	transport.DialContext = (&net.Dialer{
-		Timeout: 10 * time.Second,
-		Resolver: &net.Resolver{
-			PreferGo: true,
-		},
-	}).DialContext
+	var dnsStart, tcpStart, tlsStart, firstByte time.Time
+	var dnsEnd, tcpEnd, tlsEnd time.Time
 
-	// Use a round tripper wrapper to capture timing
+	ct := &httptrace.ClientTrace{
+		DNSStart:             func(_ httptrace.DNSStartInfo) { dnsStart = time.Now() },
+		DNSDone:              func(_ httptrace.DNSDoneInfo) { dnsEnd = time.Now() },
+		ConnectStart:         func(_, _ string) { tcpStart = time.Now() },
+		ConnectDone:          func(_, _ string, _ error) { tcpEnd = time.Now() },
+		TLSHandshakeStart:    func() { tlsStart = time.Now() },
+		TLSHandshakeDone:     func(_ tls.ConnectionState, _ error) { tlsEnd = time.Now() },
+		GotFirstResponseByte: func() { firstByte = time.Now() },
+	}
+
+	req, err := http.NewRequest("GET", "https://"+domain, nil)
+	if err != nil {
+		r.Error = err.Error()
+		return r
+	}
+	req = req.WithContext(httptrace.WithClientTrace(req.Context(), ct))
+
 	start := time.Now()
-	resp, err := client.Get(target)
+	resp, err := client.Do(req)
 	r.Total = time.Since(start)
 
 	if err != nil {
@@ -103,76 +114,18 @@ func measure(cfg *config.Config, domain, mode string) Result {
 	io.Copy(io.Discard, resp.Body)
 	r.StatusCode = resp.StatusCode
 
-	// For timing breakdown, use a traced request
-	r2 := measureTraced(cfg, domain, mode)
-	r.DNS = r2.DNS
-	r.TCP = r2.TCP
-	r.TLS = r2.TLS
-	r.TTFB = r2.TTFB
-
-	_ = dnsStart
-	_ = dnsEnd
-	_ = tcpStart
-	_ = tcpEnd
-	_ = tlsStart
-	_ = tlsEnd
-
-	return r
-}
-
-func measureTraced(cfg *config.Config, domain, mode string) Result {
-	r := Result{Domain: domain, Mode: mode}
-
-	var proxyFunc func(*http.Request) (*url.URL, error)
-	if mode == "proxy" {
-		proxyURL, _ := url.Parse(cfg.ProxyURL())
-		proxyFunc = http.ProxyURL(proxyURL)
+	if !dnsEnd.IsZero() {
+		r.DNS = dnsEnd.Sub(dnsStart)
 	}
-
-	var dnsDur, tcpDur, tlsDur, ttfbDur time.Duration
-
-	transport := &http.Transport{
-		Proxy: proxyFunc,
-		DialContext: (&net.Dialer{
-			Timeout: 10 * time.Second,
-		}).DialContext,
-		TLSClientConfig: &tls.Config{},
+	if !tcpEnd.IsZero() {
+		r.TCP = tcpEnd.Sub(tcpStart)
 	}
-
-	// Wrap to capture TLS timing
-	origTLS := transport.TLSClientConfig
-	origTLS = &tls.Config{}
-	transport.TLSClientConfig = origTLS
-
-	client := &http.Client{
-		Transport: transport,
-		Timeout:   30 * time.Second,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
+	if !tlsEnd.IsZero() {
+		r.TLS = tlsEnd.Sub(tlsStart)
 	}
-
-	// Simple approach: measure total and estimate breakdown
-	// For accurate breakdown, we'd use httptrace, but let's keep it simple
-	start := time.Now()
-	resp, err := client.Get("https://" + domain)
-	total := time.Since(start)
-
-	if err != nil {
-		r.Error = err.Error()
-		return r
+	if !firstByte.IsZero() {
+		r.TTFB = firstByte.Sub(start)
 	}
-	defer resp.Body.Close()
-	io.Copy(io.Discard, resp.Body)
-
-	r.Total = total
-	r.TTFB = total // approximate for now
-	r.StatusCode = resp.StatusCode
-
-	_ = dnsDur
-	_ = tcpDur
-	_ = tlsDur
-	_ = ttfbDur
 
 	return r
 }
