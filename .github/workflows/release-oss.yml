@@ -1,0 +1,116 @@
+name: Release to OSS
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  upload-oss:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p dist
+          gh release download "${{ github.event.release.tag_name }}" \
+            --repo chiga0/agent-proxy \
+            --dir dist \
+            --pattern '*.tar.gz' \
+            --pattern '*.zip' \
+            --pattern 'checksums.txt'
+          ls -la dist/
+
+      - name: Install aliyun CLI
+        run: |
+          curl -fsSL https://aliyuncli.alicdn.com/aliyun-cli-linux-latest-amd64.tgz \
+            | tar xz -C /usr/local/bin
+          aliyun version
+
+      - name: Assume RAM Role (STS)
+        env:
+          AK_ID: ${{ secrets.ALIBABA_CLOUD_ACCESS_KEY_ID }}
+          AK_SECRET: ${{ secrets.ALIBABA_CLOUD_ACCESS_KEY_SECRET }}
+          ROLE_ARN: ${{ secrets.ALIBABA_CLOUD_ROLE_ARN }}
+          SESSION_NAME: ${{ secrets.ALIBABA_CLOUD_ROLE_SESSION_NAME }}
+        run: |
+          aliyun configure set --profile sts-base --mode AK \
+            --region cn-hangzhou \
+            --access-key-id "$AK_ID" \
+            --access-key-secret "$AK_SECRET"
+
+          CREDS=$(aliyun sts AssumeRole \
+            --RoleArn "$ROLE_ARN" \
+            --RoleSessionName "${SESSION_NAME:-github-action}" \
+            --DurationSeconds 3600 \
+            --profile sts-base)
+
+          echo "TMP_AK=$(echo "$CREDS" | jq -r .Credentials.AccessKeyId)" >> $GITHUB_ENV
+          echo "TMP_SK=$(echo "$CREDS" | jq -r .Credentials.AccessKeySecret)" >> $GITHUB_ENV
+          echo "TMP_TOKEN=$(echo "$CREDS" | jq -r .Credentials.SecurityToken)" >> $GITHUB_ENV
+
+          # Mask secrets in logs
+          echo "::add-mask::$(echo "$CREDS" | jq -r .Credentials.AccessKeyId)"
+          echo "::add-mask::$(echo "$CREDS" | jq -r .Credentials.AccessKeySecret)"
+          echo "::add-mask::$(echo "$CREDS" | jq -r .Credentials.SecurityToken)"
+
+      - name: Upload release assets to OSS
+        env:
+          VERSION: ${{ github.event.release.tag_name }}
+          OSS_BUCKET: agent-proxy
+          OSS_REGION: cn-hangzhou
+        run: |
+          OSS_OPTS="--region $OSS_REGION \
+            --access-key-id $TMP_AK \
+            --access-key-secret $TMP_SK \
+            --sts-token $TMP_TOKEN"
+
+          for f in dist/*.tar.gz dist/*.zip dist/checksums.txt; do
+            [ -f "$f" ] || continue
+            echo "Uploading $(basename $f)..."
+            aliyun oss cp "$f" "oss://${OSS_BUCKET}/releases/${VERSION}/$(basename $f)" \
+              $OSS_OPTS --force
+          done
+
+          # Upload install.sh to root (always latest)
+          aliyun oss cp install.sh "oss://${OSS_BUCKET}/install.sh" \
+            $OSS_OPTS --force
+
+          echo "✓ All assets uploaded to oss://${OSS_BUCKET}/releases/${VERSION}/"
+
+      - name: Generate and upload manifest
+        env:
+          VERSION: ${{ github.event.release.tag_name }}
+          OSS_BUCKET: agent-proxy
+          OSS_REGION: cn-hangzhou
+        run: |
+          # Generate manifest JSON
+          cat > dist/manifest.json <<EOF
+          {
+            "version": "${VERSION}",
+            "base_url": "https://${OSS_BUCKET}.oss-cn-hangzhou.aliyuncs.com/releases/${VERSION}",
+            "assets": $(cd dist && ls *.tar.gz *.zip checksums.txt 2>/dev/null | jq -R . | jq -s .)
+          }
+          EOF
+
+          aliyun oss cp dist/manifest.json "oss://${OSS_BUCKET}/releases/${VERSION}/manifest.json" \
+            --region $OSS_REGION \
+            --access-key-id $TMP_AK \
+            --access-key-secret $TMP_SK \
+            --sts-token $TMP_TOKEN \
+            --force
+
+          # Also upload latest manifest
+          aliyun oss cp dist/manifest.json "oss://${OSS_BUCKET}/releases/latest/manifest.json" \
+            --region $OSS_REGION \
+            --access-key-id $TMP_AK \
+            --access-key-secret $TMP_SK \
+            --sts-token $TMP_TOKEN \
+            --force
+
+          echo "✓ Manifest uploaded"

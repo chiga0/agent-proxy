@@ -2,12 +2,15 @@
 # agent-proxy installer
 # Usage: curl -fsSL https://raw.githubusercontent.com/chiga0/agent-proxy/main/install.sh | bash
 #    or: curl -fsSL ... | bash -s -- --version v0.3.0
+#    or: curl -fsSL ... | bash -s -- --mirror oss   (China mirror)
 set -euo pipefail
 
 REPO="chiga0/agent-proxy"
 BINARY="agent-proxy"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 VERSION=""
+MIRROR="${MIRROR:-auto}"  # auto | github | oss
+OSS_BASE="https://agent-proxy.oss-cn-hangzhou.aliyuncs.com"
 
 # Colors
 RED='\033[0;31m'
@@ -24,6 +27,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --version) VERSION="$2"; shift 2 ;;
     --dir)     INSTALL_DIR="$2"; shift 2 ;;
+    --mirror)  MIRROR="$2"; shift 2 ;;
     *)         shift ;;
   esac
 done
@@ -47,20 +51,36 @@ detect_arch() {
   esac
 }
 
-# Get latest version from GitHub
+# Get latest version
 get_latest_version() {
+  # Try OSS manifest first if mirror is oss
+  if [[ "$MIRROR" == "oss" ]]; then
+    local ver
+    ver=$(curl -fsSL "${OSS_BASE}/releases/latest/manifest.json" 2>/dev/null \
+      | grep '"version"' | head -1 | sed 's/.*"version": *"//;s/".*//' || true)
+    [[ -n "$ver" ]] && echo "$ver" && return
+  fi
+
+  # Try GitHub
   if command -v gh &>/dev/null; then
     gh release view --repo "$REPO" --json tagName -q '.tagName' 2>/dev/null && return
   fi
   if command -v curl &>/dev/null; then
-    curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" \
-      | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": *"//;s/".*//' && return
+    local ver
+    ver=$(curl -fsSL --connect-timeout 5 "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null \
+      | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": *"//;s/".*//' || true)
+    [[ -n "$ver" ]] && echo "$ver" && return
   fi
-  if command -v wget &>/dev/null; then
-    wget -qO- "https://api.github.com/repos/${REPO}/releases/latest" \
-      | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": *"//;s/".*//' && return
+
+  # Fallback to OSS
+  if command -v curl &>/dev/null; then
+    local ver
+    ver=$(curl -fsSL "${OSS_BASE}/releases/latest/manifest.json" 2>/dev/null \
+      | grep '"version"' | head -1 | sed 's/.*"version": *"//;s/".*//' || true)
+    [[ -n "$ver" ]] && echo "$ver" && return
   fi
-  error "Cannot determine latest version. Install curl, wget, or gh CLI."
+
+  error "Cannot determine latest version"
 }
 
 # Download file
@@ -95,10 +115,28 @@ main() {
   fi
   info "Version: ${tag}"
 
+  # Resolve mirror
+  if [[ "$MIRROR" == "auto" ]]; then
+    if curl -fsSL --connect-timeout 3 -o /dev/null "https://github.com" 2>/dev/null; then
+      MIRROR="github"
+    else
+      info "GitHub unreachable, using OSS mirror"
+      MIRROR="oss"
+    fi
+  fi
+
   # Build download URL
   local ext="tar.gz"
   [[ "$os" == "windows" ]] && ext="zip"
-  archive_url="https://github.com/${REPO}/releases/download/${tag}/${BINARY}_${VERSION}_${os}_${arch}.${ext}"
+  local filename="${BINARY}_${VERSION}_${os}_${arch}.${ext}"
+
+  if [[ "$MIRROR" == "oss" ]]; then
+    archive_url="${OSS_BASE}/releases/${tag}/${filename}"
+    info "Mirror: OSS (cn-hangzhou)"
+  else
+    archive_url="https://github.com/${REPO}/releases/download/${tag}/${filename}"
+    info "Mirror: GitHub"
+  fi
 
   # Download
   tmp_dir=$(mktemp -d)

@@ -29,20 +29,33 @@ CLI Tools  ──env vars──▶  https_proxy + no_proxy  ──▶  Same rout
 
 ## Install
 
+**China mirror (recommended for CN users):**
+
 ```bash
-# One-liner (macOS / Linux)
+curl -fsSL https://agent-proxy.oss-cn-hangzhou.aliyuncs.com/install.sh | bash
+```
+
+**GitHub (international):**
+
+```bash
 curl -fsSL https://raw.githubusercontent.com/chiga0/agent-proxy/main/install.sh | bash
+```
 
-# Or specify version / install directory
-curl -fsSL https://raw.githubusercontent.com/chiga0/agent-proxy/main/install.sh | bash -s -- --version v0.3.0 --dir ~/.local/bin
+**Options:**
 
-# Or via Go
+```bash
+# Specify version / install directory / mirror
+curl -fsSL ... | bash -s -- --version v0.3.1 --dir ~/.local/bin --mirror oss
+
+# Via Go
 GONOSUMDB=github.com/chiga0/agent-proxy go install github.com/chiga0/agent-proxy/cmd/agent-proxy@latest
 
-# Or build from source
+# Build from source
 git clone https://github.com/chiga0/agent-proxy.git
 cd agent-proxy && make build && sudo cp bin/agent-proxy /usr/local/bin/
 ```
+
+The installer auto-detects OS/arch and picks the fastest mirror (GitHub or OSS).
 
 ## Quick Start
 
