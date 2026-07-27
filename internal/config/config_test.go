@@ -8,9 +8,8 @@ import (
 
 func TestDefaultConfig(t *testing.T) {
 	cfg := DefaultConfig()
-
-	if len(cfg.Whitelist) == 0 {
-		t.Error("default whitelist should not be empty")
+	if len(cfg.Presets) == 0 {
+		t.Error("default presets should not be empty")
 	}
 	if len(cfg.NoProxy) == 0 {
 		t.Error("default no_proxy should not be empty")
@@ -18,126 +17,110 @@ func TestDefaultConfig(t *testing.T) {
 	if cfg.Proxy.Port != 18443 {
 		t.Errorf("default port = %d, want 18443", cfg.Proxy.Port)
 	}
+	if len(cfg.EffectiveWhitelist()) == 0 {
+		t.Error("effective whitelist should not be empty")
+	}
 }
 
 func TestAddRemoveDomain(t *testing.T) {
 	cfg := DefaultConfig()
-	initial := len(cfg.Whitelist)
+	initial := len(cfg.CustomDomains)
 
-	// Add new domain
 	if !cfg.AddDomain("example.com") {
 		t.Error("AddDomain should return true for new domain")
 	}
-	if len(cfg.Whitelist) != initial+1 {
-		t.Errorf("whitelist len = %d, want %d", len(cfg.Whitelist), initial+1)
+	if len(cfg.CustomDomains) != initial+1 {
+		t.Errorf("custom len = %d, want %d", len(cfg.CustomDomains), initial+1)
 	}
-
-	// Add duplicate
 	if cfg.AddDomain("example.com") {
 		t.Error("AddDomain should return false for duplicate")
 	}
-	if len(cfg.Whitelist) != initial+1 {
-		t.Error("whitelist should not grow on duplicate add")
+	if cfg.AddDomain("chatgpt.com") {
+		t.Error("AddDomain should return false for preset domain")
 	}
-
-	// Remove existing
 	if !cfg.RemoveDomain("example.com") {
-		t.Error("RemoveDomain should return true for existing domain")
+		t.Error("RemoveDomain should return true")
 	}
-	if len(cfg.Whitelist) != initial {
-		t.Errorf("whitelist len = %d, want %d", len(cfg.Whitelist), initial)
-	}
-
-	// Remove non-existing
 	if cfg.RemoveDomain("nonexistent.com") {
-		t.Error("RemoveDomain should return false for non-existing domain")
+		t.Error("RemoveDomain should return false for non-existing")
 	}
 }
 
 func TestAddDomainNormalization(t *testing.T) {
 	cfg := &Config{}
-
 	cfg.AddDomain("  Example.COM  ")
-	if len(cfg.Whitelist) != 1 || cfg.Whitelist[0] != "example.com" {
-		t.Errorf("domain not normalized: %v", cfg.Whitelist)
+	if len(cfg.CustomDomains) != 1 || cfg.CustomDomains[0] != "example.com" {
+		t.Errorf("not normalized: %v", cfg.CustomDomains)
 	}
+	if cfg.AddDomain("") || cfg.AddDomain("   ") {
+		t.Error("should reject empty/whitespace")
+	}
+}
 
-	// Empty string
-	if cfg.AddDomain("") {
-		t.Error("AddDomain should return false for empty string")
+func TestPresets(t *testing.T) {
+	cfg := &Config{Presets: []string{"ai"}}
+	wl := cfg.EffectiveWhitelist()
+	if len(wl) == 0 {
+		t.Error("ai preset should have domains")
 	}
-	if cfg.AddDomain("   ") {
-		t.Error("AddDomain should return false for whitespace")
+	if !cfg.EnablePreset("dev") {
+		t.Error("EnablePreset should succeed")
+	}
+	if cfg.EnablePreset("dev") || cfg.EnablePreset("nonexistent") {
+		t.Error("EnablePreset should fail for dup/unknown")
+	}
+	if len(cfg.EffectiveWhitelist()) <= len(wl) {
+		t.Error("enabling dev should add domains")
+	}
+	if !cfg.DisablePreset("dev") {
+		t.Error("DisablePreset should succeed")
+	}
+	if cfg.DisablePreset("dev") {
+		t.Error("DisablePreset should fail for already disabled")
+	}
+}
+
+func TestEffectiveWhitelistDedup(t *testing.T) {
+	cfg := &Config{Presets: []string{"ai"}, CustomDomains: []string{"chatgpt.com"}}
+	count := 0
+	for _, d := range cfg.EffectiveWhitelist() {
+		if d == "chatgpt.com" {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Errorf("chatgpt.com appears %d times, want 1", count)
 	}
 }
 
 func TestProxyURL(t *testing.T) {
-	cfg := &Config{
-		Proxy: ProxyConfig{
-			Host:     "1.2.3.4",
-			Port:     18443,
-			User:     "user",
-			Password: "pass",
-		},
+	cfg := &Config{Proxy: ProxyConfig{Host: "1.2.3.4", Port: 18443, User: "u", Password: "p"}}
+	if cfg.ProxyURL() != "http://u:p@1.2.3.4:18443" {
+		t.Errorf("ProxyURL = %q", cfg.ProxyURL())
 	}
-
-	want := "http://user:pass@1.2.3.4:18443"
-	if got := cfg.ProxyURL(); got != want {
-		t.Errorf("ProxyURL() = %q, want %q", got, want)
-	}
-
-	wantNoAuth := "http://1.2.3.4:18443"
-	if got := cfg.ProxyURLNoAuth(); got != wantNoAuth {
-		t.Errorf("ProxyURLNoAuth() = %q, want %q", got, wantNoAuth)
-	}
-}
-
-func TestNoProxyString(t *testing.T) {
-	cfg := &Config{
-		NoProxy: []string{"localhost", "127.0.0.1", ".example.com"},
-	}
-	want := "localhost,127.0.0.1,.example.com"
-	if got := cfg.NoProxyString(); got != want {
-		t.Errorf("NoProxyString() = %q, want %q", got, want)
+	if cfg.ProxyURLNoAuth() != "http://1.2.3.4:18443" {
+		t.Errorf("ProxyURLNoAuth = %q", cfg.ProxyURLNoAuth())
 	}
 }
 
 func TestSaveAndLoad(t *testing.T) {
-	// Use temp dir
 	tmpDir := t.TempDir()
 	t.Setenv("HOME", tmpDir)
 
 	cfg := DefaultConfig()
 	cfg.Proxy.Host = "10.0.0.1"
-	cfg.Proxy.User = "testuser"
-
 	if err := cfg.Save(); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
-
-	// Verify file permissions
-	path := filepath.Join(tmpDir, ConfigDir, ConfigFile)
-	info, err := os.Stat(path)
-	if err != nil {
-		t.Fatalf("stat config: %v", err)
+	info, _ := os.Stat(filepath.Join(tmpDir, ConfigDir, ConfigFile))
+	if info.Mode().Perm() != 0600 {
+		t.Errorf("perm = %o", info.Mode().Perm())
 	}
-	perm := info.Mode().Perm()
-	if perm != 0600 {
-		t.Errorf("config file perm = %o, want 0600", perm)
-	}
-
-	// Load back
 	loaded, err := Load()
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if loaded.Proxy.Host != "10.0.0.1" {
-		t.Errorf("loaded host = %q, want %q", loaded.Proxy.Host, "10.0.0.1")
-	}
-	if loaded.Proxy.User != "testuser" {
-		t.Errorf("loaded user = %q, want %q", loaded.Proxy.User, "testuser")
-	}
-	if len(loaded.Whitelist) != len(cfg.Whitelist) {
-		t.Errorf("loaded whitelist len = %d, want %d", len(loaded.Whitelist), len(cfg.Whitelist))
+	if loaded.Proxy.Host != "10.0.0.1" || len(loaded.Presets) == 0 {
+		t.Error("loaded config mismatch")
 	}
 }

@@ -41,7 +41,7 @@ func On(cfg *config.Config) error {
 	fmt.Printf("  CLI env:               %s\n", config.EnvPath())
 	fmt.Printf("  Proxy:                 %s:%d\n", cfg.Proxy.Host, cfg.Proxy.Port)
 	fmt.Printf("  Network service:       %s\n", service)
-	fmt.Printf("  Whitelist:             %d domains\n", len(cfg.Whitelist))
+	fmt.Printf("  Whitelist:             %d domains (presets: %v)\n", len(cfg.EffectiveWhitelist()), cfg.Presets)
 	fmt.Printf("\nCurrent terminal: source %s\n", config.EnvPath())
 	return nil
 }

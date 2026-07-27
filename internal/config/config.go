@@ -19,9 +19,12 @@ const (
 )
 
 type Config struct {
-	Proxy     ProxyConfig  `yaml:"proxy"`
-	Whitelist []string     `yaml:"whitelist"`
-	NoProxy   []string     `yaml:"no_proxy"`
+	Proxy         ProxyConfig `yaml:"proxy"`
+	Presets       []string    `yaml:"presets"`
+	CustomDomains []string    `yaml:"custom_domains,omitempty"`
+	NoProxy       []string    `yaml:"no_proxy"`
+	// Legacy: migrated to CustomDomains on load
+	Whitelist []string `yaml:"whitelist,omitempty"`
 }
 
 type ProxyConfig struct {
@@ -29,8 +32,8 @@ type ProxyConfig struct {
 	Port     int    `yaml:"port"`
 	User     string `yaml:"user"`
 	Password string `yaml:"password"`
-	SSHKey   string `yaml:"ssh_key"`
-	SSHUser  string `yaml:"ssh_user"`
+	SSHKey   string `yaml:"ssh_key,omitempty"`
+	SSHUser  string `yaml:"ssh_user,omitempty"`
 }
 
 func ConfigPath() string {
@@ -57,46 +60,38 @@ func DefaultConfig() *Config {
 			Port:    18443,
 			SSHUser: "root",
 		},
-		Whitelist: []string{
-			"chatgpt.com",
-			"openai.com",
-			"oaistatic.com",
-			"oaiusercontent.com",
-			"anthropic.com",
-			"claude.ai",
-			"openrouter.ai",
-			"github.com",
-			"githubusercontent.com",
-			"ipinfo.io",
-			"googleapis.com",
-			"gemini.google.com",
-			"google.com",
-		},
+		Presets: DefaultPresets(),
 		NoProxy: []string{
-			"localhost",
-			"127.0.0.1",
-			"::1",
+			"localhost", "127.0.0.1", "::1",
 			"10.*",
 			"172.16.*", "172.17.*", "172.18.*", "172.19.*",
 			"172.20.*", "172.21.*", "172.22.*", "172.23.*",
 			"172.24.*", "172.25.*", "172.26.*", "172.27.*",
 			"172.28.*", "172.29.*", "172.30.*", "172.31.*",
 			"192.168.*",
-			".alibaba-inc.com",
-			".aliyun.com",
-			".taobao.org",
-			".antgroup.com",
-			".alipay.com",
-			".dingtalk.com",
-			".baidu.com",
-			".qq.com",
-			".tencent.com",
-			".bilibili.com",
-			".zhihu.com",
-			".npmmirror.com",
-			".mirrors.aliyun.com",
+			".alibaba-inc.com", ".aliyun.com", ".taobao.org",
+			".antgroup.com", ".alipay.com", ".dingtalk.com",
+			".baidu.com", ".qq.com", ".tencent.com",
+			".bilibili.com", ".zhihu.com",
+			".npmmirror.com", ".mirrors.aliyun.com",
 		},
 	}
+}
+
+// EffectiveWhitelist returns the union of preset domains + custom domains.
+func (c *Config) EffectiveWhitelist() []string {
+	domains := PresetDomains(c.Presets)
+	seen := make(map[string]bool, len(domains))
+	for _, d := range domains {
+		seen[d] = true
+	}
+	for _, d := range c.CustomDomains {
+		if !seen[d] {
+			seen[d] = true
+			domains = append(domains, d)
+		}
+	}
+	return domains
 }
 
 func Load() (*Config, error) {
@@ -117,6 +112,23 @@ func Load() (*Config, error) {
 	if err := yaml.Unmarshal(data, cfg); err != nil {
 		return nil, fmt.Errorf("parse config: %w", err)
 	}
+
+	// Migrate legacy whitelist → custom_domains + default presets
+	if len(cfg.Whitelist) > 0 && len(cfg.Presets) == 0 {
+		cfg.Presets = DefaultPresets()
+		presetSet := make(map[string]bool)
+		for _, d := range PresetDomains(cfg.Presets) {
+			presetSet[d] = true
+		}
+		for _, d := range cfg.Whitelist {
+			if !presetSet[d] {
+				cfg.CustomDomains = append(cfg.CustomDomains, d)
+			}
+		}
+		cfg.Whitelist = nil
+		cfg.Save()
+	}
+
 	return cfg, nil
 }
 
@@ -125,12 +137,10 @@ func (c *Config) Save() error {
 	if err := os.MkdirAll(dir, 0700); err != nil {
 		return fmt.Errorf("create config dir: %w", err)
 	}
-
 	data, err := yaml.Marshal(c)
 	if err != nil {
 		return fmt.Errorf("marshal config: %w", err)
 	}
-
 	path := ConfigPath()
 	if err := os.WriteFile(path, data, 0600); err != nil {
 		return fmt.Errorf("write config: %w", err)
@@ -143,20 +153,50 @@ func (c *Config) AddDomain(domain string) bool {
 	if domain == "" {
 		return false
 	}
-	for _, d := range c.Whitelist {
+	// Check if already in presets
+	for _, d := range PresetDomains(c.Presets) {
 		if d == domain {
 			return false
 		}
 	}
-	c.Whitelist = append(c.Whitelist, domain)
+	// Check if already in custom
+	for _, d := range c.CustomDomains {
+		if d == domain {
+			return false
+		}
+	}
+	c.CustomDomains = append(c.CustomDomains, domain)
 	return true
 }
 
 func (c *Config) RemoveDomain(domain string) bool {
 	domain = strings.TrimSpace(strings.ToLower(domain))
-	for i, d := range c.Whitelist {
+	for i, d := range c.CustomDomains {
 		if d == domain {
-			c.Whitelist = append(c.Whitelist[:i], c.Whitelist[i+1:]...)
+			c.CustomDomains = append(c.CustomDomains[:i], c.CustomDomains[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+func (c *Config) EnablePreset(name string) bool {
+	for _, p := range c.Presets {
+		if p == name {
+			return false
+		}
+	}
+	if _, ok := Presets[name]; !ok {
+		return false
+	}
+	c.Presets = append(c.Presets, name)
+	return true
+}
+
+func (c *Config) DisablePreset(name string) bool {
+	for i, p := range c.Presets {
+		if p == name {
+			c.Presets = append(c.Presets[:i], c.Presets[i+1:]...)
 			return true
 		}
 	}
