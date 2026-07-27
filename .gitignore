@@ -1,0 +1,26 @@
+# Binary
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Build
+/dist/
+/vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Go
+*.test
+*.out
+coverage.txt
