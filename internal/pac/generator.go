@@ -35,5 +35,8 @@ func Write(cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
+	if err := os.MkdirAll(config.DataDir(), 0700); err != nil {
+		return err
+	}
 	return os.WriteFile(config.PACPath(), []byte(content), 0644)
 }
