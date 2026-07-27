@@ -28,15 +28,16 @@ type CheckResult struct {
 func Status(cfg *config.Config) []CheckResult {
 	results := []CheckResult{
 		checkSSH(cfg),
-		checkPort(cfg),
 	}
 
 	if cfg.Proxy.Tunnel {
 		results = append(results, checkTunnel(cfg))
+	} else {
+		results = append(results, checkPort(cfg))
 	}
 
 	results = append(results,
-		checkAuth(cfg),
+		checkForwarding(cfg),
 		checkPAC(cfg),
 		checkPACFile(cfg),
 		checkPACServer(),
@@ -71,7 +72,7 @@ func checkTunnel(cfg *config.Config) CheckResult {
 	return CheckResult{"SSH tunnel", false, "not running — run: agent-proxy on"}
 }
 
-func checkAuth(cfg *config.Config) CheckResult {
+func checkForwarding(cfg *config.Config) CheckResult {
 	proxyURL, _ := url.Parse(cfg.ProxyURL())
 	client := &http.Client{
 		Timeout:   15 * time.Second,
@@ -81,7 +82,7 @@ func checkAuth(cfg *config.Config) CheckResult {
 	if err != nil {
 		detail := err.Error()
 		if strings.Contains(detail, "connection reset") {
-			detail = "TLS reset — possible SNI filtering (try enabling SSH tunnel)"
+			detail = "TLS reset — possible SNI filtering (try: proxy.tunnel: true)"
 		}
 		return CheckResult{"Proxy forwarding", false, detail}
 	}
@@ -101,8 +102,11 @@ func checkAuth(cfg *config.Config) CheckResult {
 }
 
 // DetectSNIBlock tests whether TLS connections are being reset by GFW SNI filtering.
-// Returns true if CONNECT succeeds but TLS handshake is reset.
 func DetectSNIBlock(cfg *config.Config) bool {
+	if cfg.Proxy.Tunnel {
+		return false // tunnel encrypts SNI
+	}
+
 	proxyHost := cfg.Proxy.EffectiveHost()
 	addr := fmt.Sprintf("%s:%d", proxyHost, cfg.Proxy.Port)
 
@@ -112,11 +116,10 @@ func DetectSNIBlock(cfg *config.Config) bool {
 	}
 	defer conn.Close()
 
-	// Send CONNECT request
 	connectReq := fmt.Sprintf("CONNECT google.com:443 HTTP/1.1\r\nHost: google.com:443\r\n")
 	if cfg.HasAuth() {
-		connectReq += fmt.Sprintf("Proxy-Authorization: Basic %s\r\n",
-			basicAuth(cfg.Proxy.User, cfg.Proxy.Password))
+		auth := base64.StdEncoding.EncodeToString([]byte(cfg.Proxy.User + ":" + cfg.Proxy.Password))
+		connectReq += "Proxy-Authorization: Basic " + auth + "\r\n"
 	}
 	connectReq += "\r\n"
 	conn.Write([]byte(connectReq))
@@ -127,7 +130,6 @@ func DetectSNIBlock(cfg *config.Config) bool {
 		return false
 	}
 
-	// CONNECT succeeded — now try TLS handshake
 	tlsConn := tls.Client(conn, &tls.Config{
 		ServerName:         "google.com",
 		InsecureSkipVerify: true,
@@ -138,10 +140,6 @@ func DetectSNIBlock(cfg *config.Config) bool {
 		return true
 	}
 	return false
-}
-
-func basicAuth(user, pass string) string {
-	return base64.StdEncoding.EncodeToString([]byte(user + ":" + pass))
 }
 
 func checkPAC(cfg *config.Config) CheckResult {

@@ -2,8 +2,10 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -17,6 +19,8 @@ const (
 	EnvFile    = "env.sh"
 	PACPort    = 18080
 )
+
+var domainRe = regexp.MustCompile(`^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$`)
 
 type Config struct {
 	Proxy         ProxyConfig `yaml:"proxy"`
@@ -144,6 +148,7 @@ func Load() (*Config, error) {
 	return cfg, nil
 }
 
+// Save writes config atomically: temp file → chmod → rename.
 func (c *Config) Save() error {
 	dir := DataDir()
 	if err := os.MkdirAll(dir, 0700); err != nil {
@@ -154,15 +159,51 @@ func (c *Config) Save() error {
 		return fmt.Errorf("marshal config: %w", err)
 	}
 	path := ConfigPath()
-	if err := os.WriteFile(path, data, 0600); err != nil {
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, data, 0600); err != nil {
 		return fmt.Errorf("write config: %w", err)
+	}
+	if err := os.Rename(tmp, path); err != nil {
+		os.Remove(tmp)
+		return fmt.Errorf("rename config: %w", err)
 	}
 	return nil
 }
 
+// Validate checks config consistency.
+func (c *Config) Validate() error {
+	if c.Proxy.Host == "" {
+		return fmt.Errorf("proxy.host is required")
+	}
+	if c.Proxy.Port < 1 || c.Proxy.Port > 65535 {
+		return fmt.Errorf("proxy.port must be 1-65535, got %d", c.Proxy.Port)
+	}
+	if (c.Proxy.User == "") != (c.Proxy.Password == "") {
+		return fmt.Errorf("proxy.user and proxy.password must both be set or both be empty")
+	}
+	if c.Proxy.Tunnel && c.Proxy.SSHKey == "" {
+		return fmt.Errorf("proxy.ssh_key is required when tunnel is enabled")
+	}
+	for _, p := range c.Presets {
+		if _, ok := Presets[p]; !ok {
+			return fmt.Errorf("unknown preset: %q", p)
+		}
+	}
+	for _, d := range c.CustomDomains {
+		if !IsValidDomain(d) {
+			return fmt.Errorf("invalid domain: %q", d)
+		}
+	}
+	return nil
+}
+
+func IsValidDomain(d string) bool {
+	return domainRe.MatchString(d)
+}
+
 func (c *Config) AddDomain(domain string) bool {
 	domain = strings.TrimSpace(strings.ToLower(domain))
-	if domain == "" {
+	if domain == "" || !IsValidDomain(domain) {
 		return false
 	}
 	// Check if already in presets
@@ -219,11 +260,16 @@ func (c *Config) HasAuth() bool {
 	return c.Proxy.User != "" && c.Proxy.Password != ""
 }
 
+// ProxyURL returns the proxy URL with proper URL encoding for credentials.
 func (c *Config) ProxyURL() string {
 	host := c.Proxy.EffectiveHost()
 	if c.HasAuth() {
-		return fmt.Sprintf("http://%s:%s@%s:%d",
-			c.Proxy.User, c.Proxy.Password, host, c.Proxy.Port)
+		u := url.URL{
+			Scheme: "http",
+			User:   url.UserPassword(c.Proxy.User, c.Proxy.Password),
+			Host:   fmt.Sprintf("%s:%d", host, c.Proxy.Port),
+		}
+		return u.String()
 	}
 	return c.ProxyURLNoAuth()
 }
@@ -234,4 +280,9 @@ func (c *Config) ProxyURLNoAuth() string {
 
 func (c *Config) NoProxyString() string {
 	return strings.Join(c.NoProxy, ",")
+}
+
+// ShellQuote wraps a string in single quotes for safe POSIX shell embedding.
+func ShellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", "'\\''") + "'"
 }

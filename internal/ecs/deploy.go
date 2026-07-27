@@ -3,10 +3,13 @@ package ecs
 import (
 	"fmt"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/chiga0/agent-proxy/internal/config"
 )
+
+var validUserRe = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 
 func Deploy(cfg *config.Config) error {
 	steps := []struct {
@@ -14,7 +17,7 @@ func Deploy(cfg *config.Config) error {
 		fn   func() error
 	}{
 		{"Connectivity", func() error { return sshRun(cfg, "echo ok") }},
-		{"Install Squid", installSquid},
+		{"Install Squid", func() error { return installSquid(cfg) }},
 	}
 
 	if cfg.HasAuth() {
@@ -49,7 +52,7 @@ func Deploy(cfg *config.Config) error {
 }
 
 func RefreshIP(cfg *config.Config) error {
-	ip, err := getPublicIP(cfg)
+	ip, err := getPublicIP()
 	if err != nil {
 		return fmt.Errorf("get public IP: %w", err)
 	}
@@ -64,19 +67,23 @@ func CheckSSH(cfg *config.Config) error {
 	return sshRun(cfg, "echo ok")
 }
 
-func installSquid() error {
-	return sshRun(nil, "apt update -qq && apt install -y -qq squid apache2-utils >/dev/null 2>&1")
+func installSquid(cfg *config.Config) error {
+	return sshRun(cfg, "apt update -qq && apt install -y -qq squid apache2-utils >/dev/null 2>&1")
 }
 
 func configureAuth(cfg *config.Config) error {
+	if !validUserRe.MatchString(cfg.Proxy.User) {
+		return fmt.Errorf("invalid proxy username: %q (allowed: a-z, 0-9, . _ -)", cfg.Proxy.User)
+	}
+	// Pass password via stdin to avoid shell injection
 	cmd := fmt.Sprintf(
-		"htpasswd -cb /etc/squid/passwd %s %s 2>/dev/null && chmod 640 /etc/squid/passwd",
-		cfg.Proxy.User, cfg.Proxy.Password)
-	return sshRun(cfg, cmd)
+		"htpasswd -cbi /etc/squid/passwd %s 2>/dev/null && chmod 640 /etc/squid/passwd",
+		cfg.Proxy.User)
+	return sshRunWithStdin(cfg, cmd, cfg.Proxy.Password)
 }
 
 func writeSquidConfig(cfg *config.Config) error {
-	ip, _ := getPublicIP(cfg)
+	ip, _ := getPublicIP()
 	conf := generateSquidConfig(cfg, ip)
 	cmd := fmt.Sprintf("cat > /etc/squid/squid.conf << 'SQUID_EOF'\n%s\nSQUID_EOF", conf)
 	return sshRun(cfg, cmd)
@@ -86,7 +93,6 @@ func generateSquidConfig(cfg *config.Config, trustedIP string) string {
 	var b strings.Builder
 	b.WriteString(fmt.Sprintf("http_port %d\n\n", cfg.Proxy.Port))
 
-	// Auth is optional — SSH tunnel (127.0.0.1) and IP whitelist are the primary security
 	if cfg.HasAuth() {
 		b.WriteString("# Auth (optional, for direct access without SSH tunnel)\n")
 		b.WriteString("auth_param basic program /usr/lib/squid/basic_ncsa_auth /etc/squid/passwd\n")
@@ -95,12 +101,11 @@ func generateSquidConfig(cfg *config.Config, trustedIP string) string {
 		b.WriteString("acl authenticated proxy_auth REQUIRED\n\n")
 	}
 
-	// Always trust localhost (SSH tunnel) + user's public IP
 	trustedSrcs := "127.0.0.1"
 	if trustedIP != "" {
 		trustedSrcs += " " + trustedIP
 	}
-	b.WriteString(fmt.Sprintf("# Trusted: SSH tunnel (127.0.0.1) + your public IP\n"))
+	b.WriteString("# Trusted: SSH tunnel (127.0.0.1) + your public IP\n")
 	b.WriteString(fmt.Sprintf("acl trusted_ip src %s\n\n", trustedSrcs))
 
 	b.WriteString("# CONNECT tunneling (HTTPS/WebSocket)\n")
@@ -137,7 +142,7 @@ func generateSquidConfig(cfg *config.Config, trustedIP string) string {
 	return b.String()
 }
 
-func getPublicIP(cfg *config.Config) (string, error) {
+func getPublicIP() (string, error) {
 	out, err := exec.Command("curl", "-s", "--max-time", "5", "https://ipinfo.io/ip").Output()
 	if err != nil {
 		return "", err
@@ -145,11 +150,15 @@ func getPublicIP(cfg *config.Config) (string, error) {
 	return strings.TrimSpace(string(out)), nil
 }
 
-func sshRun(cfg *config.Config, cmd string) error {
-	args := []string{"-o", "StrictHostKeyChecking=no", "-o", "ConnectTimeout=10"}
+func sshArgs(cfg *config.Config) []string {
+	args := []string{"-o", "StrictHostKeyChecking=accept-new", "-o", "ConnectTimeout=10"}
 	if cfg != nil && cfg.Proxy.SSHKey != "" {
 		args = append(args, "-i", cfg.Proxy.SSHKey)
 	}
+	return args
+}
+
+func sshTarget(cfg *config.Config) string {
 	user := "root"
 	host := ""
 	if cfg != nil {
@@ -158,9 +167,27 @@ func sshRun(cfg *config.Config, cmd string) error {
 		}
 		host = cfg.Proxy.Host
 	}
-	args = append(args, fmt.Sprintf("%s@%s", user, host), cmd)
+	return fmt.Sprintf("%s@%s", user, host)
+}
+
+func sshRun(cfg *config.Config, cmd string) error {
+	args := sshArgs(cfg)
+	args = append(args, sshTarget(cfg), cmd)
 
 	out, err := exec.Command("ssh", args...).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("%s: %w", strings.TrimSpace(string(out)), err)
+	}
+	return nil
+}
+
+func sshRunWithStdin(cfg *config.Config, cmd string, stdin string) error {
+	args := sshArgs(cfg)
+	args = append(args, sshTarget(cfg), cmd)
+
+	proc := exec.Command("ssh", args...)
+	proc.Stdin = strings.NewReader(stdin + "\n")
+	out, err := proc.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%s: %w", strings.TrimSpace(string(out)), err)
 	}

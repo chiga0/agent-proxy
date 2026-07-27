@@ -21,19 +21,20 @@ func launchAgentDir() string {
 	return filepath.Join(home, "Library", "LaunchAgents")
 }
 
-func InstallAutoStart(cfg *config.Config) {
+func InstallAutoStart(cfg *config.Config) error {
 	dir := launchAgentDir()
 	os.MkdirAll(dir, 0755)
 
 	self, err := os.Executable()
 	if err != nil {
-		return
+		return fmt.Errorf("get executable path: %w", err)
 	}
 
 	if cfg.Proxy.Tunnel && cfg.Proxy.SSHKey != "" {
 		installTunnelAgent(cfg, dir)
 	}
 	installPACAgent(self, dir)
+	return nil
 }
 
 func installTunnelAgent(cfg *config.Config, dir string) {

@@ -3,7 +3,6 @@ package pac
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
 	"os"
 	"sync"
@@ -18,12 +17,13 @@ var (
 )
 
 func ServerRunning() bool {
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", config.PACPort), 500*time.Millisecond)
+	client := &http.Client{Timeout: 500 * time.Millisecond}
+	resp, err := client.Get(fmt.Sprintf("http://127.0.0.1:%d/proxy.pac", config.PACPort))
 	if err != nil {
 		return false
 	}
-	conn.Close()
-	return true
+	resp.Body.Close()
+	return resp.StatusCode == 200
 }
 
 func StartServer() error {

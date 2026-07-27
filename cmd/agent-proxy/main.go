@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -20,6 +19,7 @@ import (
 )
 
 var cfg *config.Config
+var version = "dev"
 
 func main() {
 	root := &cobra.Command{
@@ -130,15 +130,12 @@ func cmdDoctor() *cobra.Command {
 				}
 			}
 
-			// SNI detection
-			if sniBlocked(cfg) {
+			// SNI detection (only relevant without tunnel)
+			if !cfg.Proxy.Tunnel && proxy.DetectSNIBlock(cfg) {
 				hasFailure = true
-				fmt.Println("  ⚠ TLS connections reset after CONNECT — likely GFW SNI filtering")
-				if !cfg.Proxy.Tunnel {
-					fmt.Println("    Fix: enable SSH tunnel to encrypt proxy traffic")
-					fmt.Println("    Run: agent-proxy init  (re-run with tunnel enabled)")
-					fmt.Println("    Or:  edit config.yaml → proxy.tunnel: true → agent-proxy on")
-				}
+				fmt.Println("  ⚠ TLS connections reset after CONNECT — GFW SNI filtering detected")
+				fmt.Println("    Fix: enable SSH tunnel to encrypt proxy traffic")
+				fmt.Println("    Run: edit config.yaml → proxy.tunnel: true → agent-proxy on")
 			}
 
 			fmt.Println()
@@ -182,18 +179,6 @@ func printFix(r proxy.CheckResult) {
 	default:
 		fmt.Printf("  ✗ %s: %s\n", r.Name, r.Detail)
 	}
-}
-
-func sniBlocked(c *config.Config) bool {
-	if !c.Proxy.Tunnel {
-		return false
-	}
-	if !tunnel.Running(c) {
-		return false
-	}
-	// Test a domain that is commonly blocked by GFW
-	// If CONNECT succeeds but TLS resets, it's SNI filtering
-	return false // tunnel encrypts SNI, so this shouldn't happen with tunnel enabled
 }
 
 func cmdInit() *cobra.Command {
@@ -242,11 +227,12 @@ func cmdInit() *cobra.Command {
 			}
 			sshKey = expandHome(sshKey)
 
-			// Validate SSH key
-			if err := validateSSHKey(sshKey); err != nil {
+			// Validate SSH key (may return a new path if auto-copied)
+			finalKey, err := validateSSHKey(sshKey)
+			if err != nil {
 				return err
 			}
-			cfg.Proxy.SSHKey = sshKey
+			cfg.Proxy.SSHKey = finalKey
 
 			fmt.Printf("代理端口 [%d]: ", cfg.Proxy.Port)
 			port, _ := reader.ReadString('\n')
@@ -346,10 +332,10 @@ func quickTest(cfg *config.Config, domain string) (bool, string) {
 	return false, result
 }
 
-func validateSSHKey(path string) error {
+func validateSSHKey(path string) (string, error) {
 	info, err := os.Stat(path)
 	if err != nil {
-		return fmt.Errorf("SSH key not found: %s\n  Fix: check the path or generate a key: ssh-keygen -t ed25519", path)
+		return "", fmt.Errorf("SSH key not found: %s\n  Fix: check the path or generate a key: ssh-keygen -t ed25519", path)
 	}
 
 	// Check permissions
@@ -357,7 +343,7 @@ func validateSSHKey(path string) error {
 		fmt.Printf("  → 修复密钥权限 (0%o → 0600)... ", info.Mode().Perm())
 		if err := os.Chmod(path, 0600); err != nil {
 			fmt.Println("✗")
-			return fmt.Errorf("cannot fix key permissions: %w", err)
+			return "", fmt.Errorf("cannot fix key permissions: %w", err)
 		}
 		fmt.Println("✓")
 	}
@@ -371,7 +357,7 @@ func validateSSHKey(path string) error {
 	}
 	for _, dir := range protected {
 		if strings.HasPrefix(path, dir) {
-			dest := home + "/.ssh/" + strings.TrimSuffix(info.Name(), filepath.Ext(info.Name())) + ".pem"
+			dest := home + "/.ssh/" + info.Name()
 			fmt.Printf("\n  ⚠ 密钥在 macOS 受保护目录 (%s)\n", dir)
 			fmt.Printf("    后台服务 (LaunchAgent) 无法访问此目录。\n")
 			fmt.Printf("    建议复制到: %s\n", dest)
@@ -383,18 +369,18 @@ func validateSSHKey(path string) error {
 				os.MkdirAll(home+"/.ssh", 0700)
 				data, err := os.ReadFile(path)
 				if err != nil {
-					return fmt.Errorf("read key: %w", err)
+					return "", fmt.Errorf("read key: %w", err)
 				}
 				if err := os.WriteFile(dest, data, 0600); err != nil {
-					return fmt.Errorf("copy key: %w", err)
+					return "", fmt.Errorf("copy key: %w", err)
 				}
 				fmt.Printf("    ✓ 已复制到 %s\n", dest)
-				return nil // caller should use new path
+				return dest, nil
 			}
 			break
 		}
 	}
-	return nil
+	return path, nil
 }
 
 func expandHome(path string) string {
@@ -571,7 +557,7 @@ func cmdVersion() *cobra.Command {
 	return &cobra.Command{
 		Use: "version", Short: "Print version",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("agent-proxy v0.4.0")
+			fmt.Printf("agent-proxy %s\n", version)
 		},
 	}
 }

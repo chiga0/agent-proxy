@@ -16,13 +16,13 @@ func systemdUserDir() string {
 	return filepath.Join(home, ".config", "systemd", "user")
 }
 
-func InstallAutoStart(cfg *config.Config) {
+func InstallAutoStart(cfg *config.Config) error {
 	dir := systemdUserDir()
 	os.MkdirAll(dir, 0755)
 
 	self, err := os.Executable()
 	if err != nil {
-		return
+		return fmt.Errorf("get executable path: %w", err)
 	}
 
 	if cfg.Proxy.Tunnel && cfg.Proxy.SSHKey != "" {
@@ -31,6 +31,7 @@ func InstallAutoStart(cfg *config.Config) {
 	installPACUnit(self, dir)
 
 	exec.Command("systemctl", "--user", "daemon-reload").Run()
+	return nil
 }
 
 func installTunnelUnit(cfg *config.Config, dir string) {
