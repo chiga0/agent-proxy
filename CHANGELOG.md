@@ -8,11 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.0] - 2026-07-27
 
 ### Added
-- Domain preset system (`ai`, `dev`, `search`) — enabled by default, zero-config
-- `agent-proxy preset ls` — list available presets and their domains
-- `agent-proxy preset enable/disable` — toggle preset groups
+- Domain preset system (`ai`, `dev`, `search`, `cloud`) — enabled by default, zero-config
+- 50+ pre-configured domains covering AI, dev tools, search, cloud providers
+- `agent-proxy preset ls/enable/disable` — manage preset groups
 - `agent-proxy init` — interactive first-time setup
 - `agent-proxy doctor` — comprehensive diagnostics
+- `agent-proxy bench` — benchmark proxy vs direct latency (TTFB, total RT)
+- `agent-proxy trace` — network path trace (local → ECS → target)
 - CHANGELOG.md
 - Issue templates (bug report, feature request)
 - Pull request template

@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/chiga0/agent-proxy/internal/bench"
 	"github.com/chiga0/agent-proxy/internal/config"
 	"github.com/chiga0/agent-proxy/internal/ecs"
 	"github.com/chiga0/agent-proxy/internal/pac"
 	"github.com/chiga0/agent-proxy/internal/proxy"
+	"github.com/chiga0/agent-proxy/internal/trace"
 	"github.com/spf13/cobra"
 )
 
@@ -46,7 +49,8 @@ Quick start:
 	root.AddCommand(
 		cmdOn(), cmdOff(), cmdStatus(), cmdDoctor(),
 		cmdInit(), cmdWhitelist(), cmdPreset(),
-		cmdSetup(), cmdIP(), cmdVersion(),
+		cmdSetup(), cmdIP(), cmdBench(), cmdTrace(),
+		cmdVersion(),
 	)
 
 	if err := root.Execute(); err != nil {
@@ -335,6 +339,70 @@ func cmdVersion() *cobra.Command {
 		Use: "version", Short: "Print version",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println("agent-proxy v0.3.0")
+		},
+	}
+}
+
+func cmdBench() *cobra.Command {
+	var runs int
+	cmd := &cobra.Command{
+		Use:   "bench [domain...]",
+		Short: "Benchmark proxy latency (TTFB, total RT)",
+		Long: `Measure request latency through the proxy vs direct connection.
+If no domains specified, tests a default set of AI endpoints.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			domains := args
+			if len(domains) == 0 {
+				domains = []string{"chatgpt.com", "openai.com", "api.anthropic.com", "github.com"}
+			}
+			fmt.Printf("Benchmarking %d domains × %d runs (proxy vs direct)...\n", len(domains), runs)
+			results := bench.Run(cfg, domains, runs)
+			bench.PrintResults(results)
+			return nil
+		},
+	}
+	cmd.Flags().IntVarP(&runs, "runs", "n", 3, "Number of requests per domain per mode")
+	return cmd
+}
+
+func cmdTrace() *cobra.Command {
+	return &cobra.Command{
+		Use:   "trace [domain]",
+		Short: "Network path trace: local → ECS → target",
+		Long: `Trace the full network path from your machine to the ECS proxy
+and from the ECS to the target domain. Useful for diagnosing
+latency issues and identifying routing bottlenecks.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			target := "chatgpt.com"
+			if len(args) > 0 {
+				target = args[0]
+			}
+
+			fmt.Println("=== Network Trace ===")
+
+			// 1. DNS resolution
+			fmt.Printf("\n--- DNS Resolution ---\n")
+			for _, d := range []string{cfg.Proxy.Host, target} {
+				ip, dur, err := trace.DNSInfo(d)
+				if err != nil {
+					fmt.Printf("  %-25s ERROR: %v\n", d, err)
+				} else {
+					fmt.Printf("  %-25s → %-16s (%s)\n", d, ip, dur.Round(time.Millisecond))
+				}
+			}
+
+			// 2. Local → ECS
+			fmt.Printf("\n--- Local → ECS (%s) ---\n", cfg.Proxy.Host)
+			r1 := trace.LocalToECS(cfg)
+			trace.PrintTrace(r1)
+
+			// 3. ECS → Target
+			fmt.Printf("\n--- ECS → %s ---\n", target)
+			r2 := trace.ECSToTarget(cfg, target)
+			trace.PrintTrace(r2)
+
+			fmt.Println()
+			return nil
 		},
 	}
 }
