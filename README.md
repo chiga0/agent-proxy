@@ -1,6 +1,13 @@
 # agent-proxy
 
-Domain-based selective proxy routing via an overseas server. Route whitelisted domains (AI services, GitHub, etc.) through a proxy while keeping everything else direct.
+[![CI](https://github.com/chiga0/agent-proxy/actions/workflows/ci.yml/badge.svg)](https://github.com/chiga0/agent-proxy/actions/workflows/ci.yml)
+[![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/chiga0/agent-proxy)](https://github.com/chiga0/agent-proxy/releases)
+
+Domain-based selective proxy routing via an overseas server. Route AI services, developer tools, and search engines through a proxy while keeping everything else direct.
+
+**50+ domains pre-configured. Zero config to start.**
 
 ## How It Works
 
@@ -18,127 +25,165 @@ CLI Tools  ──env vars──▶  https_proxy + no_proxy  ──▶  Same rout
 - **PAC (Proxy Auto-Config)** for browsers and Electron apps — selective per-domain routing
 - **Environment variables** (`https_proxy` + `no_proxy`) for CLI tools
 - **Squid forward proxy** on your ECS with password auth + IP whitelist
-- **Local PAC HTTP server** for Chrome compatibility (Chrome doesn't support `file://` PAC)
+- **Built-in PAC HTTP server** (pure Go, no external dependencies)
 
 ## Install
 
 ```bash
-go install github.com/chiga0/agent-proxy/cmd/agent-proxy@latest
-```
+# One-liner (macOS / Linux)
+curl -fsSL https://raw.githubusercontent.com/chiga0/agent-proxy/main/install.sh | bash
 
-Or build from source:
+# Or specify version / install directory
+curl -fsSL https://raw.githubusercontent.com/chiga0/agent-proxy/main/install.sh | bash -s -- --version v0.3.0 --dir ~/.local/bin
 
-```bash
+# Or via Go
+GONOSUMDB=github.com/chiga0/agent-proxy go install github.com/chiga0/agent-proxy/cmd/agent-proxy@latest
+
+# Or build from source
 git clone https://github.com/chiga0/agent-proxy.git
-cd agent-proxy
-make build
-sudo cp bin/agent-proxy /usr/local/bin/
+cd agent-proxy && make build && sudo cp bin/agent-proxy /usr/local/bin/
 ```
 
 ## Quick Start
 
-### 1. Configure
-
 ```bash
-# Generate default config at ~/.config/agent-proxy/config.yaml
-agent-proxy status
+# 1. Interactive setup (enter ECS host, port, credentials)
+agent-proxy init
 
-# Edit config — set your ECS host, port, credentials
-vim ~/.config/agent-proxy/config.yaml
-```
-
-Example config:
-
-```yaml
-proxy:
-  host: 1.2.3.4
-  port: 18443
-  user: proxyuser
-  password: your-password
-  ssh_key: ~/.ssh/your-key.pem
-  ssh_user: root
-
-whitelist:
-  - chatgpt.com
-  - openai.com
-  - anthropic.com
-  - github.com
-  # ... add more domains
-
-no_proxy:
-  - localhost
-  - 127.0.0.1
-  - .alibaba-inc.com
-  - .baidu.com
-  # ... internal/domestic domains to exclude
-```
-
-### 2. Deploy proxy on ECS
-
-```bash
+# 2. Deploy Squid on your ECS
 agent-proxy setup
-```
 
-This installs and configures Squid on your ECS (idempotent — safe to re-run).
-
-### 3. Enable proxy
-
-```bash
+# 3. Enable proxy
 agent-proxy on
+
+# 4. Verify
+agent-proxy doctor
 ```
 
-This will:
-- Generate PAC file from whitelist
-- Start local PAC HTTP server (for Chrome)
-- Set macOS system PAC proxy
-- Write CLI environment variables (`~/.config/agent-proxy/env.sh`)
-
-Add this line to your `~/.zshrc` or `~/.bashrc` for auto-loading:
+Add to your `~/.zshrc` or `~/.bashrc` for auto-loading CLI env vars:
 
 ```bash
 [ -f "$HOME/.config/agent-proxy/env.sh" ] && source "$HOME/.config/agent-proxy/env.sh"
 ```
 
-### 4. Verify
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `agent-proxy on` | Enable proxy (PAC + env vars + PAC HTTP server) |
+| `agent-proxy off` | Disable proxy |
+| `agent-proxy status` | Quick health check |
+| `agent-proxy doctor` | Full diagnostics (config + connectivity) |
+| `agent-proxy init` | Interactive first-time setup |
+| `agent-proxy setup` | Deploy Squid on ECS (idempotent) |
+| `agent-proxy ip` | Refresh Squid IP whitelist (when your public IP changes) |
+| `agent-proxy bench [domains...]` | Benchmark proxy vs direct latency |
+| `agent-proxy trace [domain]` | Network path trace: local → ECS → target |
+| `agent-proxy whitelist ls` | List effective whitelist (presets + custom) |
+| `agent-proxy whitelist add <domain>` | Add custom domain |
+| `agent-proxy whitelist rm <domain>` | Remove custom domain |
+| `agent-proxy preset ls` | List preset groups with domains |
+| `agent-proxy preset enable <name>` | Enable a preset group |
+| `agent-proxy preset disable <name>` | Disable a preset group |
+
+## Presets (Zero-Config)
+
+All presets are **enabled by default**. You get 50+ domains out of the box:
+
+| Preset | Domains | Examples |
+|--------|---------|---------|
+| `ai` | AI services | OpenAI, ChatGPT, Anthropic, Claude, Gemini, OpenRouter, Copilot, Mistral, Perplexity |
+| `dev` | Developer tools | GitHub, StackOverflow, npm, PyPI, crates.io, Go, Rust, Docker, HuggingFace |
+| `search` | Search engines | Google, DuckDuckGo, Bing, Wikipedia |
+| `cloud` | Cloud providers | AWS, GCP, Azure docs & consoles |
+
+Manage presets:
 
 ```bash
-agent-proxy status
+agent-proxy preset ls              # Show all presets and their domains
+agent-proxy preset disable cloud   # Disable cloud preset
+agent-proxy preset enable cloud    # Re-enable
 ```
 
-## Usage
+Add domains beyond presets:
 
-```
-agent-proxy on                        # Enable proxy
-agent-proxy off                       # Disable proxy
-agent-proxy status                    # Health check
-agent-proxy whitelist add gemini.google.com google.com
-agent-proxy whitelist rm github.com
-agent-proxy whitelist ls              # List domains
-agent-proxy setup                     # Deploy Squid on ECS
-agent-proxy ip refresh                # Update IP whitelist when your public IP changes
+```bash
+agent-proxy whitelist add ipinfo.io mysite.com
+agent-proxy whitelist rm mysite.com
 ```
 
-## Architecture
+## Diagnostics
 
+### Benchmark
+
+Compare proxy vs direct latency:
+
+```bash
+$ agent-proxy bench
+Benchmarking 4 domains × 3 runs (proxy vs direct)...
+
+  Domain                    Mode       TTFB    Total     Runs   Status
+  ---------------------------------------------------------------------------
+  chatgpt.com               proxy      350ms    352ms        3        ✓
+  chatgpt.com               direct       -        -         3        ✗
+  openai.com                proxy      340ms    342ms        3        ✓
+  openai.com                direct     1380ms   1428ms        3        ✓
+  github.com                proxy      320ms    330ms        3        ✓
+  github.com                direct     690ms    700ms        3        ✓
 ```
-~/.config/agent-proxy/
-├── config.yaml          # Main config (whitelist, credentials, proxy settings)
-├── proxy.pac            # Generated PAC file
-└── env.sh               # Generated CLI env vars (sourced by shell)
 
-Local:
-  127.0.0.1:18080        # PAC HTTP server (python3 http.server)
+### Network Trace
 
-ECS:
-  Squid :18443           # Forward proxy with auth + IP whitelist
+Trace the full path from your machine to the target via the proxy:
+
+```bash
+$ agent-proxy trace chatgpt.com
+=== Network Trace ===
+
+--- DNS Resolution ---
+  47.236.51.96              → 47.236.51.96     (5ms)
+  chatgpt.com               → 104.18.32.47     (12ms)
+
+--- Local → ECS (47.236.51.96) ---
+   1  192.168.1.1              2.1ms   1.8ms   2.3ms
+   2  10.0.0.1                 5.2ms   4.9ms   5.5ms
+   ...
+  12  47.236.51.96            82.1ms  81.5ms  83.0ms
+
+--- ECS → chatgpt.com ---
+   1  172.16.0.1               0.5ms   0.4ms   0.6ms
+   ...
+   4  104.18.32.47             2.1ms   1.9ms   2.3ms
 ```
 
-## Security
+## Configuration
 
-- Proxy credentials stored in `config.yaml` with `0600` permissions
-- Squid requires authentication for non-whitelisted IPs
-- Your public IP is whitelisted on Squid for PAC/browser access (no auth prompt)
-- No credentials in the repository
+Config file: `~/.config/agent-proxy/config.yaml` (auto-created with defaults)
+
+```yaml
+proxy:
+  host: 1.2.3.4          # Your ECS IP
+  port: 18443
+  user: proxyuser
+  password: your-password
+  ssh_key: ~/.ssh/key.pem # For setup/ip commands
+  ssh_user: root
+
+presets:                  # Enabled preset groups
+  - ai
+  - dev
+  - search
+  - cloud
+
+custom_domains: []        # Extra domains beyond presets
+
+no_proxy:                 # Domains/IPs that bypass proxy
+  - localhost
+  - 127.0.0.1
+  - .alibaba-inc.com
+  - .baidu.com
+  # ... (see default config for full list)
+```
 
 ## Platform Support
 
@@ -151,9 +196,53 @@ ECS:
 ## Requirements
 
 - Go 1.22+ (for building from source)
-- SSH access to your ECS (for `setup` and `ip refresh`)
-- No external runtime dependencies (PAC server is built-in)
+- SSH access to your ECS (for `setup` and `ip` commands)
+- No external runtime dependencies
+
+## Security
+
+- Proxy credentials stored in `config.yaml` with `0600` permissions
+- Squid requires authentication for non-whitelisted IPs
+- Your public IP is whitelisted on Squid for PAC/browser access (no auth prompt)
+- PAC HTTP server binds to `127.0.0.1` only
+- No credentials in the repository
+
+## Troubleshooting
+
+### macOS: "cannot be opened because the developer cannot be verified"
+
+The binary is not Apple-signed. Remove the quarantine attribute:
+
+```bash
+xattr -d com.apple.quarantine /usr/local/bin/agent-proxy
+```
+
+The `install.sh` script does this automatically.
+
+### `go install` fails with sum.golang.org 500
+
+New modules may not be indexed by the Go checksum database yet. Skip verification:
+
+```bash
+GONOSUMDB=github.com/chiga0/agent-proxy go install github.com/chiga0/agent-proxy/cmd/agent-proxy@latest
+```
+
+Or use the `install.sh` script which downloads directly from GitHub Releases.
+
+### Proxy env vars break `go build` / `go install`
+
+Go module domains are in the default `no_proxy` list. If you have an older config, regenerate:
+
+```bash
+agent-proxy on   # regenerates env.sh with updated no_proxy
+```
+
+Or temporarily unset: `unset https_proxy http_proxy && go build ...`
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Please read our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## License
 
-MIT
+[MIT](LICENSE)
