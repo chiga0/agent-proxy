@@ -74,6 +74,8 @@ func DefaultConfig() *Config {
 			".baidu.com", ".qq.com", ".tencent.com",
 			".bilibili.com", ".zhihu.com",
 			".npmmirror.com", ".mirrors.aliyun.com",
+			// Go module proxy (needed for go install/build)
+			"proxy.golang.org", "sum.golang.org", "index.golang.org",
 		},
 	}
 }
