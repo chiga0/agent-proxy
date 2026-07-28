@@ -2,7 +2,9 @@ package pac
 
 import (
 	"fmt"
+	"net"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -20,11 +22,10 @@ func Generate(cfg *config.Config) (string, error) {
 	fmt.Fprintf(&b, "// Effective whitelist: %d domains (presets: %v)\n", len(domains), cfg.Presets)
 	b.WriteString("function FindProxyForURL(url, host) {\n")
 
-	proxyHost := cfg.Proxy.EffectiveHost()
-	proxyPort := cfg.Proxy.LocalPort()
+	proxyAddr := net.JoinHostPort(cfg.Proxy.EffectiveHost(), strconv.Itoa(cfg.Proxy.LocalPort()))
 	for _, d := range domains {
-		fmt.Fprintf(&b, "    if (dnsDomainIs(host, \".%s\") || host == \"%s\") return \"PROXY %s:%d\";\n",
-			d, d, proxyHost, proxyPort)
+		fmt.Fprintf(&b, "    if (dnsDomainIs(host, \".%s\") || host == \"%s\") return \"PROXY %s\";\n",
+			d, d, proxyAddr)
 	}
 
 	b.WriteString("    return \"DIRECT\";\n")

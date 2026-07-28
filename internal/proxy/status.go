@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -104,11 +105,10 @@ func checkForwarding(cfg *config.Config) CheckResult {
 // DetectSNIBlock tests whether TLS connections are being reset by GFW SNI filtering.
 func DetectSNIBlock(cfg *config.Config) bool {
 	if cfg.Proxy.Tunnel {
-		return false // tunnel encrypts SNI
+		return false
 	}
 
-	proxyHost := cfg.Proxy.EffectiveHost()
-	addr := fmt.Sprintf("%s:%d", proxyHost, cfg.Proxy.Port)
+	addr := net.JoinHostPort(cfg.Proxy.EffectiveHost(), strconv.Itoa(cfg.Proxy.Port))
 
 	conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
 	if err != nil {
@@ -116,13 +116,18 @@ func DetectSNIBlock(cfg *config.Config) bool {
 	}
 	defer conn.Close()
 
+	// Set overall deadline for the entire detection
+	conn.SetDeadline(time.Now().Add(10 * time.Second))
+
 	connectReq := fmt.Sprintf("CONNECT google.com:443 HTTP/1.1\r\nHost: google.com:443\r\n")
 	if cfg.HasAuth() {
 		auth := base64.StdEncoding.EncodeToString([]byte(cfg.Proxy.User + ":" + cfg.Proxy.Password))
 		connectReq += "Proxy-Authorization: Basic " + auth + "\r\n"
 	}
 	connectReq += "\r\n"
-	conn.Write([]byte(connectReq))
+	if _, err := conn.Write([]byte(connectReq)); err != nil {
+		return false
+	}
 
 	buf := make([]byte, 1024)
 	n, err := conn.Read(buf)
@@ -134,7 +139,6 @@ func DetectSNIBlock(cfg *config.Config) bool {
 		ServerName:         "google.com",
 		InsecureSkipVerify: true,
 	})
-	tlsConn.SetDeadline(time.Now().Add(5 * time.Second))
 	err = tlsConn.Handshake()
 	if err != nil && strings.Contains(err.Error(), "reset") {
 		return true

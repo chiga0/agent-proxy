@@ -28,12 +28,15 @@ func On(cfg *config.Config) error {
 	// 1. Start SSH tunnel if enabled
 	if cfg.Proxy.Tunnel {
 		fmt.Print("  → SSH tunnel... ")
-		if err := tunnel.Start(cfg); err != nil {
+		started, err := tunnel.Start(cfg)
+		if err != nil {
 			fmt.Println("✗")
 			return fmt.Errorf("start SSH tunnel: %w", err)
 		}
 		fmt.Println("✓")
-		undo = append(undo, func() { tunnel.Stop(cfg) })
+		if started {
+			undo = append(undo, func() { tunnel.Stop(cfg) })
+		}
 	}
 
 	// 2. Generate PAC
@@ -43,12 +46,15 @@ func On(cfg *config.Config) error {
 
 	// 3. Start PAC HTTP server (background daemon with PID file)
 	fmt.Print("  → PAC server... ")
-	if err := startPACDaemon(); err != nil {
+	pacStarted, err := startPACDaemon()
+	if err != nil {
 		fmt.Println("✗")
 		return fail(fmt.Errorf("start PAC server: %w", err))
 	}
 	fmt.Println("✓")
-	undo = append(undo, stopPACDaemon)
+	if pacStarted {
+		undo = append(undo, stopPACDaemon)
+	}
 
 	// 4. Set system PAC proxy
 	service, err := platform.DetectNetworkService()
@@ -67,19 +73,17 @@ func On(cfg *config.Config) error {
 	}
 	undo = append(undo, func() { os.Remove(config.EnvPath()) })
 
-	// 6. Install auto-start
+	// 6. Register auto-start (write config files only, don't start services)
 	if err := platform.InstallAutoStart(cfg); err != nil {
-		fmt.Printf("  ⚠ Auto-start: %v\n", err)
-	} else {
-		undo = append(undo, func() { platform.UninstallAutoStart() })
+		fmt.Printf("  ⚠ Auto-start registration failed: %v\n", err)
 	}
 
 	fmt.Printf("\n✓ Proxy enabled\n")
 	fmt.Printf("  PAC (browser/desktop): %s\n", pacURL)
 	fmt.Printf("  CLI env:               %s\n", config.EnvPath())
-	fmt.Printf("  Proxy:                 %s:%d", cfg.Proxy.EffectiveHost(), cfg.Proxy.Port)
+	fmt.Printf("  Proxy:                 %s:%d", cfg.Proxy.EffectiveHost(), cfg.Proxy.LocalPort())
 	if cfg.Proxy.Tunnel {
-		fmt.Printf(" (via SSH tunnel → %s)", cfg.Proxy.Host)
+		fmt.Printf(" (via SSH tunnel → %s:%d)", cfg.Proxy.Host, cfg.Proxy.Port)
 	}
 	fmt.Println()
 	fmt.Printf("  Network service:       %s\n", service)
@@ -89,6 +93,8 @@ func On(cfg *config.Config) error {
 }
 
 func Off(cfg *config.Config) error {
+	var errs []string
+
 	// 1. Disable system PAC proxy
 	service, err := platform.DetectNetworkService()
 	if err == nil {
@@ -107,9 +113,18 @@ func Off(cfg *config.Config) error {
 	platform.UninstallAutoStart()
 
 	// 5. Remove CLI env file
-	os.Remove(config.EnvPath())
+	if err := os.Remove(config.EnvPath()); err != nil && !os.IsNotExist(err) {
+		errs = append(errs, fmt.Sprintf("remove env.sh: %v", err))
+	}
 
-	fmt.Println("✓ Proxy disabled")
+	if len(errs) > 0 {
+		fmt.Printf("✓ Proxy disabled (with warnings)\n")
+		for _, e := range errs {
+			fmt.Printf("  ⚠ %s\n", e)
+		}
+	} else {
+		fmt.Println("✓ Proxy disabled")
+	}
 	fmt.Println("  Current terminal: unset https_proxy http_proxy no_proxy NO_PROXY")
 	return nil
 }
@@ -118,14 +133,16 @@ func pacPIDFile() string {
 	return filepath.Join(config.DataDir(), "pac-server.pid")
 }
 
-func startPACDaemon() error {
+// startPACDaemon starts the PAC server if not already running.
+// Returns (true, nil) if started by this call, (false, nil) if already running.
+func startPACDaemon() (bool, error) {
 	if pac.ServerRunning() {
-		return nil
+		return false, nil
 	}
 
 	self, err := os.Executable()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	cmd := exec.Command(self, "serve-pac")
@@ -133,31 +150,34 @@ func startPACDaemon() error {
 	cmd.Stderr = nil
 	cmd.Stdin = nil
 	if err := cmd.Start(); err != nil {
-		return err
+		return false, err
 	}
 
-	// Write PID file
+	pid := cmd.Process.Pid
 	os.MkdirAll(config.DataDir(), 0700)
-	os.WriteFile(pacPIDFile(), []byte(strconv.Itoa(cmd.Process.Pid)), 0644)
+	os.WriteFile(pacPIDFile(), []byte(strconv.Itoa(pid)), 0644)
 
 	go cmd.Wait()
 
 	for i := 0; i < 20; i++ {
 		time.Sleep(50 * time.Millisecond)
 		if pac.ServerRunning() {
-			return nil
+			return true, nil
 		}
 	}
-	return fmt.Errorf("PAC server did not start within 1s")
+
+	// Cleanup on failure: kill the child and remove stale PID
+	if proc, err := os.FindProcess(pid); err == nil {
+		proc.Kill()
+	}
+	os.Remove(pacPIDFile())
+	return false, fmt.Errorf("PAC server did not start within 1s")
 }
 
 func stopPACDaemon() {
-	// Try PID file first
 	if data, err := os.ReadFile(pacPIDFile()); err == nil {
 		if pid, err := strconv.Atoi(strings.TrimSpace(string(data))); err == nil {
-			if proc, err := os.FindProcess(pid); err == nil {
-				proc.Kill()
-			}
+			killIfPACServer(pid)
 		}
 		os.Remove(pacPIDFile())
 		return
@@ -172,8 +192,23 @@ func stopPACDaemon() {
 		if line == "" {
 			continue
 		}
-		exec.Command("kill", line).Run()
+		if pid, err := strconv.Atoi(line); err == nil {
+			killIfPACServer(pid)
+		}
 	}
+}
+
+// killIfPACServer kills a PID only if it looks like our agent-proxy process.
+func killIfPACServer(pid int) {
+	out, err := exec.Command("ps", "-p", strconv.Itoa(pid), "-o", "args=").Output()
+	if err != nil {
+		return
+	}
+	args := string(out)
+	if !strings.Contains(args, "serve-pac") {
+		return // PID was reused by a different process
+	}
+	exec.Command("kill", strconv.Itoa(pid)).Run()
 }
 
 func writeEnvFile(cfg *config.Config) error {

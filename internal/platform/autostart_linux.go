@@ -70,7 +70,7 @@ WantedBy=default.target
 	path := filepath.Join(dir, "agent-proxy-tunnel.service")
 	os.WriteFile(path, []byte(unit), 0644)
 	exec.Command("systemctl", "--user", "enable", "agent-proxy-tunnel").Run()
-	exec.Command("systemctl", "--user", "start", "agent-proxy-tunnel").Run()
+	// Don't start here — On() manages the current session.
 }
 
 func installPACUnit(self string, dir string) {
@@ -90,7 +90,6 @@ WantedBy=default.target
 	path := filepath.Join(dir, "agent-proxy-pac.service")
 	os.WriteFile(path, []byte(unit), 0644)
 	exec.Command("systemctl", "--user", "enable", "agent-proxy-pac").Run()
-	exec.Command("systemctl", "--user", "start", "agent-proxy-pac").Run()
 }
 
 func UninstallAutoStart() {

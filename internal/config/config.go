@@ -2,10 +2,12 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -154,6 +156,11 @@ func Load() (*Config, error) {
 		cfg.Save()
 	}
 
+	// Validate config consistency (warn but don't block for backward compat)
+	if err := cfg.Validate(); err != nil && cfg.Proxy.Host != "" {
+		fmt.Fprintf(os.Stderr, "Warning: config validation: %v\n", err)
+	}
+
 	return cfg, nil
 }
 
@@ -277,7 +284,7 @@ func (c *Config) ProxyURL() string {
 		u := url.URL{
 			Scheme: "http",
 			User:   url.UserPassword(c.Proxy.User, c.Proxy.Password),
-			Host:   fmt.Sprintf("%s:%d", host, port),
+			Host:   net.JoinHostPort(host, strconv.Itoa(port)),
 		}
 		return u.String()
 	}
@@ -285,7 +292,7 @@ func (c *Config) ProxyURL() string {
 }
 
 func (c *Config) ProxyURLNoAuth() string {
-	return fmt.Sprintf("http://%s:%d", c.Proxy.EffectiveHost(), c.Proxy.LocalPort())
+	return "http://" + net.JoinHostPort(c.Proxy.EffectiveHost(), strconv.Itoa(c.Proxy.LocalPort()))
 }
 
 func (c *Config) NoProxyString() string {

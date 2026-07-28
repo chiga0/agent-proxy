@@ -263,7 +263,7 @@ func cmdInit() *cobra.Command {
 			if tunnelAns == "" || tunnelAns == "y" || tunnelAns == "yes" {
 				cfg.Proxy.Tunnel = true
 				fmt.Print("  → 建立 SSH 隧道... ")
-				if err := tunnel.Start(cfg); err != nil {
+				if _, err := tunnel.Start(cfg); err != nil {
 					fmt.Println("✗")
 					fmt.Printf("    Warning: %v\n", err)
 					fmt.Println("    You can retry later: agent-proxy on")
@@ -275,7 +275,10 @@ func cmdInit() *cobra.Command {
 				fmt.Println("  跳过 (直连模式，需确保服务器 IP 在白名单)")
 			}
 
-			// --- Step 5: Save config ---
+			// --- Step 5: Validate and save config ---
+			if err := cfg.Validate(); err != nil {
+				return fmt.Errorf("config validation: %w", err)
+			}
 			if err := cfg.Save(); err != nil {
 				return err
 			}

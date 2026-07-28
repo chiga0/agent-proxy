@@ -83,7 +83,18 @@ func configureAuth(cfg *config.Config) error {
 }
 
 func writeSquidConfig(cfg *config.Config) error {
-	ip, _ := getPublicIP()
+	ip, err := getPublicIP()
+	if err != nil {
+		// Tunnel mode: only 127.0.0.1 is needed, public IP is optional
+		if cfg.Proxy.Tunnel {
+			ip = ""
+		} else if !cfg.HasAuth() {
+			return fmt.Errorf("cannot get public IP for IP whitelist (required in direct mode without auth): %w", err)
+		} else {
+			// Direct mode with auth: IP whitelist is nice-to-have
+			ip = ""
+		}
+	}
 	conf := generateSquidConfig(cfg, ip)
 	cmd := fmt.Sprintf("cat > /etc/squid/squid.conf << 'SQUID_EOF'\n%s\nSQUID_EOF", conf)
 	return sshRun(cfg, cmd)

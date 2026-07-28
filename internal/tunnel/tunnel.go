@@ -17,9 +17,11 @@ func pidFile() string {
 	return filepath.Join(config.DataDir(), "ssh-tunnel.pid")
 }
 
-func Start(cfg *config.Config) error {
+// Start ensures the SSH tunnel is running.
+// Returns (true, nil) if it was started by this call, (false, nil) if already running.
+func Start(cfg *config.Config) (bool, error) {
 	if Running(cfg) {
-		return nil
+		return false, nil
 	}
 
 	args := []string{
@@ -43,32 +45,28 @@ func Start(cfg *config.Config) error {
 
 	cmd := exec.Command("ssh", args...)
 	if out, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("start SSH tunnel: %s: %w", strings.TrimSpace(string(out)), err)
+		return false, fmt.Errorf("start SSH tunnel: %s: %w", strings.TrimSpace(string(out)), err)
 	}
 
 	for i := 0; i < 20; i++ {
 		time.Sleep(100 * time.Millisecond)
 		if Running(cfg) {
-			// Save PID (ssh -f forks, find child via port)
 			savePID(cfg)
-			return nil
+			return true, nil
 		}
 	}
-	return fmt.Errorf("SSH tunnel did not start within 2s")
+	return false, fmt.Errorf("SSH tunnel did not start within 2s")
 }
 
 func Stop(cfg *config.Config) {
-	// Try PID file first
 	if data, err := os.ReadFile(pidFile()); err == nil {
 		if pid, err := strconv.Atoi(strings.TrimSpace(string(data))); err == nil {
-			if proc, err := os.FindProcess(pid); err == nil {
-				proc.Kill()
-			}
+			killIfSSH(pid)
 		}
 		os.Remove(pidFile())
 		return
 	}
-	// Fallback: pgrep
+	// Fallback: pgrep with specific pattern
 	user := cfg.Proxy.SSHUser
 	if user == "" {
 		user = "root"
@@ -84,34 +82,54 @@ func Stop(cfg *config.Config) {
 		if err != nil {
 			continue
 		}
-		if proc, err := os.FindProcess(pid); err == nil {
-			proc.Kill()
-		}
+		killIfSSH(pid)
 	}
 }
 
-// Running checks if the tunnel is alive via PID file + port check.
+// Running checks PID file + process liveness + port.
 func Running(cfg *config.Config) bool {
-	// Check PID file first
 	if data, err := os.ReadFile(pidFile()); err == nil {
 		if pid, err := strconv.Atoi(strings.TrimSpace(string(data))); err == nil {
-			if proc, err := os.FindProcess(pid); err == nil {
-				// Signal 0 checks if process exists
-				if proc.Signal(nil) != nil {
-					os.Remove(pidFile())
-					return false
-				}
+			if !isProcessAlive(pid) {
+				os.Remove(pidFile())
+				return false
 			}
 		}
 	}
-	// Verify port is actually listening
 	conn, err := net.DialTimeout("tcp",
-		fmt.Sprintf("127.0.0.1:%d", cfg.Proxy.LocalPort()), 500*time.Millisecond)
+		net.JoinHostPort("127.0.0.1", strconv.Itoa(cfg.Proxy.LocalPort())), 500*time.Millisecond)
 	if err != nil {
 		return false
 	}
 	conn.Close()
 	return true
+}
+
+// killIfSSH kills a PID only if it looks like an ssh process.
+func killIfSSH(pid int) {
+	if !isProcessAlive(pid) {
+		return
+	}
+	// Verify the process is actually ssh
+	out, err := exec.Command("ps", "-p", strconv.Itoa(pid), "-o", "comm=").Output()
+	if err != nil {
+		return
+	}
+	comm := strings.TrimSpace(string(out))
+	if comm != "ssh" && !strings.HasSuffix(comm, "/ssh") {
+		return // PID was reused by a different process
+	}
+	if proc, err := os.FindProcess(pid); err == nil {
+		proc.Kill()
+	}
+}
+
+func isProcessAlive(pid int) bool {
+	proc, err := os.FindProcess(pid)
+	if err != nil {
+		return false
+	}
+	return proc.Signal(nil) == nil
 }
 
 func savePID(cfg *config.Config) {

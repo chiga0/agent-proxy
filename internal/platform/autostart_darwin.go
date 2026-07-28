@@ -97,7 +97,8 @@ func installTunnelAgent(cfg *config.Config, dir string) {
 `
 	path := filepath.Join(dir, tunnelLabel+".plist")
 	os.WriteFile(path, []byte(plist), 0644)
-	exec.Command("launchctl", "load", path).Run()
+	// Don't launchctl load here — On() manages the current session.
+	// The plist in ~/Library/LaunchAgents/ auto-loads on next login.
 }
 
 func installPACAgent(self string, dir string) {
@@ -123,7 +124,6 @@ func installPACAgent(self string, dir string) {
 `
 	path := filepath.Join(dir, pacLabel+".plist")
 	os.WriteFile(path, []byte(plist), 0644)
-	exec.Command("launchctl", "load", path).Run()
 }
 
 func UninstallAutoStart() {

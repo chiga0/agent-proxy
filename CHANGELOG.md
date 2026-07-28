@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3] - 2026-07-28
+
+### Fixed
+- `Config.Validate()` now called in `Load()` (warns) and `init` (blocks) — catches bad port, half-set credentials, missing SSH key
+- Eliminated double-start: `InstallAutoStart` only writes boot config files, no longer calls `launchctl load` / `systemctl start` — `On()` solely manages current-session processes
+- `tunnel.Start` / `startPACDaemon` return `(started bool, err error)` — rollback only stops resources this call actually started
+- PID kill verifies process identity (`ps -o comm=` for ssh, `ps -o args=` for serve-pac) before killing — prevents killing unrelated processes on PID reuse
+- PAC start failure now kills the child process and removes stale PID file
+- `Off()` aggregates cleanup errors and reports warnings instead of silently ignoring
+- `writeSquidConfig` fails deployment in direct+no-auth mode when public IP is unavailable (would deploy an unreachable Squid)
+- SNI detection sets connection deadline before CONNECT read (was blocking indefinitely)
+- `conn.Write` error checked in SNI detection
+- All address construction uses `net.JoinHostPort` — fixes `go vet` IPv6 warning
+- `init` wizard calls `Validate()` before saving config
+
 ## [0.4.2] - 2026-07-28
 
 ### Added
