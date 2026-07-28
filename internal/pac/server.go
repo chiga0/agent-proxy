@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -61,6 +62,20 @@ func ServerRunning() bool {
 	}
 	resp.Body.Close()
 	return resp.StatusCode == 200 && resp.Header.Get("X-Agent-Proxy") == nonce
+}
+
+// PortOccupied checks if something is listening on the PAC port.
+func PortOccupied() bool {
+	client := &http.Client{
+		Timeout:   300 * time.Millisecond,
+		Transport: &http.Transport{Proxy: nil},
+	}
+	resp, err := client.Get(fmt.Sprintf("http://127.0.0.1:%d/proxy.pac", config.PACPort))
+	if err != nil {
+		return false
+	}
+	resp.Body.Close()
+	return true
 }
 
 func pacHandler(nonce string) http.HandlerFunc {
@@ -131,18 +146,26 @@ func StopServer() {
 
 // ServeForeground runs the PAC HTTP server in the foreground (blocking).
 // Used by the hidden "serve-pac" command for daemon mode.
+// Nonce is written only after successful listener bind.
 func ServeForeground() error {
+	addr := fmt.Sprintf("127.0.0.1:%d", config.PACPort)
+
+	// Bind first to guarantee single instance
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		return fmt.Errorf("bind PAC port: %w", err)
+	}
+
+	// Generate and persist nonce only after successful bind
 	nonce, err := generateNonce()
 	if err != nil {
+		ln.Close()
 		return fmt.Errorf("generate PAC nonce: %w", err)
 	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/proxy.pac", pacHandler(nonce))
 
-	s := &http.Server{
-		Addr:    fmt.Sprintf("127.0.0.1:%d", config.PACPort),
-		Handler: mux,
-	}
-	return s.ListenAndServe()
+	s := &http.Server{Handler: mux}
+	return s.Serve(ln)
 }

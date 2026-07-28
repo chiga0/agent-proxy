@@ -120,9 +120,12 @@ func savePACState(service string) error {
 // restorePACState restores the original PAC for a service from its snapshot.
 // Order: PAC URL/enabled state first, platform extra state LAST.
 func restorePACState(service string, snap pacSnapshot) error {
-	// Only modify if the current PAC still belongs to agent-proxy
+	// Verify ownership: fail if we can't confirm the current PAC is ours
 	pacURL, enabled, err := platform.GetAutoProxy(service)
-	if err == nil && enabled && !isOurPAC(pacURL) {
+	if err != nil {
+		return fmt.Errorf("verify PAC ownership: %w", err)
+	}
+	if enabled && !isOurPAC(pacURL) {
 		return nil // PAC was changed by something else — don't touch it
 	}
 
@@ -186,31 +189,38 @@ func On(cfg *config.Config) error {
 		undo = append(undo, stopPACDaemon)
 	}
 
-	// 4. Save original PAC state — must succeed before modifying system proxy
+	// 4. System PAC: check capability first, then save/set
 	service, err := platform.DetectNetworkService()
 	if err != nil {
 		return fail(fmt.Errorf("detect network: %w", err))
 	}
-	if err := savePACState(service); err != nil {
-		return fail(fmt.Errorf("save PAC state (required for safe restore): %w", err))
-	}
-
-	// Register rollback BEFORE modifying system proxy
-	undo = append(undo, func() {
-		if m, err := loadPACStateFile(); err == nil {
-			if snap, ok := m[service]; ok {
-				restorePACState(service, snap)
-			}
-		}
-	})
 
 	pacURL := agentProxyPACURL()
-	if err := platform.SetAutoProxy(service, pacURL); err != nil {
-		// Linux without gsettings: skip system PAC, continue with CLI-only
-		if errors.Is(err, platform.ErrPACNotSupported) {
-			fmt.Printf("  ⚠ System PAC not supported: %v\n", err)
-			fmt.Println("    Continuing with CLI env vars only.")
-		} else {
+	systemPACEnabled := true
+
+	// Probe capability: if GetAutoProxy returns ErrPACNotSupported,
+	// skip system PAC entirely and continue with CLI-only mode.
+	_, _, probeErr := platform.GetAutoProxy(service)
+	if probeErr != nil && errors.Is(probeErr, platform.ErrPACNotSupported) {
+		systemPACEnabled = false
+		fmt.Printf("  ⚠ System PAC not supported — CLI env vars only\n")
+	}
+
+	if systemPACEnabled {
+		if err := savePACState(service); err != nil {
+			return fail(fmt.Errorf("save PAC state (required for safe restore): %w", err))
+		}
+
+		// Register rollback BEFORE modifying system proxy
+		undo = append(undo, func() {
+			if m, err := loadPACStateFile(); err == nil {
+				if snap, ok := m[service]; ok {
+					restorePACState(service, snap)
+				}
+			}
+		})
+
+		if err := platform.SetAutoProxy(service, pacURL); err != nil {
 			return fail(fmt.Errorf("set PAC proxy: %w", err))
 		}
 	}
@@ -316,6 +326,14 @@ func pacPIDFile() string {
 func startPACDaemon() (bool, error) {
 	if pac.ServerRunning() {
 		return false, nil
+	}
+
+	// Port occupied but nonce mismatch: likely an old-version daemon.
+	// Attempt safe takeover: stop old process, then start new one.
+	if pac.PortOccupied() {
+		stopPACDaemon() // stops by PID file or pattern match
+		// Brief wait for port release
+		time.Sleep(200 * time.Millisecond)
 	}
 
 	self, err := os.Executable()

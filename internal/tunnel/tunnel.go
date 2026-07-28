@@ -118,7 +118,8 @@ func killIfSSH(pid int) {
 		return
 	}
 	comm := platform.GetProcessName(pid)
-	if comm != "ssh" && !strings.HasSuffix(comm, "/ssh") && !strings.HasSuffix(comm, "\\ssh.exe") {
+	if comm != "ssh" && !strings.HasSuffix(comm, "/ssh") &&
+		!strings.HasSuffix(comm, "\\ssh.exe") && !strings.EqualFold(comm, "ssh.exe") {
 		return
 	}
 	if proc, err := os.FindProcess(pid); err == nil {

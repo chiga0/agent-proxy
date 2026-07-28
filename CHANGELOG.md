@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security (P2 hardening)
 - **SSH host key verification**: `init` now fetches the ECS host key via `ssh-keyscan`, displays the fingerprint for user confirmation, and stores it in a project-specific `known_hosts` (`~/.config/agent-proxy/known_hosts`). All SSH connections use `StrictHostKeyChecking=yes` with this file (no more TOFU `accept-new`).
-- **PAC server nonce**: static `X-Agent-Proxy: pac` header replaced with a per-start random 128-bit nonce persisted to disk; `ServerRunning()` verifies the nonce, preventing impersonation by other local HTTP services.
+- **PAC server nonce**: static `X-Agent-Proxy: pac` header replaced with a per-start random 128-bit nonce persisted to disk; `ServerRunning()` verifies the nonce, distinguishing agent-proxy from unrelated HTTP services on the same port (not a same-user security boundary).
 - **GitHub Actions pinned to commit SHA**: `actions/checkout`, `actions/setup-go`, and `goreleaser/goreleaser-action` pinned to immutable SHAs with version comments.
 - **Squid temp file validation**: strict regex `^/etc/squid/squid\.conf\.[A-Za-z0-9]+$` replaces prefix+char check.
 - **System tuning**: failures now display a visible warning instead of faking success.

@@ -30,7 +30,7 @@ jobs:
       - uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6
         with:
           distribution: goreleaser
-          version: latest
+          version: '~> v2'
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -67,8 +67,13 @@ jobs:
 
       - name: Install aliyun CLI
         run: |
-          curl -fsSL https://aliyuncli.alicdn.com/aliyun-cli-linux-latest-amd64.tgz \
-            | tar xz -C /usr/local/bin
+          curl -fsSL -o /tmp/aliyun-cli.tgz https://aliyuncli.alicdn.com/aliyun-cli-linux-latest-amd64.tgz
+          # Verify checksum if available
+          curl -fsSL -o /tmp/aliyun-cli.tgz.sha256 https://aliyuncli.alicdn.com/aliyun-cli-linux-latest-amd64.tgz.sha256 2>/dev/null || true
+          if [ -f /tmp/aliyun-cli.tgz.sha256 ]; then
+            cd /tmp && sha256sum -c aliyun-cli.tgz.sha256
+          fi
+          tar xzf /tmp/aliyun-cli.tgz -C /usr/local/bin
 
       - name: Assume RAM Role (STS)
         env:

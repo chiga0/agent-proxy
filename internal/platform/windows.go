@@ -59,13 +59,14 @@ func GetAutoProxy(service string) (url string, enabled bool, err error) {
 	return url, enabled, nil
 }
 
-// CaptureExtraState saves the AutoDetect registry value.
+// CaptureExtraState saves the AutoDetect registry value and its presence.
 func CaptureExtraState(service string) (map[string]string, error) {
 	out, err := exec.Command("reg", "query", ieRegPath, "/v", "AutoDetect").CombinedOutput()
 	if err != nil {
 		output := strings.TrimSpace(string(out))
 		if strings.Contains(output, "not found") || strings.Contains(output, "找不到") || strings.Contains(output, "No values") {
-			return nil, nil // value genuinely absent
+			// Value genuinely absent — record this so we can restore absence
+			return map[string]string{"auto_detect_present": "false"}, nil
 		}
 		return nil, fmt.Errorf("query AutoDetect: %s: %w", output, err)
 	}
@@ -73,16 +74,23 @@ func CaptureExtraState(service string) (map[string]string, error) {
 		if strings.Contains(line, "AutoDetect") {
 			parts := strings.SplitN(line, "REG_DWORD", 2)
 			if len(parts) == 2 {
-				return map[string]string{"auto_detect": strings.TrimSpace(parts[1])}, nil
+				return map[string]string{"auto_detect": strings.TrimSpace(parts[1]), "auto_detect_present": "true"}, nil
 			}
 		}
 	}
-	return nil, nil
+	return map[string]string{"auto_detect_present": "false"}, nil
 }
 
-// RestoreExtraState restores the AutoDetect registry value.
+// RestoreExtraState restores the AutoDetect registry value or removes it
+// if it was originally absent.
 func RestoreExtraState(service string, data map[string]string) error {
 	if data == nil {
+		return nil
+	}
+	present := data["auto_detect_present"]
+	if present == "false" {
+		// Originally absent — delete the value we created
+		exec.Command("reg", "delete", ieRegPath, "/v", "AutoDetect", "/f").Run()
 		return nil
 	}
 	if v, ok := data["auto_detect"]; ok && v != "" {
