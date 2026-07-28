@@ -362,7 +362,7 @@ umask 077
 ```text
 .keys/
 ├── proxy.env
-├── singapore-ak.pem
+├── id_ed25519
 └── known_hosts
 ```
 
@@ -371,7 +371,7 @@ umask 077
 ```text
 .keys                       700
 .keys/proxy.env             600
-.keys/singapore-ak.pem      600
+.keys/id_ed25519      600
 .keys/known_hosts           600
 ```
 
@@ -397,7 +397,7 @@ HEALTH_TIMEOUT=12
 秘密配置：
 
 ```ini
-SSH_KEY=.keys/singapore-ak.pem
+SSH_KEY=.keys/id_ed25519
 SQUID_USER=<USERNAME>
 SQUID_PASS=<PASSWORD>
 ```

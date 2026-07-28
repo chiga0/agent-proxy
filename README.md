@@ -149,14 +149,14 @@ $ agent-proxy trace chatgpt.com
 === Network Trace ===
 
 --- DNS Resolution ---
-  47.236.51.96              → 47.236.51.96     (5ms)
+  203.0.113.1               → 203.0.113.1      (5ms)
   chatgpt.com               → 104.18.32.47     (12ms)
 
---- Local → ECS (47.236.51.96) ---
+--- Local → ECS (203.0.113.1) ---
    1  192.168.1.1              2.1ms   1.8ms   2.3ms
    2  10.0.0.1                 5.2ms   4.9ms   5.5ms
    ...
-  12  47.236.51.96            82.1ms  81.5ms  83.0ms
+  12  203.0.113.1             82.1ms  81.5ms  83.0ms
 
 --- ECS → chatgpt.com ---
    1  172.16.0.1               0.5ms   0.4ms   0.6ms
@@ -175,7 +175,7 @@ proxy:
   ssh_key: ~/.ssh/key.pem # SSH key for tunnel + setup
   ssh_user: root
   tunnel: true            # SSH tunnel (recommended for China users)
-  # user: proxyuser       # Optional: only needed for direct mode without tunnel
+  # user: myuser          # Optional: only needed for direct mode without tunnel
   # password: your-pass
 
 presets:                  # Enabled preset groups

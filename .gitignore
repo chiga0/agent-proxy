@@ -24,3 +24,15 @@ Thumbs.db
 *.test
 *.out
 coverage.txt
+
+# Sensitive — never commit
+.keys/
+*.pem
+*.key
+*.crt
+*.p12
+config.yaml
+config.yml
+env.sh
+proxy.pac
+*.pid
