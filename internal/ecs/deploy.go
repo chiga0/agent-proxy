@@ -20,7 +20,8 @@ func Deploy(cfg *config.Config) error {
 		{"Connectivity", func() error { return sshRun(cfg, "echo ok") }},
 		{"Install Squid", func() error { return installSquid(cfg) }},
 		{"System tuning", func() error {
-			return sshRun(cfg, `grep -q tcp_fastopen /etc/sysctl.conf || echo "net.ipv4.tcp_fastopen = 3" >> /etc/sysctl.conf; sysctl -w net.ipv4.tcp_fastopen=3 >/dev/null 2>&1; echo ok`)
+			// Best-effort: warn but don't fail if sysctl is unavailable
+			return sshRun(cfg, `grep -q tcp_fastopen /etc/sysctl.conf 2>/dev/null || echo "net.ipv4.tcp_fastopen = 3" >> /etc/sysctl.conf 2>/dev/null; sysctl -w net.ipv4.tcp_fastopen=3 >/dev/null 2>&1 || true; echo ok`)
 		}},
 		{"Write Squid config", func() error { return writeSquidConfig(cfg) }},
 		// Note: writeSquidConfig → deploySquidConfig already restarts Squid.
@@ -100,6 +101,10 @@ func deploySquidConfig(cfg *config.Config, conf string) error {
 		return fmt.Errorf("create temp file: %w", err)
 	}
 	tmpPath := strings.TrimSpace(tmpOut)
+	// Validate the path to guard against SSH banner/warning pollution
+	if !strings.HasPrefix(tmpPath, "/etc/squid/squid.conf.") || strings.ContainsAny(tmpPath, " \t\n;'\"\\") {
+		return fmt.Errorf("unexpected mktemp output: %q", tmpPath)
+	}
 
 	writeCmd := fmt.Sprintf("cat > %s << 'SQUID_EOF'\n%s\nSQUID_EOF\nchmod 644 %s", tmpPath, conf, tmpPath)
 	if err := sshRun(cfg, writeCmd); err != nil {
@@ -107,9 +112,12 @@ func deploySquidConfig(cfg *config.Config, conf string) error {
 		return fmt.Errorf("write temp config: %w", err)
 	}
 
-	// 2. Syntax check (always attempt; squid -k parse works even if not running on some versions)
-	parseCmd := fmt.Sprintf("squid -k parse -f %s 2>&1 || true", tmpPath)
-	sshRun(cfg, parseCmd)
+	// 2. Syntax check — must pass before we touch the real config
+	parseCmd := fmt.Sprintf("squid -k parse -f %s 2>&1", tmpPath)
+	if err := sshRun(cfg, parseCmd); err != nil {
+		sshRun(cfg, "rm -f "+tmpPath)
+		return fmt.Errorf("squid config syntax check failed: %w", err)
+	}
 
 	// 3. Backup existing config (check success before replacing)
 	backupCmd := "if [ -f /etc/squid/squid.conf ]; then cp /etc/squid/squid.conf /etc/squid/squid.conf.bak || exit 1; fi"
@@ -140,21 +148,30 @@ func deploySquidConfig(cfg *config.Config, conf string) error {
 	return nil
 }
 
-// CheckSquidListenMode checks whether ECS Squid is listening on loopback only.
-// Returns (loopbackOnly bool, detail string, err error).
+// CheckSquidListenMode checks whether ALL ECS Squid http_port directives
+// are loopback-only. Returns (loopbackOnly bool, detail string, err error).
 func CheckSquidListenMode(cfg *config.Config) (bool, string, error) {
 	out, err := sshRunOutput(cfg, "grep -E '^http_port' /etc/squid/squid.conf 2>/dev/null || echo 'NO_CONFIG'")
 	if err != nil {
 		return false, "", fmt.Errorf("read squid config: %w", err)
 	}
-	line := strings.TrimSpace(out)
-	if line == "NO_CONFIG" || line == "" {
+	lines := strings.Split(strings.TrimSpace(out), "\n")
+	if len(lines) == 1 && (lines[0] == "NO_CONFIG" || lines[0] == "") {
 		return false, "no Squid config found on ECS", nil
 	}
-	if strings.Contains(line, "127.0.0.1:") {
-		return true, line, nil
+	var details []string
+	allLoopback := true
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		details = append(details, line)
+		if !strings.Contains(line, "127.0.0.1:") {
+			allLoopback = false
+		}
 	}
-	return false, line, nil
+	return allLoopback, strings.Join(details, "; "), nil
 }
 
 func generateSquidConfig(cfg *config.Config, trustedIP string) string {

@@ -9,21 +9,20 @@ import (
 )
 
 // FindPIDsByPattern returns PIDs of processes whose command line matches pattern.
-// Uses wmic on Windows (available on Windows 7+).
+// Uses PowerShell Get-CimInstance (WMIC is deprecated since Windows Server 2025).
 func FindPIDsByPattern(pattern string) []int {
-	out, err := exec.Command("wmic", "process", "where",
-		"CommandLine like '%"+pattern+"%'", "get", "ProcessId", "/value").Output()
+	// Escape single quotes for PowerShell
+	escaped := strings.ReplaceAll(pattern, "'", "''")
+	script := "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*" + escaped + "*' } | ForEach-Object { $_.ProcessId }"
+	out, err := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", script).Output()
 	if err != nil {
 		return nil
 	}
 	var pids []int
 	for _, line := range strings.Split(string(out), "\n") {
 		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "ProcessId=") {
-			pidStr := strings.TrimPrefix(line, "ProcessId=")
-			if pid, err := strconv.Atoi(strings.TrimSpace(pidStr)); err == nil && pid > 0 {
-				pids = append(pids, pid)
-			}
+		if pid, err := strconv.Atoi(line); err == nil && pid > 0 {
+			pids = append(pids, pid)
 		}
 	}
 	return pids
@@ -31,17 +30,12 @@ func FindPIDsByPattern(pattern string) []int {
 
 // GetProcessArgs returns the full command line of a process.
 func GetProcessArgs(pid int) string {
-	out, err := exec.Command("wmic", "process", "where",
-		"ProcessId="+strconv.Itoa(pid), "get", "CommandLine", "/value").Output()
+	script := "(Get-CimInstance Win32_Process -Filter 'ProcessId=" + strconv.Itoa(pid) + "').CommandLine"
+	out, err := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", script).Output()
 	if err != nil {
 		return ""
 	}
-	for _, line := range strings.Split(string(out), "\n") {
-		if strings.HasPrefix(line, "CommandLine=") {
-			return strings.TrimSpace(strings.TrimPrefix(line, "CommandLine="))
-		}
-	}
-	return ""
+	return strings.TrimSpace(string(out))
 }
 
 // GetProcessName returns the executable name of a process.

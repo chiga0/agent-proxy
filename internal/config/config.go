@@ -199,8 +199,11 @@ func Load() (*Config, error) {
 			_, hasUser := proxy["user"]
 			_, hasPass := proxy["password"]
 			if hasUser || hasPass {
-				fmt.Fprintf(os.Stderr, "Notice: removing legacy Basic auth credentials from config (no longer supported)\n")
-				cfg.Save() // re-save strips the removed fields
+				if err := cfg.Save(); err != nil {
+					fmt.Fprintf(os.Stderr, "Warning: failed to remove legacy Basic auth credentials: %v\n", err)
+				} else {
+					fmt.Fprintf(os.Stderr, "Notice: removed legacy Basic auth credentials from config (no longer supported)\n")
+				}
 			}
 		}
 	}

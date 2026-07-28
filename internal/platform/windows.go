@@ -48,3 +48,36 @@ func GetAutoProxy(service string) (url string, enabled bool, err error) {
 	}
 	return url, enabled, nil
 }
+
+const ieRegPath = `HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings`
+
+// CaptureExtraState saves the AutoDetect registry value.
+func CaptureExtraState(service string) map[string]string {
+	out, err := exec.Command("reg", "query", ieRegPath, "/v", "AutoDetect").Output()
+	if err != nil {
+		return nil
+	}
+	for _, line := range strings.Split(string(out), "\n") {
+		if strings.Contains(line, "AutoDetect") {
+			parts := strings.SplitN(line, "REG_DWORD", 2)
+			if len(parts) == 2 {
+				return map[string]string{"auto_detect": strings.TrimSpace(parts[1])}
+			}
+		}
+	}
+	return nil
+}
+
+// RestoreExtraState restores the AutoDetect registry value.
+func RestoreExtraState(service string, data map[string]string) error {
+	if data == nil {
+		return nil
+	}
+	if v, ok := data["auto_detect"]; ok && v != "" {
+		out, err := exec.Command("reg", "add", ieRegPath, "/v", "AutoDetect", "/t", "REG_DWORD", "/d", v, "/f").CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("restore AutoDetect: %s: %w", strings.TrimSpace(string(out)), err)
+		}
+	}
+	return nil
+}

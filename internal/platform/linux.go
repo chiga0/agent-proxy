@@ -61,3 +61,26 @@ func runGsettings(args ...string) error {
 	}
 	return nil
 }
+
+// CaptureExtraState saves the GNOME proxy mode so it can be restored later.
+func CaptureExtraState(service string) map[string]string {
+	if !gsettingsAvailable() {
+		return nil
+	}
+	out, err := exec.Command("gsettings", "get", "org.gnome.system.proxy", "mode").Output()
+	if err != nil {
+		return nil
+	}
+	return map[string]string{"mode": strings.Trim(strings.TrimSpace(string(out)), "'")}
+}
+
+// RestoreExtraState restores the GNOME proxy mode.
+func RestoreExtraState(service string, data map[string]string) error {
+	if data == nil {
+		return nil
+	}
+	if mode, ok := data["mode"]; ok && mode != "" && gsettingsAvailable() {
+		return runGsettings("set", "org.gnome.system.proxy", "mode", mode)
+	}
+	return nil
+}
