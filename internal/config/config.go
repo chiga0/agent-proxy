@@ -34,22 +34,48 @@ type Config struct {
 }
 
 type ProxyConfig struct {
-	Host            string `yaml:"host"`
-	Port            int    `yaml:"port"`
-	User            string `yaml:"user,omitempty"`
-	Password        string `yaml:"password,omitempty"`
-	SSHKey          string `yaml:"ssh_key,omitempty"`
-	SSHUser         string `yaml:"ssh_user,omitempty"`
-	Tunnel          bool   `yaml:"tunnel,omitempty"`
-	TunnelLocalPort int    `yaml:"tunnel_local_port,omitempty"`
+	Host            string          `yaml:"host"`
+	Port            int             `yaml:"port"`
+	User            string          `yaml:"user,omitempty"`
+	Password        string          `yaml:"password,omitempty"`
+	SSHKey          string          `yaml:"ssh_key,omitempty"`
+	SSHUser         string          `yaml:"ssh_user,omitempty"`
+	Tunnel          bool            `yaml:"tunnel,omitempty"`
+	TunnelType      string          `yaml:"tunnel_type,omitempty"` // auto|ssh|wireguard (default: auto)
+	TunnelLocalPort int             `yaml:"tunnel_local_port,omitempty"`
+	WireGuard       WireGuardConfig `yaml:"wireguard,omitempty"`
 }
 
-// EffectiveHost returns the proxy host for client connections.
+type WireGuardConfig struct {
+	ConfigPath    string `yaml:"config_path,omitempty"`     // path to wg config file (no Address line)
+	ServerIP      string `yaml:"server_ip,omitempty"`       // ECS WireGuard IP (e.g. 10.8.0.1)
+	ClientIP      string `yaml:"client_ip,omitempty"`       // local WireGuard IP (e.g. 10.8.0.2)
+	WireGuardGo   string `yaml:"wireguard_go_path,omitempty"` // path to wireguard-go binary
+	Udp2Raw       bool   `yaml:"udp2raw,omitempty"`         // use udp2raw to bypass UDP blocks
+	Udp2RawPort   int    `yaml:"udp2raw_port,omitempty"`    // udp2raw local listen port (default: 4097)
+	Udp2RawRemote string `yaml:"udp2raw_remote,omitempty"`  // udp2raw remote endpoint (e.g. 47.236.51.96:4096)
+	Udp2RawKey    string `yaml:"udp2raw_key,omitempty"`     // shared secret
+}
+
+// ActiveTunnel tracks which tunnel is actually running (set at runtime, not persisted).
+var ActiveTunnel string // "ssh", "wireguard", or ""
+
 func (p *ProxyConfig) EffectiveHost() string {
 	if p.Tunnel {
+		if ActiveTunnel == "wireguard" && p.WireGuard.ServerIP != "" {
+			return p.WireGuard.ServerIP
+		}
 		return "127.0.0.1"
 	}
 	return p.Host
+}
+
+// DesiredTunnelType returns the configured tunnel type, defaulting to "auto".
+func (p *ProxyConfig) DesiredTunnelType() string {
+	if p.TunnelType == "" {
+		return "auto"
+	}
+	return p.TunnelType
 }
 
 // LocalPort returns the port clients connect to.
