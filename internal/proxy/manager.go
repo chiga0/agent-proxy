@@ -25,43 +25,17 @@ func On(cfg *config.Config) error {
 		return err
 	}
 
-	// 1. Start tunnel if enabled (auto-detect: try WireGuard → fallback SSH)
+	// 1. Start SSH tunnel if enabled
 	if cfg.Proxy.Tunnel {
-		tunnelType := cfg.Proxy.DesiredTunnelType()
-		tunnelOK := false
-
-		if tunnelType == "wireguard" || tunnelType == "auto" {
-			if cfg.Proxy.WireGuard.ConfigPath != "" {
-				fmt.Print("  → WireGuard tunnel... ")
-				started, err := tunnel.StartWireGuard(cfg)
-				if err == nil {
-					fmt.Println("✓")
-					if started {
-						undo = append(undo, func() { tunnel.StopWireGuard(cfg) })
-					}
-					tunnelOK = true
-				} else {
-					fmt.Printf("✗ (%v)\n", err)
-					if tunnelType == "wireguard" {
-						return fmt.Errorf("WireGuard tunnel failed: %w", err)
-					}
-					fmt.Println("  → Falling back to SSH tunnel...")
-				}
-			}
+		fmt.Print("  → SSH tunnel... ")
+		started, err := tunnel.Start(cfg)
+		if err != nil {
+			fmt.Println("✗")
+			return fmt.Errorf("start SSH tunnel: %w", err)
 		}
-
-		if !tunnelOK && (tunnelType == "ssh" || tunnelType == "auto") {
-			fmt.Print("  → SSH tunnel... ")
-			started, err := tunnel.Start(cfg)
-			if err != nil {
-				fmt.Println("✗")
-				return fail(fmt.Errorf("start SSH tunnel: %w", err))
-			}
-			fmt.Println("✓")
-			config.ActiveTunnel = "ssh"
-			if started {
-				undo = append(undo, func() { tunnel.Stop(cfg) })
-			}
+		fmt.Println("✓")
+		if started {
+			undo = append(undo, func() { tunnel.Stop(cfg) })
 		}
 	}
 
@@ -109,11 +83,7 @@ func On(cfg *config.Config) error {
 	fmt.Printf("  CLI env:               %s\n", config.EnvPath())
 	fmt.Printf("  Proxy:                 %s:%d", cfg.Proxy.EffectiveHost(), cfg.Proxy.LocalPort())
 	if cfg.Proxy.Tunnel {
-		tunnelLabel := config.ActiveTunnel
-		if tunnelLabel == "" {
-			tunnelLabel = "ssh"
-		}
-		fmt.Printf(" (via %s tunnel → %s:%d)", tunnelLabel, cfg.Proxy.Host, cfg.Proxy.Port)
+		fmt.Printf(" (via SSH tunnel → %s:%d)", cfg.Proxy.Host, cfg.Proxy.Port)
 	}
 	fmt.Println()
 	fmt.Printf("  Network service:       %s\n", service)
@@ -134,11 +104,9 @@ func Off(cfg *config.Config) error {
 	// 2. Stop PAC HTTP server daemon
 	stopPACDaemon()
 
-	// 3. Stop tunnels
+	// 3. Stop SSH tunnel
 	if cfg.Proxy.Tunnel {
-		tunnel.StopWireGuard(cfg)
 		tunnel.Stop(cfg)
-		config.ActiveTunnel = ""
 	}
 
 	// 4. Remove auto-start
