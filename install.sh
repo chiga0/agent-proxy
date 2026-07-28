@@ -145,7 +145,7 @@ main() {
   info "Downloading ${archive_url}..."
   download "$archive_url" "${tmp_dir}/archive.${ext}"
 
-  # Verify checksum
+  # Verify checksum (fail-closed: abort if verification is not possible)
   local checksums_url
   if [[ "$MIRROR" == "oss" ]]; then
     checksums_url="${OSS_BASE}/releases/${tag}/checksums.txt"
@@ -153,29 +153,24 @@ main() {
     checksums_url="https://github.com/${REPO}/releases/download/${tag}/checksums.txt"
   fi
   info "Verifying checksum..."
-  if download "$checksums_url" "${tmp_dir}/checksums.txt" 2>/dev/null; then
-    local expected_sha
-    expected_sha=$(grep "$filename" "${tmp_dir}/checksums.txt" | awk '{print $1}')
-    if [[ -n "$expected_sha" ]]; then
-      local actual_sha
-      if command -v sha256sum &>/dev/null; then
-        actual_sha=$(sha256sum "${tmp_dir}/archive.${ext}" | awk '{print $1}')
-      elif command -v shasum &>/dev/null; then
-        actual_sha=$(shasum -a 256 "${tmp_dir}/archive.${ext}" | awk '{print $1}')
-      else
-        warn "No sha256sum or shasum found — skipping checksum verification"
-        actual_sha="$expected_sha"
-      fi
-      if [[ "$actual_sha" != "$expected_sha" ]]; then
-        error "Checksum mismatch! Expected: $expected_sha Got: $actual_sha"
-      fi
-      info "Checksum verified ✓"
-    else
-      warn "No checksum entry for $filename — skipping verification"
-    fi
+  download "$checksums_url" "${tmp_dir}/checksums.txt" || error "Cannot download checksums.txt — aborting (use --mirror to try alternate source)"
+
+  local expected_sha
+  expected_sha=$(grep -F "$filename" "${tmp_dir}/checksums.txt" | awk '{print $1}')
+  [[ -n "$expected_sha" ]] || error "No checksum entry for $filename in checksums.txt — aborting"
+
+  local actual_sha
+  if command -v sha256sum &>/dev/null; then
+    actual_sha=$(sha256sum "${tmp_dir}/archive.${ext}" | awk '{print $1}')
+  elif command -v shasum &>/dev/null; then
+    actual_sha=$(shasum -a 256 "${tmp_dir}/archive.${ext}" | awk '{print $1}')
   else
-    warn "Could not download checksums.txt — skipping verification"
+    error "No sha256sum or shasum found — cannot verify checksum, aborting"
   fi
+  if [[ "$actual_sha" != "$expected_sha" ]]; then
+    error "Checksum mismatch! Expected: $expected_sha Got: $actual_sha"
+  fi
+  info "Checksum verified ✓"
 
   # Extract
   info "Extracting..."

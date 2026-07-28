@@ -28,7 +28,17 @@ func pacStatePath() string {
 	return filepath.Join(config.DataDir(), "pac-state.json")
 }
 
-func savePACState(service string) {
+func savePACState(service string) error {
+	// Idempotency: if a state file already exists and the current PAC
+	// is already ours, keep the original snapshot (don't overwrite with our own URL).
+	if existing, err := loadPACState(); err == nil {
+		pacURL, enabled, _ := platform.GetAutoProxy(service)
+		if enabled && strings.Contains(pacURL, "127.0.0.1:"+strconv.Itoa(config.PACPort)) {
+			_ = existing // state already captured before we took over
+			return nil
+		}
+	}
+
 	pacURL, enabled, err := platform.GetAutoProxy(service)
 	if err != nil {
 		pacURL = ""
@@ -41,10 +51,22 @@ func savePACState(service string) {
 	}
 	data, err := json.Marshal(state)
 	if err != nil {
-		return
+		return fmt.Errorf("marshal PAC state: %w", err)
 	}
-	os.MkdirAll(config.DataDir(), 0700)
-	os.WriteFile(pacStatePath(), data, 0600)
+	if err := os.MkdirAll(config.DataDir(), 0700); err != nil {
+		return fmt.Errorf("create data dir: %w", err)
+	}
+	// Atomic write: temp → rename
+	path := pacStatePath()
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, data, 0600); err != nil {
+		return fmt.Errorf("write PAC state: %w", err)
+	}
+	if err := os.Rename(tmp, path); err != nil {
+		os.Remove(tmp)
+		return fmt.Errorf("rename PAC state: %w", err)
+	}
+	return nil
 }
 
 func loadPACState() (*pacState, error) {
@@ -105,13 +127,21 @@ func On(cfg *config.Config) error {
 	if err != nil {
 		return fail(fmt.Errorf("detect network: %w", err))
 	}
-	savePACState(service)
+	if err := savePACState(service); err != nil {
+		fmt.Printf("  ⚠ Could not save PAC state: %v\n", err)
+	}
 
 	pacURL := fmt.Sprintf("http://127.0.0.1:%d/proxy.pac", config.PACPort)
 	if err := platform.SetAutoProxy(service, pacURL); err != nil {
 		return fail(fmt.Errorf("set PAC proxy: %w", err))
 	}
-	undo = append(undo, func() { restorePACState(service) })
+	undo = append(undo, func() {
+		if s, err := loadPACState(); err == nil {
+			restorePACState(s)
+		} else {
+			platform.ClearAutoProxy(service)
+		}
+	})
 
 	// 5. Write CLI env file
 	if err := writeEnvFile(cfg); err != nil {
@@ -141,10 +171,15 @@ func On(cfg *config.Config) error {
 func Off(cfg *config.Config) error {
 	var errs []string
 
-	// 1. Restore original system PAC state
-	service, err := platform.DetectNetworkService()
-	if err == nil {
-		restorePACState(service)
+	// 1. Restore original system PAC state (use saved service, not current)
+	if state, err := loadPACState(); err == nil {
+		restorePACState(state)
+		os.Remove(pacStatePath())
+	} else {
+		// No saved state — clear current service
+		if service, err := platform.DetectNetworkService(); err == nil {
+			platform.ClearAutoProxy(service)
+		}
 	}
 
 	// 2. Stop PAC HTTP server daemon
@@ -163,9 +198,6 @@ func Off(cfg *config.Config) error {
 		errs = append(errs, fmt.Sprintf("remove env.sh: %v", err))
 	}
 
-	// 6. Remove PAC state file
-	os.Remove(pacStatePath())
-
 	if len(errs) > 0 {
 		fmt.Printf("✓ Proxy disabled (with warnings)\n")
 		for _, e := range errs {
@@ -178,27 +210,22 @@ func Off(cfg *config.Config) error {
 	return nil
 }
 
-// restorePACState restores the original PAC configuration.
-// If the current PAC URL does not belong to agent-proxy, it is left untouched.
-func restorePACState(currentService string) {
-	state, err := loadPACState()
-	if err != nil {
-		// No saved state — just clear
-		platform.ClearAutoProxy(currentService)
-		return
-	}
+// restorePACState restores the original PAC configuration on the service
+// that was active when On() was called.
+func restorePACState(state *pacState) {
+	service := state.Service
 
 	// Only modify if the current PAC still belongs to agent-proxy
-	pacURL, enabled, err := platform.GetAutoProxy(currentService)
+	pacURL, enabled, err := platform.GetAutoProxy(service)
 	if err == nil && enabled && !strings.Contains(pacURL, "127.0.0.1:"+strconv.Itoa(config.PACPort)) {
 		// PAC was changed by something else — don't touch it
 		return
 	}
 
 	if state.WasEnabled && state.OriginalURL != "" {
-		platform.SetAutoProxy(currentService, state.OriginalURL)
+		platform.SetAutoProxy(service, state.OriginalURL)
 	} else {
-		platform.ClearAutoProxy(currentService)
+		platform.ClearAutoProxy(service)
 	}
 }
 

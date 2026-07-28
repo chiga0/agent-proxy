@@ -44,11 +44,20 @@ func InstallAutoStart(cfg *config.Config) error {
 		if err := installTunnelAgent(cfg, dir); err != nil {
 			return fmt.Errorf("install tunnel agent: %w", err)
 		}
+	} else {
+		// Declarative cleanup: remove stale tunnel agent when tunnel is disabled
+		removeAgent(tunnelLabel, dir)
 	}
 	if err := installPACAgent(self, dir); err != nil {
 		return fmt.Errorf("install PAC agent: %w", err)
 	}
 	return nil
+}
+
+func removeAgent(label, dir string) {
+	path := filepath.Join(dir, label+".plist")
+	exec.Command("launchctl", "unload", path).Run()
+	os.Remove(path)
 }
 
 // xmlEscape escapes a string for safe embedding in plist XML.
@@ -99,7 +108,11 @@ func installTunnelAgent(cfg *config.Config, dir string) error {
         <string>-o</string>
         <string>Compression=no</string>
         <string>-o</string>
+        <string>ControlMaster=auto</string>
+        <string>-o</string>
         ` + plistString("ControlPath="+cfg.Proxy.SSHControlPath()) + `
+        <string>-o</string>
+        <string>ControlPersist=600</string>
         <string>-L</string>
         ` + plistString(fmt.Sprintf("%d:127.0.0.1:%d", localPort, remotePort)) + `
         ` + plistString(fmt.Sprintf("%s@%s", user, cfg.Proxy.Host)) + `

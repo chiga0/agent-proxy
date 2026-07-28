@@ -83,8 +83,8 @@ func Stop(cfg *config.Config) {
 	}
 }
 
-// Running checks whether the tunnel is active.
-// Primary: ssh -O check via ControlPath. Fallback: TCP dial to local port.
+// Running checks whether the tunnel is active via the ControlMaster socket.
+// A port listener alone is NOT sufficient — it may be another process.
 func Running(cfg *config.Config) bool {
 	sock := controlSocket(cfg)
 	if _, err := os.Stat(sock); err == nil {
@@ -97,7 +97,12 @@ func Running(cfg *config.Config) bool {
 			return true
 		}
 	}
-	// Fallback: port check
+	return false
+}
+
+// PortOccupied checks whether something (possibly not our tunnel) is listening
+// on the local tunnel port. Used for diagnostics only.
+func PortOccupied(cfg *config.Config) bool {
 	conn, err := net.DialTimeout("tcp",
 		net.JoinHostPort("127.0.0.1", strconv.Itoa(cfg.Proxy.LocalPort())), 500*time.Millisecond)
 	if err != nil {

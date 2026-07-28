@@ -48,7 +48,11 @@ Quick start:
 				return err
 			}
 			// Mutating commands require strict validation
-			mutating := map[string]bool{"on": true, "off": true, "setup": true, "ip": true}
+			mutating := map[string]bool{
+				"on": true, "off": true, "setup": true, "ip": true,
+				"add": true, "rm": true, "remove": true, "del": true,
+				"enable": true, "disable": true,
+			}
 			if mutating[cmd.Name()] {
 				if err := cfg.Validate(); err != nil {
 					return fmt.Errorf("config validation: %w", err)
@@ -147,7 +151,18 @@ func cmdDoctor() *cobra.Command {
 				hasFailure = true
 				fmt.Println("  ⚠ TLS connections reset after CONNECT — GFW SNI filtering detected")
 				fmt.Println("    Fix: enable SSH tunnel to encrypt proxy traffic")
-				fmt.Println("    Run: edit config.yaml → proxy.tunnel: true → agent-proxy on")
+				fmt.Println("    Run: edit config.yaml → proxy.tunnel: true → agent-proxy setup → agent-proxy on")
+			}
+
+			// ECS Squid listen mode check (tunnel mode should be loopback-only)
+			if cfg.Proxy.Tunnel && cfg.Proxy.Host != "" {
+				loopback, detail, err := ecs.CheckSquidListenMode(cfg)
+				if err == nil && !loopback {
+					hasFailure = true
+					fmt.Printf("  ⚠ ECS Squid is NOT loopback-only: %s\n", detail)
+					fmt.Println("    Your Squid may still be listening on all interfaces from a previous deployment.")
+					fmt.Println("    Fix: agent-proxy setup   (rewrites Squid config for tunnel mode)")
+				}
 			}
 
 			fmt.Println()
@@ -618,6 +633,8 @@ func cmdUpdate() *cobra.Command {
 			tag := version
 			if tag == "dev" || tag == "" {
 				tag = "main" // dev builds fall back to main
+			} else if !strings.HasPrefix(tag, "v") {
+				tag = "v" + tag // GoReleaser strips the v prefix; git tags have it
 			}
 			scriptURL := fmt.Sprintf(
 				"https://raw.githubusercontent.com/chiga0/agent-proxy/%s/install.sh", tag)

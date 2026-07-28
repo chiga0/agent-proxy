@@ -32,6 +32,9 @@ func InstallAutoStart(cfg *config.Config) error {
 		if err := installTunnelUnit(cfg, dir); err != nil {
 			return fmt.Errorf("install tunnel unit: %w", err)
 		}
+	} else {
+		// Declarative cleanup: remove stale tunnel unit when tunnel is disabled
+		removeUnit("agent-proxy-tunnel", dir)
 	}
 	if err := installPACUnit(self, dir); err != nil {
 		return fmt.Errorf("install PAC unit: %w", err)
@@ -41,6 +44,12 @@ func InstallAutoStart(cfg *config.Config) error {
 		return fmt.Errorf("daemon-reload: %s: %w", strings.TrimSpace(string(out)), err)
 	}
 	return nil
+}
+
+func removeUnit(name, dir string) {
+	exec.Command("systemctl", "--user", "stop", name).Run()
+	exec.Command("systemctl", "--user", "disable", name).Run()
+	os.Remove(filepath.Join(dir, name+".service"))
 }
 
 // systemdQuote quotes a string for systemd ExecStart using C-style escaping.
@@ -64,7 +73,7 @@ Description=agent-proxy SSH tunnel
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/ssh -i %s -N -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o Ciphers=aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com -o Compression=no -o ControlPath=%s -L %d:127.0.0.1:%d %s@%s
+ExecStart=/usr/bin/ssh -i %s -N -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o Ciphers=aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com -o Compression=no -o ControlMaster=auto -o ControlPath=%s -o ControlPersist=600 -L %d:127.0.0.1:%d %s@%s
 Restart=always
 RestartSec=5
 

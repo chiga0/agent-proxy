@@ -51,6 +51,22 @@ func TestGenerateSquidConfigTunnelMode(t *testing.T) {
 			t.Errorf("should deny %s", acl)
 		}
 	}
+
+	// Alibaba Cloud metadata address
+	if !strings.Contains(conf, "100.100.100.200") {
+		t.Error("should block Alibaba Cloud metadata 100.100.100.200")
+	}
+
+	// IPv6 coverage
+	if !strings.Contains(conf, "::1") {
+		t.Error("should block IPv6 loopback ::1")
+	}
+	if !strings.Contains(conf, "fe80::/10") {
+		t.Error("should block IPv6 link-local fe80::/10")
+	}
+	if !strings.Contains(conf, "fc00::/7") {
+		t.Error("should block IPv6 private fc00::/7")
+	}
 }
 
 func TestGenerateSquidConfigDirectMode(t *testing.T) {

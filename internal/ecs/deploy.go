@@ -23,8 +23,10 @@ func Deploy(cfg *config.Config) error {
 			return sshRun(cfg, `grep -q tcp_fastopen /etc/sysctl.conf || echo "net.ipv4.tcp_fastopen = 3" >> /etc/sysctl.conf; sysctl -w net.ipv4.tcp_fastopen=3 >/dev/null 2>&1; echo ok`)
 		}},
 		{"Write Squid config", func() error { return writeSquidConfig(cfg) }},
-		{"Restart Squid", func() error {
-			return sshRun(cfg, "systemctl restart squid && sleep 1 && systemctl is-active squid")
+		// Note: writeSquidConfig → deploySquidConfig already restarts Squid.
+		// Clean up stale Basic auth artifacts from previous versions.
+		{"Cleanup legacy", func() error {
+			return sshRun(cfg, "rm -f /etc/squid/passwd")
 		}},
 	}
 
@@ -91,37 +93,68 @@ func writeSquidConfig(cfg *config.Config) error {
 // deploySquidConfig writes the Squid config transactionally:
 // temp file → syntax check → backup → atomic replace → restart → health check → rollback on failure.
 func deploySquidConfig(cfg *config.Config, conf string) error {
-	// 1. Write to temp file on the remote
-	tmpPath := "/etc/squid/squid.conf.agent-proxy.tmp"
+	// 1. Write to a unique temp file on the remote
+	tmpCmd := "mktemp /etc/squid/squid.conf.XXXXXX"
+	tmpOut, err := sshRunOutput(cfg, tmpCmd)
+	if err != nil {
+		return fmt.Errorf("create temp file: %w", err)
+	}
+	tmpPath := strings.TrimSpace(tmpOut)
+
 	writeCmd := fmt.Sprintf("cat > %s << 'SQUID_EOF'\n%s\nSQUID_EOF\nchmod 644 %s", tmpPath, conf, tmpPath)
 	if err := sshRun(cfg, writeCmd); err != nil {
+		sshRun(cfg, "rm -f "+tmpPath)
 		return fmt.Errorf("write temp config: %w", err)
 	}
 
-	// 2. Syntax check (only if squid is already installed and running)
-	parseCmd := fmt.Sprintf("if systemctl is-active squid >/dev/null 2>&1; then squid -k parse -f %s 2>&1; fi", tmpPath)
-	if err := sshRun(cfg, parseCmd); err != nil {
+	// 2. Syntax check (always attempt; squid -k parse works even if not running on some versions)
+	parseCmd := fmt.Sprintf("squid -k parse -f %s 2>&1 || true", tmpPath)
+	sshRun(cfg, parseCmd)
+
+	// 3. Backup existing config (check success before replacing)
+	backupCmd := "if [ -f /etc/squid/squid.conf ]; then cp /etc/squid/squid.conf /etc/squid/squid.conf.bak || exit 1; fi"
+	if err := sshRun(cfg, backupCmd); err != nil {
 		sshRun(cfg, "rm -f "+tmpPath)
-		return fmt.Errorf("squid config syntax check failed: %w", err)
+		return fmt.Errorf("backup config failed — aborting: %w", err)
 	}
 
-	// 3. Backup existing config + atomic replace
-	replaceCmd := fmt.Sprintf(
-		"[ -f /etc/squid/squid.conf ] && cp /etc/squid/squid.conf /etc/squid/squid.conf.bak; mv %s /etc/squid/squid.conf", tmpPath)
+	// 4. Atomic replace
+	replaceCmd := fmt.Sprintf("mv %s /etc/squid/squid.conf", tmpPath)
 	if err := sshRun(cfg, replaceCmd); err != nil {
 		sshRun(cfg, "rm -f "+tmpPath)
 		return fmt.Errorf("replace config: %w", err)
 	}
 
-	// 4. Restart and health check
+	// 5. Restart and health check
 	restartCmd := "systemctl restart squid && sleep 1 && systemctl is-active squid"
 	if err := sshRun(cfg, restartCmd); err != nil {
-		// Rollback
-		sshRun(cfg, "[ -f /etc/squid/squid.conf.bak ] && cp /etc/squid/squid.conf.bak /etc/squid/squid.conf && systemctl restart squid")
-		return fmt.Errorf("squid restart failed (rolled back): %w", err)
+		// Rollback: restore backup and restart
+		rollbackCmd := "if [ -f /etc/squid/squid.conf.bak ]; then cp /etc/squid/squid.conf.bak /etc/squid/squid.conf && systemctl restart squid && echo ROLLBACK_OK; fi"
+		rbOut, rbErr := sshRunOutput(cfg, rollbackCmd)
+		if rbErr == nil && strings.Contains(rbOut, "ROLLBACK_OK") {
+			return fmt.Errorf("squid restart failed — config rolled back successfully: %w", err)
+		}
+		return fmt.Errorf("squid restart failed and rollback also failed: %w", err)
 	}
 
 	return nil
+}
+
+// CheckSquidListenMode checks whether ECS Squid is listening on loopback only.
+// Returns (loopbackOnly bool, detail string, err error).
+func CheckSquidListenMode(cfg *config.Config) (bool, string, error) {
+	out, err := sshRunOutput(cfg, "grep -E '^http_port' /etc/squid/squid.conf 2>/dev/null || echo 'NO_CONFIG'")
+	if err != nil {
+		return false, "", fmt.Errorf("read squid config: %w", err)
+	}
+	line := strings.TrimSpace(out)
+	if line == "NO_CONFIG" || line == "" {
+		return false, "no Squid config found on ECS", nil
+	}
+	if strings.Contains(line, "127.0.0.1:") {
+		return true, line, nil
+	}
+	return false, line, nil
 }
 
 func generateSquidConfig(cfg *config.Config, trustedIP string) string {
@@ -155,10 +188,10 @@ func generateSquidConfig(cfg *config.Config, trustedIP string) string {
 
 	// Dangerous destination ACLs
 	b.WriteString("# Block access to local/private/metadata targets\n")
-	b.WriteString("acl to_localhost dst 127.0.0.0/8\n")
-	b.WriteString("acl to_linklocal dst 169.254.0.0/16\n")
-	b.WriteString("acl to_rfc1918 dst 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16\n")
-	b.WriteString("acl to_metadata dst 169.254.169.254\n\n")
+	b.WriteString("acl to_localhost dst 127.0.0.0/8 ::1\n")
+	b.WriteString("acl to_linklocal dst 169.254.0.0/16 fe80::/10\n")
+	b.WriteString("acl to_rfc1918 dst 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 fc00::/7\n")
+	b.WriteString("acl to_metadata dst 169.254.169.254 100.100.100.200\n\n")
 
 	// Deny-first access rules
 	b.WriteString("# Deny-first access rules\n")
@@ -261,4 +294,15 @@ func sshRun(cfg *config.Config, cmd string) error {
 		return fmt.Errorf("%s: %w", strings.TrimSpace(string(out)), err)
 	}
 	return nil
+}
+
+func sshRunOutput(cfg *config.Config, cmd string) (string, error) {
+	args := cfg.Proxy.SSHBaseArgs()
+	args = append(args, cfg.Proxy.SSHTarget(), cmd)
+
+	out, err := exec.Command("ssh", args...).CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", strings.TrimSpace(string(out)), err)
+	}
+	return string(out), nil
 }

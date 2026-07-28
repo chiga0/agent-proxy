@@ -195,6 +195,8 @@ no_proxy:                 # Domains/IPs that bypass proxy
   # ... (see default config for full list)
 ```
 
+> **`no_proxy` compatibility note:** Wildcard patterns like `10.*` and `172.16.*` are not uniformly supported across all HTTP clients (curl, Go, Python, Node, and Java each differ). Domain suffixes (`.example.com`) have the broadest compatibility. If a specific CLI tool leaks traffic through the proxy, check its `no_proxy` parsing rules.
+
 ## Platform Support
 
 | Platform | System PAC proxy | CLI env vars | ECS setup |

@@ -191,6 +191,20 @@ func Load() (*Config, error) {
 		cfg.Save()
 	}
 
+	// Migrate legacy Basic auth credentials: detect and strip user/password
+	// fields that existed in versions prior to the security audit fix.
+	var raw map[string]interface{}
+	if yaml.Unmarshal(data, &raw) == nil {
+		if proxy, ok := raw["proxy"].(map[string]interface{}); ok {
+			_, hasUser := proxy["user"]
+			_, hasPass := proxy["password"]
+			if hasUser || hasPass {
+				fmt.Fprintf(os.Stderr, "Notice: removing legacy Basic auth credentials from config (no longer supported)\n")
+				cfg.Save() // re-save strips the removed fields
+			}
+		}
+	}
+
 	// Validate config consistency (warn but don't block for backward compat)
 	if err := cfg.Validate(); err != nil && cfg.Proxy.Host != "" {
 		fmt.Fprintf(os.Stderr, "Warning: config validation: %v\n", err)
