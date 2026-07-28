@@ -37,7 +37,7 @@ func Start(cfg *config.Config) error {
 		user = "root"
 	}
 	args = append(args,
-		"-L", fmt.Sprintf("%d:127.0.0.1:%d", cfg.Proxy.Port, cfg.Proxy.Port),
+		"-L", fmt.Sprintf("%d:127.0.0.1:%d", cfg.Proxy.LocalPort(), cfg.Proxy.Port),
 		fmt.Sprintf("%s@%s", user, cfg.Proxy.Host),
 	)
 
@@ -74,7 +74,7 @@ func Stop(cfg *config.Config) {
 		user = "root"
 	}
 	pattern := fmt.Sprintf("ssh.*-L.*%d:127.0.0.1:%d.*%s@%s",
-		cfg.Proxy.Port, cfg.Proxy.Port, user, cfg.Proxy.Host)
+		cfg.Proxy.LocalPort(), cfg.Proxy.Port, user, cfg.Proxy.Host)
 	out, err := exec.Command("pgrep", "-f", pattern).Output()
 	if err != nil {
 		return
@@ -90,10 +90,23 @@ func Stop(cfg *config.Config) {
 	}
 }
 
-// Running checks if the tunnel is alive by connecting through it.
+// Running checks if the tunnel is alive via PID file + port check.
 func Running(cfg *config.Config) bool {
+	// Check PID file first
+	if data, err := os.ReadFile(pidFile()); err == nil {
+		if pid, err := strconv.Atoi(strings.TrimSpace(string(data))); err == nil {
+			if proc, err := os.FindProcess(pid); err == nil {
+				// Signal 0 checks if process exists
+				if proc.Signal(nil) != nil {
+					os.Remove(pidFile())
+					return false
+				}
+			}
+		}
+	}
+	// Verify port is actually listening
 	conn, err := net.DialTimeout("tcp",
-		fmt.Sprintf("127.0.0.1:%d", cfg.Proxy.Port), 500*time.Millisecond)
+		fmt.Sprintf("127.0.0.1:%d", cfg.Proxy.LocalPort()), 500*time.Millisecond)
 	if err != nil {
 		return false
 	}
@@ -107,7 +120,7 @@ func savePID(cfg *config.Config) {
 		user = "root"
 	}
 	pattern := fmt.Sprintf("ssh.*-L.*%d:127.0.0.1:%d.*%s@%s",
-		cfg.Proxy.Port, cfg.Proxy.Port, user, cfg.Proxy.Host)
+		cfg.Proxy.LocalPort(), cfg.Proxy.Port, user, cfg.Proxy.Host)
 	out, err := exec.Command("pgrep", "-f", pattern).Output()
 	if err != nil {
 		return

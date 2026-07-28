@@ -21,9 +21,10 @@ func Generate(cfg *config.Config) (string, error) {
 	b.WriteString("function FindProxyForURL(url, host) {\n")
 
 	proxyHost := cfg.Proxy.EffectiveHost()
+	proxyPort := cfg.Proxy.LocalPort()
 	for _, d := range domains {
 		fmt.Fprintf(&b, "    if (dnsDomainIs(host, \".%s\") || host == \"%s\") return \"PROXY %s:%d\";\n",
-			d, d, proxyHost, cfg.Proxy.Port)
+			d, d, proxyHost, proxyPort)
 	}
 
 	b.WriteString("    return \"DIRECT\";\n")

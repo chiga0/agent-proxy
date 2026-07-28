@@ -3,6 +3,7 @@
 package platform
 
 import (
+	"encoding/xml"
 	"fmt"
 	"os"
 	"os/exec"
@@ -37,22 +38,41 @@ func InstallAutoStart(cfg *config.Config) error {
 	return nil
 }
 
+// xmlEscape escapes a string for safe embedding in plist XML.
+func xmlEscape(s string) string {
+	var b xmlEncoder
+	xml.EscapeText(&b, []byte(s))
+	return b.String()
+}
+
+type xmlEncoder struct{ data []byte }
+
+func (e *xmlEncoder) Write(p []byte) (int, error) { e.data = append(e.data, p...); return len(p), nil }
+func (e *xmlEncoder) String() string              { return string(e.data) }
+
+func plistString(s string) string {
+	return "<string>" + xmlEscape(s) + "</string>"
+}
+
 func installTunnelAgent(cfg *config.Config, dir string) {
 	user := cfg.Proxy.SSHUser
 	if user == "" {
 		user = "root"
 	}
-	plist := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
+	localPort := cfg.Proxy.LocalPort()
+	remotePort := cfg.Proxy.Port
+
+	plist := `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>%s</string>
+    ` + plistString(tunnelLabel) + `
     <key>ProgramArguments</key>
     <array>
         <string>/usr/bin/ssh</string>
         <string>-i</string>
-        <string>%s</string>
+        ` + plistString(cfg.Proxy.SSHKey) + `
         <string>-N</string>
         <string>-o</string>
         <string>ServerAliveInterval=60</string>
@@ -61,10 +81,10 @@ func installTunnelAgent(cfg *config.Config, dir string) {
         <string>-o</string>
         <string>ExitOnForwardFailure=yes</string>
         <string>-o</string>
-        <string>StrictHostKeyChecking=no</string>
+        <string>StrictHostKeyChecking=accept-new</string>
         <string>-L</string>
-        <string>%d:127.0.0.1:%d</string>
-        <string>%s@%s</string>
+        ` + plistString(fmt.Sprintf("%d:127.0.0.1:%d", localPort, remotePort)) + `
+        ` + plistString(fmt.Sprintf("%s@%s", user, cfg.Proxy.Host)) + `
     </array>
     <key>RunAtLoad</key>
     <true/>
@@ -74,23 +94,22 @@ func installTunnelAgent(cfg *config.Config, dir string) {
     <string>/tmp/agent-proxy-ssh-tunnel.log</string>
 </dict>
 </plist>
-`, tunnelLabel, cfg.Proxy.SSHKey, cfg.Proxy.Port, cfg.Proxy.Port, user, cfg.Proxy.Host)
-
+`
 	path := filepath.Join(dir, tunnelLabel+".plist")
 	os.WriteFile(path, []byte(plist), 0644)
 	exec.Command("launchctl", "load", path).Run()
 }
 
 func installPACAgent(self string, dir string) {
-	plist := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
+	plist := `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>%s</string>
+    ` + plistString(pacLabel) + `
     <key>ProgramArguments</key>
     <array>
-        <string>%s</string>
+        ` + plistString(self) + `
         <string>serve-pac</string>
     </array>
     <key>RunAtLoad</key>
@@ -101,8 +120,7 @@ func installPACAgent(self string, dir string) {
     <string>/tmp/agent-proxy-pac-server.log</string>
 </dict>
 </plist>
-`, pacLabel, self)
-
+`
 	path := filepath.Join(dir, pacLabel+".plist")
 	os.WriteFile(path, []byte(plist), 0644)
 	exec.Command("launchctl", "load", path).Run()

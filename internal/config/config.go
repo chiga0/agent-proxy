@@ -32,22 +32,31 @@ type Config struct {
 }
 
 type ProxyConfig struct {
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	User     string `yaml:"user,omitempty"`
-	Password string `yaml:"password,omitempty"`
-	SSHKey   string `yaml:"ssh_key,omitempty"`
-	SSHUser  string `yaml:"ssh_user,omitempty"`
-	Tunnel   bool   `yaml:"tunnel,omitempty"`
+	Host            string `yaml:"host"`
+	Port            int    `yaml:"port"`
+	User            string `yaml:"user,omitempty"`
+	Password        string `yaml:"password,omitempty"`
+	SSHKey          string `yaml:"ssh_key,omitempty"`
+	SSHUser         string `yaml:"ssh_user,omitempty"`
+	Tunnel          bool   `yaml:"tunnel,omitempty"`
+	TunnelLocalPort int    `yaml:"tunnel_local_port,omitempty"`
 }
 
 // EffectiveHost returns the proxy host for client connections.
-// When tunnel is enabled, traffic goes through 127.0.0.1 (local SSH tunnel end).
 func (p *ProxyConfig) EffectiveHost() string {
 	if p.Tunnel {
 		return "127.0.0.1"
 	}
 	return p.Host
+}
+
+// LocalPort returns the port clients connect to.
+// When tunnel is enabled with a custom local port, use that; otherwise use Port.
+func (p *ProxyConfig) LocalPort() int {
+	if p.Tunnel && p.TunnelLocalPort > 0 {
+		return p.TunnelLocalPort
+	}
+	return p.Port
 }
 
 func ConfigPath() string {
@@ -263,11 +272,12 @@ func (c *Config) HasAuth() bool {
 // ProxyURL returns the proxy URL with proper URL encoding for credentials.
 func (c *Config) ProxyURL() string {
 	host := c.Proxy.EffectiveHost()
+	port := c.Proxy.LocalPort()
 	if c.HasAuth() {
 		u := url.URL{
 			Scheme: "http",
 			User:   url.UserPassword(c.Proxy.User, c.Proxy.Password),
-			Host:   fmt.Sprintf("%s:%d", host, c.Proxy.Port),
+			Host:   fmt.Sprintf("%s:%d", host, port),
 		}
 		return u.String()
 	}
@@ -275,7 +285,7 @@ func (c *Config) ProxyURL() string {
 }
 
 func (c *Config) ProxyURLNoAuth() string {
-	return fmt.Sprintf("http://%s:%d", c.Proxy.EffectiveHost(), c.Proxy.Port)
+	return fmt.Sprintf("http://%s:%d", c.Proxy.EffectiveHost(), c.Proxy.LocalPort())
 }
 
 func (c *Config) NoProxyString() string {

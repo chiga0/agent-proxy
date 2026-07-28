@@ -27,14 +27,16 @@ type Result struct {
 }
 
 type Summary struct {
-	Domain string
-	Mode   string
-	Runs   int
-	DNS    [3]time.Duration // min, avg, max
-	TCP    [3]time.Duration
-	TLS    [3]time.Duration
-	TTFB   [3]time.Duration
-	Total  [3]time.Duration
+	Domain   string
+	Mode     string
+	Runs     int
+	Success  int
+	LastErr  string
+	DNS      [3]time.Duration // min, avg, max
+	TCP      [3]time.Duration
+	TLS      [3]time.Duration
+	TTFB     [3]time.Duration
+	Total    [3]time.Duration
 }
 
 func Run(cfg *config.Config, domains []string, runs int) []Summary {
@@ -136,17 +138,32 @@ func summarize(domain, mode string, results []Result) Summary {
 		return s
 	}
 
-	var totals, ttfbs []time.Duration
+	var dns, tcp, tlsD, ttfbs, totals []time.Duration
 	for _, r := range results {
-		if r.Error == "" {
-			totals = append(totals, r.Total)
-			ttfbs = append(ttfbs, r.TTFB)
+		if r.Error != "" {
+			s.LastErr = r.Error
+			continue
+		}
+		s.Success++
+		totals = append(totals, r.Total)
+		ttfbs = append(ttfbs, r.TTFB)
+		if r.DNS > 0 {
+			dns = append(dns, r.DNS)
+		}
+		if r.TCP > 0 {
+			tcp = append(tcp, r.TCP)
+		}
+		if r.TLS > 0 {
+			tlsD = append(tlsD, r.TLS)
 		}
 	}
 
 	if len(totals) > 0 {
 		s.Total = minAvgMax(totals)
 		s.TTFB = minAvgMax(ttfbs)
+		s.DNS = minAvgMax(dns)
+		s.TCP = minAvgMax(tcp)
+		s.TLS = minAvgMax(tlsD)
 	}
 	return s
 }
@@ -169,22 +186,28 @@ func minAvgMax(durations []time.Duration) [3]time.Duration {
 }
 
 func PrintResults(summaries []Summary) {
-	fmt.Printf("\n  %-25s %-8s %8s %8s %8s %8s\n", "Domain", "Mode", "TTFB", "Total", "Runs", "Status")
-	fmt.Printf("  %s\n", strings.Repeat("-", 75))
+	fmt.Printf("\n  %-25s %-8s %8s %8s %8s %8s %8s\n", "Domain", "Mode", "DNS", "TTFB", "Total", "OK/Run", "Status")
+	fmt.Printf("  %s\n", strings.Repeat("-", 83))
 
 	for _, s := range summaries {
 		status := "✓"
-		if s.Total[1] == 0 {
+		if s.Success == 0 {
 			status = "✗"
+		} else if s.Success < s.Runs {
+			status = "△"
 		}
-		fmt.Printf("  %-25s %-8s %8s %8s %8d %8s\n",
+		fmt.Printf("  %-25s %-8s %8s %8s %8s %5d/%-2d %8s\n",
 			truncate(s.Domain, 25),
 			s.Mode,
+			formatDur(s.DNS[1]),
 			formatDur(s.TTFB[1]),
 			formatDur(s.Total[1]),
-			s.Runs,
+			s.Success, s.Runs,
 			status,
 		)
+		if s.LastErr != "" && s.Success < s.Runs {
+			fmt.Printf("  %-25s          err: %s\n", "", truncate(s.LastErr, 60))
+		}
 	}
 }
 

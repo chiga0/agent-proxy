@@ -162,6 +162,87 @@ func TestMediaPreset(t *testing.T) {
 	}
 }
 
+func TestIsValidDomain(t *testing.T) {
+	valid := []string{"google.com", "sub.domain.org", "a-b.c-d.com", "x.co"}
+	for _, d := range valid {
+		if !IsValidDomain(d) {
+			t.Errorf("IsValidDomain(%q) = false, want true", d)
+		}
+	}
+	invalid := []string{"", "not a domain", "http://evil.com", "a\";alert(1)", "-bad.com", ".com", "a b.com"}
+	for _, d := range invalid {
+		if IsValidDomain(d) {
+			t.Errorf("IsValidDomain(%q) = true, want false", d)
+		}
+	}
+}
+
+func TestAddDomainRejectsInvalid(t *testing.T) {
+	cfg := DefaultConfig()
+	if cfg.AddDomain("not valid!") {
+		t.Error("should reject invalid domain")
+	}
+	if cfg.AddDomain("a\";return \"PROXY evil:1") {
+		t.Error("should reject PAC injection attempt")
+	}
+}
+
+func TestShellQuote(t *testing.T) {
+	tests := []struct{ in, want string }{
+		{"simple", "'simple'"},
+		{"has space", "'has space'"},
+		{"has'quote", "'has'\\''quote'"},
+		{"$(cmd)", "'$(cmd)'"},
+	}
+	for _, tt := range tests {
+		if got := ShellQuote(tt.in); got != tt.want {
+			t.Errorf("ShellQuote(%q) = %q, want %q", tt.in, got, tt.want)
+		}
+	}
+}
+
+func TestLocalPort(t *testing.T) {
+	p := ProxyConfig{Port: 18443}
+	if p.LocalPort() != 18443 {
+		t.Errorf("LocalPort without tunnel = %d", p.LocalPort())
+	}
+	p.Tunnel = true
+	if p.LocalPort() != 18443 {
+		t.Errorf("LocalPort with tunnel, no custom = %d", p.LocalPort())
+	}
+	p.TunnelLocalPort = 18444
+	if p.LocalPort() != 18444 {
+		t.Errorf("LocalPort with custom = %d, want 18444", p.LocalPort())
+	}
+}
+
+func TestValidate(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Proxy.Host = "1.2.3.4"
+	if err := cfg.Validate(); err != nil {
+		t.Errorf("valid config should pass: %v", err)
+	}
+
+	cfg.Proxy.Host = ""
+	if err := cfg.Validate(); err == nil {
+		t.Error("empty host should fail validation")
+	}
+
+	cfg.Proxy.Host = "1.2.3.4"
+	cfg.Proxy.User = "user"
+	cfg.Proxy.Password = ""
+	if err := cfg.Validate(); err == nil {
+		t.Error("user without password should fail")
+	}
+
+	cfg.Proxy.User = ""
+	cfg.Proxy.Tunnel = true
+	cfg.Proxy.SSHKey = ""
+	if err := cfg.Validate(); err == nil {
+		t.Error("tunnel without ssh_key should fail")
+	}
+}
+
 func TestSaveAndLoad(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("HOME", tmpDir)

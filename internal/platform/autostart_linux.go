@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/chiga0/agent-proxy/internal/config"
 )
@@ -34,23 +35,37 @@ func InstallAutoStart(cfg *config.Config) error {
 	return nil
 }
 
+// systemdQuote quotes a string for systemd ExecStart using C-style escaping.
+func systemdQuote(s string) string {
+	if !strings.ContainsAny(s, " \t\"'\\%") {
+		return s
+	}
+	s = strings.ReplaceAll(s, `\`, `\\`)
+	s = strings.ReplaceAll(s, `"`, `\"`)
+	s = strings.ReplaceAll(s, `%`, `%%`)
+	return `"` + s + `"`
+}
+
 func installTunnelUnit(cfg *config.Config, dir string) {
 	user := cfg.Proxy.SSHUser
 	if user == "" {
 		user = "root"
 	}
+	localPort := cfg.Proxy.LocalPort()
+	remotePort := cfg.Proxy.Port
+
 	unit := fmt.Sprintf(`[Unit]
 Description=agent-proxy SSH tunnel
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/ssh -i %s -N -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o StrictHostKeyChecking=no -L %d:127.0.0.1:%d %s@%s
+ExecStart=/usr/bin/ssh -i %s -N -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o StrictHostKeyChecking=accept-new -L %d:127.0.0.1:%d %s@%s
 Restart=always
 RestartSec=5
 
 [Install]
 WantedBy=default.target
-`, cfg.Proxy.SSHKey, cfg.Proxy.Port, cfg.Proxy.Port, user, cfg.Proxy.Host)
+`, systemdQuote(cfg.Proxy.SSHKey), localPort, remotePort, user, cfg.Proxy.Host)
 
 	path := filepath.Join(dir, "agent-proxy-tunnel.service")
 	os.WriteFile(path, []byte(unit), 0644)
@@ -70,7 +85,7 @@ RestartSec=3
 
 [Install]
 WantedBy=default.target
-`, self)
+`, systemdQuote(self))
 
 	path := filepath.Join(dir, "agent-proxy-pac.service")
 	os.WriteFile(path, []byte(unit), 0644)

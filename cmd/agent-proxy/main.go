@@ -407,8 +407,12 @@ func cmdWhitelist() *cobra.Command {
 					}
 				}
 				if added > 0 {
-					cfg.Save()
-					pac.Write(cfg)
+					if err := cfg.Save(); err != nil {
+						return fmt.Errorf("save config: %w", err)
+					}
+					if err := pac.Write(cfg); err != nil {
+						return fmt.Errorf("regenerate PAC: %w", err)
+					}
 					fmt.Printf("\n✓ %d added, PAC regenerated\n", added)
 				}
 				return nil
@@ -427,8 +431,12 @@ func cmdWhitelist() *cobra.Command {
 					}
 				}
 				if removed > 0 {
-					cfg.Save()
-					pac.Write(cfg)
+					if err := cfg.Save(); err != nil {
+						return fmt.Errorf("save config: %w", err)
+					}
+					if err := pac.Write(cfg); err != nil {
+						return fmt.Errorf("regenerate PAC: %w", err)
+					}
 					fmt.Printf("\n✓ %d removed, PAC regenerated\n", removed)
 				}
 				return nil
@@ -501,8 +509,12 @@ func cmdPreset() *cobra.Command {
 			Use: "enable <name>", Short: "Enable a preset", Args: cobra.ExactArgs(1),
 			RunE: func(cmd *cobra.Command, args []string) error {
 				if cfg.EnablePreset(args[0]) {
-					cfg.Save()
-					pac.Write(cfg)
+					if err := cfg.Save(); err != nil {
+						return err
+					}
+					if err := pac.Write(cfg); err != nil {
+						return err
+					}
 					fmt.Printf("✓ Preset '%s' enabled\n", args[0])
 				} else {
 					fmt.Printf("Already enabled or unknown: %s\n", args[0])
@@ -514,8 +526,12 @@ func cmdPreset() *cobra.Command {
 			Use: "disable <name>", Aliases: []string{"rm"}, Short: "Disable a preset", Args: cobra.ExactArgs(1),
 			RunE: func(cmd *cobra.Command, args []string) error {
 				if cfg.DisablePreset(args[0]) {
-					cfg.Save()
-					pac.Write(cfg)
+					if err := cfg.Save(); err != nil {
+						return err
+					}
+					if err := pac.Write(cfg); err != nil {
+						return err
+					}
 					fmt.Printf("✓ Preset '%s' disabled\n", args[0])
 				} else {
 					fmt.Printf("Not enabled: %s\n", args[0])
