@@ -73,13 +73,13 @@ Description=agent-proxy SSH tunnel
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/ssh -i %s -N -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o Ciphers=aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com -o Compression=no -o ControlMaster=auto -o ControlPath=%s -o ControlPersist=600 -L %d:127.0.0.1:%d %s@%s
+ExecStart=/usr/bin/ssh -i %s -N -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=%s -o BatchMode=yes -o Ciphers=aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com -o Compression=no -o ControlMaster=auto -o ControlPath=%s -o ControlPersist=600 -L %d:127.0.0.1:%d %s@%s
 Restart=always
 RestartSec=5
 
 [Install]
 WantedBy=default.target
-`, systemdQuote(cfg.Proxy.SSHKey), systemdQuote(cfg.Proxy.SSHControlPath()), localPort, remotePort, user, cfg.Proxy.Host)
+`, systemdQuote(cfg.Proxy.SSHKey), systemdQuote(config.KnownHostsPath()), systemdQuote(cfg.Proxy.SSHControlPath()), localPort, remotePort, user, cfg.Proxy.Host)
 
 	path := filepath.Join(dir, "agent-proxy-tunnel.service")
 	if err := os.WriteFile(path, []byte(unit), 0644); err != nil {
@@ -115,13 +115,25 @@ WantedBy=default.target
 	return nil
 }
 
-func UninstallAutoStart() {
+func UninstallAutoStart() error {
+	var errs []string
 	for _, name := range []string{"agent-proxy-tunnel", "agent-proxy-pac"} {
-		exec.Command("systemctl", "--user", "stop", name).Run()
+		if out, err := exec.Command("systemctl", "--user", "stop", name).CombinedOutput(); err != nil {
+			if !strings.Contains(string(out), "not loaded") && !strings.Contains(string(out), "not found") {
+				errs = append(errs, fmt.Sprintf("stop %s: %s", name, strings.TrimSpace(string(out))))
+			}
+		}
 		exec.Command("systemctl", "--user", "disable", name).Run()
 	}
 	dir := systemdUserDir()
-	os.Remove(filepath.Join(dir, "agent-proxy-tunnel.service"))
-	os.Remove(filepath.Join(dir, "agent-proxy-pac.service"))
+	for _, f := range []string{"agent-proxy-tunnel.service", "agent-proxy-pac.service"} {
+		if err := os.Remove(filepath.Join(dir, f)); err != nil && !os.IsNotExist(err) {
+			errs = append(errs, fmt.Sprintf("remove %s: %v", f, err))
+		}
+	}
 	exec.Command("systemctl", "--user", "daemon-reload").Run()
+	if len(errs) > 0 {
+		return fmt.Errorf("autostart cleanup: %s", strings.Join(errs, "; "))
+	}
+	return nil
 }

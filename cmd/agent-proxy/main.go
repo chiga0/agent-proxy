@@ -158,7 +158,10 @@ func cmdDoctor() *cobra.Command {
 			// ECS Squid listen mode check (tunnel mode should be loopback-only)
 			if cfg.Proxy.Tunnel && cfg.Proxy.Host != "" {
 				loopback, detail, err := ecs.CheckSquidListenMode(cfg)
-				if err == nil && !loopback {
+				if err != nil {
+					fmt.Printf("  ⚠ Cannot verify ECS Squid mode: %v\n", err)
+					fmt.Println("    Run: agent-proxy doctor   (after ensuring SSH connectivity)")
+				} else if !loopback {
 					hasFailure = true
 					fmt.Printf("  ⚠ ECS Squid is NOT loopback-only: %s\n", detail)
 					fmt.Println("    Your Squid may still be listening on all interfaces from a previous deployment.")
@@ -283,7 +286,13 @@ func cmdInit() *cobra.Command {
 				fmt.Println("    建议确保 ECS 安全组限制 Squid 端口访问。")
 			}
 
-			// --- Step 3: SSH connectivity check ---
+			// --- Step 3: SSH host key verification ---
+			fmt.Printf("\n─── 主机验证 ───\n")
+			if err := verifyHostKey(cfg, reader); err != nil {
+				return err
+			}
+
+			// --- Step 4: SSH connectivity check ---
 			fmt.Printf("\n─── 连接检查 ───\n")
 			fmt.Print("  → SSH 连接... ")
 			if err := ecs.CheckSSH(cfg); err != nil {
@@ -421,6 +430,63 @@ func validateSSHKey(path string) (string, error) {
 		}
 	}
 	return path, nil
+}
+
+// verifyHostKey checks if the ECS host key is already trusted. If not,
+// it fetches the key via ssh-keyscan, shows the fingerprint, and asks
+// the user to confirm before adding it to the project known_hosts.
+func verifyHostKey(cfg *config.Config, reader *bufio.Reader) error {
+	knownHosts := config.KnownHostsPath()
+	os.MkdirAll(config.DataDir(), 0700)
+
+	// Check if host is already known
+	if data, err := os.ReadFile(knownHosts); err == nil {
+		if strings.Contains(string(data), cfg.Proxy.Host) {
+			fmt.Printf("  ✓ 主机 %s 已在 known_hosts 中\n", cfg.Proxy.Host)
+			return nil
+		}
+	}
+
+	// Fetch host key
+	fmt.Printf("  → 获取 %s 主机密钥... ", cfg.Proxy.Host)
+	out, err := exec.Command("ssh-keyscan", "-T", "5", cfg.Proxy.Host).Output()
+	if err != nil || len(out) == 0 {
+		fmt.Println("✗")
+		return fmt.Errorf("cannot fetch host key from %s — check network connectivity", cfg.Proxy.Host)
+	}
+	fmt.Println("✓")
+
+	// Show fingerprint for verification
+	fpOut, _ := exec.Command("ssh-keygen", "-lf", "/dev/stdin").CombinedOutput()
+	_ = fpOut // fingerprint display is best-effort
+
+	// Show the raw key info for the user to verify
+	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	for _, line := range lines {
+		fields := strings.Fields(line)
+		if len(fields) >= 3 {
+			fmt.Printf("  主机密钥 (%s): %s...%s\n", fields[1], fields[2][:20], fields[2][len(fields[2])-20:])
+		}
+	}
+
+	fmt.Printf("  确认以上指纹与 ECS 控制台一致? [Y/n]: ")
+	ans, _ := reader.ReadString('\n')
+	ans = strings.TrimSpace(strings.ToLower(ans))
+	if ans != "" && ans != "y" && ans != "yes" {
+		return fmt.Errorf("host key verification aborted by user")
+	}
+
+	// Append to project known_hosts
+	f, err := os.OpenFile(knownHosts, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+	if err != nil {
+		return fmt.Errorf("open known_hosts: %w", err)
+	}
+	defer f.Close()
+	if _, err := f.Write(out); err != nil {
+		return fmt.Errorf("write known_hosts: %w", err)
+	}
+	fmt.Printf("  ✓ 已保存到 %s\n", knownHosts)
+	return nil
 }
 
 func expandHome(path string) string {

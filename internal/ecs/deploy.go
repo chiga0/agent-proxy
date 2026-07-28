@@ -6,11 +6,14 @@ import (
 	"net"
 	"net/http"
 	"os/exec"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/chiga0/agent-proxy/internal/config"
 )
+
+var squidTmpRe = regexp.MustCompile(`^/etc/squid/squid\.conf\.[A-Za-z0-9]+$`)
 
 func Deploy(cfg *config.Config) error {
 	steps := []struct {
@@ -20,8 +23,7 @@ func Deploy(cfg *config.Config) error {
 		{"Connectivity", func() error { return sshRun(cfg, "echo ok") }},
 		{"Install Squid", func() error { return installSquid(cfg) }},
 		{"System tuning", func() error {
-			// Best-effort: warn but don't fail if sysctl is unavailable
-			return sshRun(cfg, `grep -q tcp_fastopen /etc/sysctl.conf 2>/dev/null || echo "net.ipv4.tcp_fastopen = 3" >> /etc/sysctl.conf 2>/dev/null; sysctl -w net.ipv4.tcp_fastopen=3 >/dev/null 2>&1 || true; echo ok`)
+			return sshRun(cfg, `grep -q tcp_fastopen /etc/sysctl.conf 2>/dev/null || echo "net.ipv4.tcp_fastopen = 3" >> /etc/sysctl.conf; sysctl -w net.ipv4.tcp_fastopen=3 >/dev/null 2>&1`)
 		}},
 		{"Write Squid config", func() error { return writeSquidConfig(cfg) }},
 		// Note: writeSquidConfig → deploySquidConfig already restarts Squid.
@@ -34,6 +36,11 @@ func Deploy(cfg *config.Config) error {
 	for _, s := range steps {
 		fmt.Printf("  → %s... ", s.name)
 		if err := s.fn(); err != nil {
+			if s.name == "System tuning" {
+				// Best-effort: show warning but continue
+				fmt.Printf("⚠ (non-fatal: %v)\n", err)
+				continue
+			}
 			fmt.Println("✗")
 			return fmt.Errorf("%s: %w", s.name, err)
 		}
@@ -101,8 +108,8 @@ func deploySquidConfig(cfg *config.Config, conf string) error {
 		return fmt.Errorf("create temp file: %w", err)
 	}
 	tmpPath := strings.TrimSpace(tmpOut)
-	// Validate the path to guard against SSH banner/warning pollution
-	if !strings.HasPrefix(tmpPath, "/etc/squid/squid.conf.") || strings.ContainsAny(tmpPath, " \t\n;'\"\\") {
+	// Strict validation: guard against SSH banner/warning pollution
+	if !squidTmpRe.MatchString(tmpPath) {
 		return fmt.Errorf("unexpected mktemp output: %q", tmpPath)
 	}
 

@@ -75,7 +75,8 @@ func (p *ProxyConfig) SSHControlPath() string {
 // deploy, autostart, and trace.
 func (p *ProxyConfig) SSHBaseArgs() []string {
 	args := []string{
-		"-o", "StrictHostKeyChecking=accept-new",
+		"-o", "StrictHostKeyChecking=yes",
+		"-o", "UserKnownHostsFile=" + KnownHostsPath(),
 		"-o", "ConnectTimeout=10",
 	}
 	if p.SSHKey != "" {
@@ -112,6 +113,11 @@ func PACPath() string {
 
 func EnvPath() string {
 	return filepath.Join(DataDir(), EnvFile)
+}
+
+// KnownHostsPath returns the project-specific SSH known_hosts file.
+func KnownHostsPath() string {
+	return filepath.Join(DataDir(), "known_hosts")
 }
 
 func DefaultConfig() *Config {
@@ -188,7 +194,9 @@ func Load() (*Config, error) {
 			}
 		}
 		cfg.Whitelist = nil
-		cfg.Save()
+		if err := cfg.Save(); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to save migrated config: %v\n", err)
+		}
 	}
 
 	// Migrate legacy Basic auth credentials: detect and strip user/password

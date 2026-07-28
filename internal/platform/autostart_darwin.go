@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/chiga0/agent-proxy/internal/config"
 )
@@ -100,7 +101,9 @@ func installTunnelAgent(cfg *config.Config, dir string) error {
         <string>-o</string>
         <string>ExitOnForwardFailure=yes</string>
         <string>-o</string>
-        <string>StrictHostKeyChecking=accept-new</string>
+        <string>StrictHostKeyChecking=yes</string>
+        <string>-o</string>
+        ` + plistString("UserKnownHostsFile="+config.KnownHostsPath()) + `
         <string>-o</string>
         <string>BatchMode=yes</string>
         <string>-o</string>
@@ -155,11 +158,23 @@ func installPACAgent(self string, dir string) error {
 	return os.WriteFile(path, []byte(plist), 0644)
 }
 
-func UninstallAutoStart() {
+func UninstallAutoStart() error {
+	var errs []string
 	dir := launchAgentDir()
 	for _, label := range []string{tunnelLabel, pacLabel} {
 		path := filepath.Join(dir, label+".plist")
-		exec.Command("launchctl", "unload", path).Run()
-		os.Remove(path)
+		if out, err := exec.Command("launchctl", "unload", path).CombinedOutput(); err != nil {
+			// Ignore "not loaded" errors
+			if !strings.Contains(string(out), "not loaded") && !strings.Contains(string(out), "Could not find") {
+				errs = append(errs, fmt.Sprintf("unload %s: %s", label, strings.TrimSpace(string(out))))
+			}
+		}
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			errs = append(errs, fmt.Sprintf("remove %s: %v", label, err))
+		}
 	}
+	if len(errs) > 0 {
+		return fmt.Errorf("autostart cleanup: %s", strings.Join(errs, "; "))
+	}
+	return nil
 }

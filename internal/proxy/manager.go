@@ -276,7 +276,9 @@ func Off(cfg *config.Config) error {
 	}
 
 	// 4. Remove auto-start
-	platform.UninstallAutoStart()
+	if err := platform.UninstallAutoStart(); err != nil {
+		errs = append(errs, fmt.Sprintf("autostart: %v", err))
+	}
 
 	// 5. Remove CLI env file
 	if err := os.Remove(config.EnvPath()); err != nil && !os.IsNotExist(err) {

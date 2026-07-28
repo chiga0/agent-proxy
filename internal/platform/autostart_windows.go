@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/chiga0/agent-proxy/internal/config"
 )
@@ -30,8 +31,8 @@ func InstallAutoStart(cfg *config.Config) error {
 	if cfg.Proxy.Tunnel && cfg.Proxy.SSHKey != "" {
 		user := cfg.Proxy.SSHUserOrRoot()
 		sshArgs := fmt.Sprintf(
-			`ssh -i "%s" -N -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o StrictHostKeyChecking=accept-new -o BatchMode=yes -o ControlMaster=auto -o ControlPath="%s" -o ControlPersist=600 -L %d:127.0.0.1:%d %s@%s`,
-			cfg.Proxy.SSHKey, cfg.Proxy.SSHControlPath(), cfg.Proxy.LocalPort(), cfg.Proxy.Port, user, cfg.Proxy.Host,
+			`ssh -i "%s" -N -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="%s" -o BatchMode=yes -o ControlMaster=auto -o ControlPath="%s" -o ControlPersist=600 -L %d:127.0.0.1:%d %s@%s`,
+			cfg.Proxy.SSHKey, config.KnownHostsPath(), cfg.Proxy.SSHControlPath(), cfg.Proxy.LocalPort(), cfg.Proxy.Port, user, cfg.Proxy.Host,
 		)
 		if err := createTask(tunnelTaskName, sshArgs); err != nil {
 			return fmt.Errorf("create tunnel task: %w", err)
@@ -61,8 +62,18 @@ func createTask(name, command string) error {
 	return nil
 }
 
-func UninstallAutoStart() {
+func UninstallAutoStart() error {
+	var errs []string
 	for _, name := range []string{pacTaskName, tunnelTaskName} {
-		exec.Command("schtasks", "/Delete", "/TN", name, "/F").Run()
+		if out, err := exec.Command("schtasks", "/Delete", "/TN", name, "/F").CombinedOutput(); err != nil {
+			output := strings.TrimSpace(string(out))
+			if !strings.Contains(output, "not found") && !strings.Contains(output, "找不到") {
+				errs = append(errs, fmt.Sprintf("delete %s: %s", name, output))
+			}
+		}
 	}
+	if len(errs) > 0 {
+		return fmt.Errorf("autostart cleanup: %s", strings.Join(errs, "; "))
+	}
+	return nil
 }

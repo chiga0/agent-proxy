@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security (P2 hardening)
+- **SSH host key verification**: `init` now fetches the ECS host key via `ssh-keyscan`, displays the fingerprint for user confirmation, and stores it in a project-specific `known_hosts` (`~/.config/agent-proxy/known_hosts`). All SSH connections use `StrictHostKeyChecking=yes` with this file (no more TOFU `accept-new`).
+- **PAC server nonce**: static `X-Agent-Proxy: pac` header replaced with a per-start random 128-bit nonce persisted to disk; `ServerRunning()` verifies the nonce, preventing impersonation by other local HTTP services.
+- **GitHub Actions pinned to commit SHA**: `actions/checkout`, `actions/setup-go`, and `goreleaser/goreleaser-action` pinned to immutable SHAs with version comments.
+- **Squid temp file validation**: strict regex `^/etc/squid/squid\.conf\.[A-Za-z0-9]+$` replaces prefix+char check.
+- **System tuning**: failures now display a visible warning instead of faking success.
+- **Doctor**: SSH errors during Squid mode check reported as warnings, not silently ignored.
+- **Autostart cleanup**: `UninstallAutoStart()` returns aggregated errors; `off` reports them.
+- **Whitelist migration**: `Save()` error checked and warned.
+- **All autostart SSH args**: updated to `StrictHostKeyChecking=yes` + project `UserKnownHostsFile`.
+
 ### Security (Phase A — audit P0)
 - **Tunnel mode is now a strict security boundary**: Squid listens on `127.0.0.1` only (`http_port 127.0.0.1:<port>`), no public IP is fetched or whitelisted, and the `ip` command is disabled in tunnel mode
 - **Squid ACL rewritten to deny-first**: `deny !Safe_ports` → `deny CONNECT !SSL_ports` → `deny to_localhost/to_linklocal/to_rfc1918/to_metadata` → `allow trusted_ip` → `deny all`

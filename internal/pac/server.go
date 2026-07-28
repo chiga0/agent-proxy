@@ -2,9 +2,12 @@ package pac
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -16,7 +19,38 @@ var (
 	srv      *http.Server
 )
 
+func noncePath() string {
+	return filepath.Join(config.DataDir(), "pac-nonce")
+}
+
+// generateNonce creates a random nonce and persists it to disk.
+func generateNonce() (string, error) {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	nonce := hex.EncodeToString(b)
+	os.MkdirAll(config.DataDir(), 0700)
+	if err := os.WriteFile(noncePath(), []byte(nonce), 0600); err != nil {
+		return "", err
+	}
+	return nonce, nil
+}
+
+// readNonce reads the persisted nonce.
+func readNonce() string {
+	data, err := os.ReadFile(noncePath())
+	if err != nil {
+		return ""
+	}
+	return string(data)
+}
+
 func ServerRunning() bool {
+	nonce := readNonce()
+	if nonce == "" {
+		return false
+	}
 	client := &http.Client{
 		Timeout:   500 * time.Millisecond,
 		Transport: &http.Transport{Proxy: nil},
@@ -26,8 +60,21 @@ func ServerRunning() bool {
 		return false
 	}
 	resp.Body.Close()
-	// Verify this is our PAC server, not another HTTP service on the same port
-	return resp.StatusCode == 200 && resp.Header.Get("X-Agent-Proxy") == "pac"
+	return resp.StatusCode == 200 && resp.Header.Get("X-Agent-Proxy") == nonce
+}
+
+func pacHandler(nonce string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		data, err := os.ReadFile(config.PACPath())
+		if err != nil {
+			http.Error(w, "PAC not found", 404)
+			return
+		}
+		w.Header().Set("Content-Type", "application/x-ns-proxy-autoconfig")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("X-Agent-Proxy", nonce)
+		w.Write(data)
+	}
 }
 
 func StartServer() error {
@@ -38,18 +85,13 @@ func StartServer() error {
 		return nil
 	}
 
+	nonce, err := generateNonce()
+	if err != nil {
+		return fmt.Errorf("generate PAC nonce: %w", err)
+	}
+
 	mux := http.NewServeMux()
-	mux.HandleFunc("/proxy.pac", func(w http.ResponseWriter, r *http.Request) {
-		data, err := os.ReadFile(config.PACPath())
-		if err != nil {
-			http.Error(w, "PAC not found", 404)
-			return
-		}
-		w.Header().Set("Content-Type", "application/x-ns-proxy-autoconfig")
-		w.Header().Set("Cache-Control", "no-cache")
-		w.Header().Set("X-Agent-Proxy", "pac")
-		w.Write(data)
-	})
+	mux.HandleFunc("/proxy.pac", pacHandler(nonce))
 
 	srv = &http.Server{
 		Addr:    fmt.Sprintf("127.0.0.1:%d", config.PACPort),
@@ -84,23 +126,19 @@ func StopServer() {
 	defer cancel()
 	srv.Shutdown(ctx)
 	srv = nil
+	os.Remove(noncePath())
 }
 
 // ServeForeground runs the PAC HTTP server in the foreground (blocking).
 // Used by the hidden "serve-pac" command for daemon mode.
 func ServeForeground() error {
+	nonce, err := generateNonce()
+	if err != nil {
+		return fmt.Errorf("generate PAC nonce: %w", err)
+	}
+
 	mux := http.NewServeMux()
-	mux.HandleFunc("/proxy.pac", func(w http.ResponseWriter, r *http.Request) {
-		data, err := os.ReadFile(config.PACPath())
-		if err != nil {
-			http.Error(w, "PAC not found", 404)
-			return
-		}
-		w.Header().Set("Content-Type", "application/x-ns-proxy-autoconfig")
-		w.Header().Set("Cache-Control", "no-cache")
-		w.Header().Set("X-Agent-Proxy", "pac")
-		w.Write(data)
-	})
+	mux.HandleFunc("/proxy.pac", pacHandler(nonce))
 
 	s := &http.Server{
 		Addr:    fmt.Sprintf("127.0.0.1:%d", config.PACPort),
