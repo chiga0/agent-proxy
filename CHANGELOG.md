@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.4] - 2026-07-28
+
+### Fixed
+- **P0**: PAC server daemon now uses `Setsid` (Unix) / `CREATE_NEW_PROCESS_GROUP` (Windows) — survives terminal close and shell exit
+- **P0**: `stopPACDaemon()` cleans up legacy `__pac-server` processes from v0.3.x — prevents port 18080 conflict after upgrade
+- **P1**: `ServerRunning()` health check uses `Transport{Proxy: nil}` — avoids proxy env var loop when `NO_PROXY` missing `127.0.0.1`
+- **P1**: `doctor` skips raw SSH port check in tunnel mode — eliminates false-negative `✗ SSH (22)` when tunnel is working
+
+### Changed
+- SSH tunnel: prefer `aes128-gcm@openssh.com` (ARM hardware acceleration), `Compression=no` (HTTPS already compressed), `ServerAliveInterval=30` (faster dead-peer detection), `IPQoS=throughput` (DSCP marking)
+- Squid: `pconn_timeout 2 minutes`, `half_closed_clients off`, DNS cache (`positive_dns_ttl 1h`), `max_filedescriptors 65536`
+- Added design doc: `docs/network-optimization.md`
+
 ## [0.4.3] - 2026-07-28
 
 ### Fixed
