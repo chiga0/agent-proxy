@@ -13,8 +13,10 @@ var Presets = map[string]PresetInfo{
 			// Anthropic / Claude
 			"anthropic.com",
 			"claude.ai",
-			// Google AI / Gemini
+			// Google AI / Gemini (specific domains only — CDN goes direct)
 			"gemini.google.com",
+			"gemini.gstatic.com",
+			"clients6.google.com",
 			"googleapis.com",
 			"generativelanguage.googleapis.com",
 			"ai.google.dev",
@@ -63,13 +65,23 @@ var Presets = map[string]PresetInfo{
 	"search": {
 		Description: "Search engines and knowledge bases",
 		Domains: []string{
-			"google.com",
-			"www.google.com",
-			"gstatic.com",
-			"googleusercontent.com",
-			"google-analytics.com",
-			"googletagmanager.com",
+			// Google services blocked in China (specific subdomains only)
+			// CDN domains (gstatic.com, googleusercontent.com) go direct for speed
+			"mail.google.com",
+			"docs.google.com",
+			"drive.google.com",
+			"photos.google.com",
+			"scholar.google.com",
+			"maps.google.com",
+			"translate.google.com",
+			"calendar.google.com",
+			"contacts.google.com",
+			"keep.google.com",
+			"classroom.google.com",
+			"sites.google.com",
+			// YouTube thumbnails (blocked)
 			"ggpht.com",
+			// Other search engines
 			"duckduckgo.com",
 			"bing.com",
 			"wikipedia.org",
