@@ -246,13 +246,17 @@ func TestValidate(t *testing.T) {
 func TestSaveAndLoad(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("HOME", tmpDir)
+	t.Setenv("USERPROFILE", tmpDir) // Windows uses USERPROFILE
 
 	cfg := DefaultConfig()
 	cfg.Proxy.Host = "10.0.0.1"
 	if err := cfg.Save(); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
-	info, _ := os.Stat(filepath.Join(tmpDir, ConfigDir, ConfigFile))
+	info, err := os.Stat(filepath.Join(tmpDir, ConfigDir, ConfigFile))
+	if err != nil {
+		t.Fatalf("Stat: %v", err)
+	}
 	if info.Mode().Perm() != 0600 {
 		t.Errorf("perm = %o", info.Mode().Perm())
 	}
