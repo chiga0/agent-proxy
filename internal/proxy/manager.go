@@ -149,6 +149,7 @@ func startPACDaemon() (bool, error) {
 	cmd.Stdout = nil
 	cmd.Stderr = nil
 	cmd.Stdin = nil
+	platform.DetachProcess(cmd)
 	if err := cmd.Start(); err != nil {
 		return false, err
 	}
@@ -177,38 +178,41 @@ func startPACDaemon() (bool, error) {
 func stopPACDaemon() {
 	if data, err := os.ReadFile(pacPIDFile()); err == nil {
 		if pid, err := strconv.Atoi(strings.TrimSpace(string(data))); err == nil {
-			killIfPACServer(pid)
+			killIfPACServer(pid, "serve-pac", "__pac-server")
 		}
 		os.Remove(pacPIDFile())
-		return
 	}
-	// Fallback: pgrep
-	out, err := exec.Command("pgrep", "-f", "serve-pac").Output()
-	if err != nil {
-		return
-	}
-	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" {
+	// Fallback: pgrep both current and legacy command names
+	for _, pattern := range []string{"serve-pac", "__pac-server"} {
+		out, err := exec.Command("pgrep", "-f", pattern).Output()
+		if err != nil {
 			continue
 		}
-		if pid, err := strconv.Atoi(line); err == nil {
-			killIfPACServer(pid)
+		for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+			line = strings.TrimSpace(line)
+			if line == "" {
+				continue
+			}
+			if pid, err := strconv.Atoi(line); err == nil {
+				killIfPACServer(pid, pattern)
+			}
 		}
 	}
 }
 
-// killIfPACServer kills a PID only if it looks like our agent-proxy process.
-func killIfPACServer(pid int) {
+// killIfPACServer kills a PID only if its args contain one of the expected patterns.
+func killIfPACServer(pid int, patterns ...string) {
 	out, err := exec.Command("ps", "-p", strconv.Itoa(pid), "-o", "args=").Output()
 	if err != nil {
 		return
 	}
 	args := string(out)
-	if !strings.Contains(args, "serve-pac") {
-		return // PID was reused by a different process
+	for _, p := range patterns {
+		if strings.Contains(args, p) {
+			exec.Command("kill", strconv.Itoa(pid)).Run()
+			return
+		}
 	}
-	exec.Command("kill", strconv.Itoa(pid)).Run()
 }
 
 func writeEnvFile(cfg *config.Config) error {
