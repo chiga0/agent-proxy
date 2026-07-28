@@ -13,7 +13,8 @@ import (
 func FindPIDsByPattern(pattern string) []int {
 	// Escape single quotes for PowerShell
 	escaped := strings.ReplaceAll(pattern, "'", "''")
-	script := "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*" + escaped + "*' } | ForEach-Object { $_.ProcessId }"
+	// Exclude $PID (the PowerShell process itself) to avoid self-match
+	script := "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*" + escaped + "*' -and $_.ProcessId -ne $PID } | ForEach-Object { $_.ProcessId }"
 	out, err := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", script).Output()
 	if err != nil {
 		return nil
