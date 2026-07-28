@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-07-28
+
+### Changed
+- Split Google wildcards (`google.com`, `gstatic.com`, `googleusercontent.com`) into specific blocked services — CDN domains now go direct for speed
+- Added `clients6.google.com` and `gemini.gstatic.com` to ai preset for Gemini API
+- Removed `google-analytics.com` and `googletagmanager.com` from search preset (tracking scripts accessible from China)
+- Removed WireGuard/udp2raw tunnel code (adds complexity without benefit in UDP-blocked networks)
+
+### Performance
+- Gemini page load: 15s → 3.1s (5x faster) by letting CDN resources load direct
+
+## [0.5.0] - 2026-07-28
+
+### Added
+- SSH ControlMaster/ControlPersist=600 for connection multiplexing
+- TCP Fast Open (TFO) on ECS — saves 1 RTT per TCP handshake
+- Squid `collapsed_forwarding on` — deduplicates concurrent identical requests
+
+### Changed
+- SSH tunnel: `ServerAliveInterval=30` (was 60), `IPQoS=throughput`, `TCPKeepAlive=yes`
+
+### Performance
+- Tunnel TTFB variance: 1.52s → 0.04s (97% reduction)
+- 5s+ outlier eliminated
+- Average tunnel TTFB: 2.46s → 1.50s (39% faster)
+
 ## [0.4.4] - 2026-07-28
 
 ### Fixed

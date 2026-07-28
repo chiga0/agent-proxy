@@ -61,14 +61,21 @@ func (p *ProxyConfig) LocalPort() int {
 	return p.Port
 }
 
+func homeDir() string {
+	home, err := os.UserHomeDir()
+	if err != nil || home == "" {
+		fmt.Fprintf(os.Stderr, "Warning: cannot determine home directory: %v\n", err)
+		return "."
+	}
+	return home
+}
+
 func ConfigPath() string {
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ConfigDir, ConfigFile)
+	return filepath.Join(homeDir(), ConfigDir, ConfigFile)
 }
 
 func DataDir() string {
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ConfigDir)
+	return filepath.Join(homeDir(), ConfigDir)
 }
 
 func PACPath() string {

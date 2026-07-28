@@ -49,10 +49,10 @@ var Presets = map[string]PresetInfo{
 			"files.pythonhosted.org",
 			"crates.io",
 			"rubygems.org",
-			// Go
+			// Go (proxy.golang.org intentionally excluded — it's in no_proxy
+			// defaults for CLI tooling; add as custom domain if browser access needed)
 			"go.dev",
 			"pkg.go.dev",
-			"proxy.golang.org",
 			// Rust
 			"docs.rs",
 			// Docker
