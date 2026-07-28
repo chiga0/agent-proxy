@@ -27,9 +27,13 @@ func Start(cfg *config.Config) (bool, error) {
 	args := []string{
 		"-f", "-N",
 		"-o", "StrictHostKeyChecking=accept-new",
-		"-o", "ServerAliveInterval=60",
+		"-o", "ServerAliveInterval=30",
 		"-o", "ServerAliveCountMax=3",
 		"-o", "ExitOnForwardFailure=yes",
+		"-o", "Ciphers=aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com",
+		"-o", "Compression=no",
+		"-o", "IPQoS=throughput",
+		"-o", "TCPKeepAlive=yes",
 	}
 	if cfg.Proxy.SSHKey != "" {
 		args = append(args, "-i", cfg.Proxy.SSHKey)

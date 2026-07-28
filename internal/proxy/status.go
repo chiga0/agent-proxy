@@ -27,14 +27,15 @@ type CheckResult struct {
 }
 
 func Status(cfg *config.Config) []CheckResult {
-	results := []CheckResult{
-		checkSSH(cfg),
-	}
+	var results []CheckResult
 
 	if cfg.Proxy.Tunnel {
-		results = append(results, checkTunnel(cfg))
+		results = append(results,
+			CheckResult{"SSH (22)", true, "via tunnel — direct check skipped"},
+			checkTunnel(cfg),
+		)
 	} else {
-		results = append(results, checkPort(cfg))
+		results = append(results, checkSSH(cfg), checkPort(cfg))
 	}
 
 	results = append(results,

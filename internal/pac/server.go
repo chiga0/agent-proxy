@@ -17,7 +17,10 @@ var (
 )
 
 func ServerRunning() bool {
-	client := &http.Client{Timeout: 500 * time.Millisecond}
+	client := &http.Client{
+		Timeout:   500 * time.Millisecond,
+		Transport: &http.Transport{Proxy: nil},
+	}
 	resp, err := client.Get(fmt.Sprintf("http://127.0.0.1:%d/proxy.pac", config.PACPort))
 	if err != nil {
 		return false

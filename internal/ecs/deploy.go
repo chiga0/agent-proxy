@@ -147,8 +147,16 @@ func generateSquidConfig(cfg *config.Config, trustedIP string) string {
 	b.WriteString("# Performance\n")
 	b.WriteString("server_persistent_connections on\n")
 	b.WriteString("client_persistent_connections on\n")
-	b.WriteString("persistent_request_timeout 30 seconds\n")
-	b.WriteString("pconn_timeout 1 minute\n")
+	b.WriteString("persistent_request_timeout 60 seconds\n")
+	b.WriteString("pconn_timeout 2 minutes\n")
+	b.WriteString("half_closed_clients off\n")
+	b.WriteString("read_timeout 5 minutes\n")
+	b.WriteString("connect_timeout 10 seconds\n\n")
+	b.WriteString("# DNS cache\n")
+	b.WriteString("positive_dns_ttl 1 hours\n")
+	b.WriteString("negative_dns_ttl 30 seconds\n\n")
+	b.WriteString("# File descriptors\n")
+	b.WriteString("max_filedescriptors 65536\n")
 
 	return b.String()
 }
