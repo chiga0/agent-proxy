@@ -182,31 +182,20 @@ func stopPACDaemon() {
 		}
 		os.Remove(pacPIDFile())
 	}
-	// Fallback: pgrep both current and legacy command names
+	// Fallback: find both current and legacy command names
 	for _, pattern := range []string{"serve-pac", "__pac-server"} {
-		out, err := exec.Command("pgrep", "-f", pattern).Output()
-		if err != nil {
-			continue
-		}
-		for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
-			line = strings.TrimSpace(line)
-			if line == "" {
-				continue
-			}
-			if pid, err := strconv.Atoi(line); err == nil {
-				killIfPACServer(pid, pattern)
-			}
+		for _, pid := range platform.FindPIDsByPattern(pattern) {
+			killIfPACServer(pid, pattern)
 		}
 	}
 }
 
 // killIfPACServer kills a PID only if its args contain one of the expected patterns.
 func killIfPACServer(pid int, patterns ...string) {
-	out, err := exec.Command("ps", "-p", strconv.Itoa(pid), "-o", "args=").Output()
-	if err != nil {
+	args := platform.GetProcessArgs(pid)
+	if args == "" {
 		return
 	}
-	args := string(out)
 	for _, p := range patterns {
 		if strings.Contains(args, p) {
 			exec.Command("kill", strconv.Itoa(pid)).Run()

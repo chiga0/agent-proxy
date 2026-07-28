@@ -74,7 +74,18 @@ func CheckSSH(cfg *config.Config) error {
 }
 
 func installSquid(cfg *config.Config) error {
-	return sshRun(cfg, "apt update -qq && apt install -y -qq squid apache2-utils >/dev/null 2>&1")
+	// Detect package manager and install accordingly
+	cmd := `if command -v apt >/dev/null 2>&1; then
+		apt update -qq && apt install -y -qq squid apache2-utils >/dev/null 2>&1
+	elif command -v yum >/dev/null 2>&1; then
+		yum install -y -q squid httpd-tools >/dev/null 2>&1
+	elif command -v apk >/dev/null 2>&1; then
+		apk add --quiet squid apache2-utils >/dev/null 2>&1
+	else
+		echo "ERROR: unsupported package manager (need apt, yum, or apk)" >&2
+		exit 1
+	fi`
+	return sshRun(cfg, cmd)
 }
 
 func configureAuth(cfg *config.Config) error {

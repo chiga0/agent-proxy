@@ -20,6 +20,7 @@ import (
 
 var cfg *config.Config
 var version = "dev"
+var verbose bool
 
 func main() {
 	root := &cobra.Command{
@@ -48,12 +49,13 @@ Quick start:
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
+	root.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output")
 
 	root.AddCommand(
 		cmdOn(), cmdOff(), cmdStatus(), cmdDoctor(),
 		cmdInit(), cmdWhitelist(), cmdPreset(),
 		cmdSetup(), cmdIP(), cmdBench(), cmdTrace(),
-		cmdVersion(), cmdServePAC(),
+		cmdVersion(), cmdServePAC(), cmdUpdate(),
 	)
 
 	if err := root.Execute(); err != nil {
@@ -209,6 +211,10 @@ func cmdInit() *cobra.Command {
 			if cfg.Proxy.Host == "" {
 				return fmt.Errorf("server IP is required")
 			}
+			// Basic validation: reject URLs and spaces
+			if strings.Contains(cfg.Proxy.Host, "://") || strings.Contains(cfg.Proxy.Host, " ") {
+				return fmt.Errorf("invalid server address %q — enter IP or hostname only (no http:// prefix)", cfg.Proxy.Host)
+			}
 
 			fmt.Printf("SSH 用户 [root]: ")
 			sshUser, _ := reader.ReadString('\n')
@@ -237,7 +243,11 @@ func cmdInit() *cobra.Command {
 			fmt.Printf("代理端口 [%d]: ", cfg.Proxy.Port)
 			port, _ := reader.ReadString('\n')
 			if p := strings.TrimSpace(port); p != "" {
-				fmt.Sscanf(p, "%d", &cfg.Proxy.Port)
+				var portNum int
+				if _, err := fmt.Sscanf(p, "%d", &portNum); err != nil || portNum < 1 || portNum > 65535 {
+					return fmt.Errorf("invalid port %q — must be a number between 1 and 65535", p)
+				}
+				cfg.Proxy.Port = portNum
 			}
 
 			// --- Step 2: SSH connectivity check ---
@@ -577,6 +587,22 @@ func cmdVersion() *cobra.Command {
 		Use: "version", Short: "Print version",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Printf("agent-proxy %s\n", version)
+		},
+	}
+}
+
+func cmdUpdate() *cobra.Command {
+	return &cobra.Command{
+		Use:   "update",
+		Short: "Update agent-proxy to the latest version",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Println("Updating agent-proxy...")
+			c := exec.Command("bash", "-c",
+				"curl -fsSL https://raw.githubusercontent.com/chiga0/agent-proxy/main/install.sh | bash")
+			c.Stdin = os.Stdin
+			c.Stdout = os.Stdout
+			c.Stderr = os.Stderr
+			return c.Run()
 		},
 	}
 }

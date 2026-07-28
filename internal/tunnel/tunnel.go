@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/chiga0/agent-proxy/internal/config"
+	"github.com/chiga0/agent-proxy/internal/platform"
 )
 
 func pidFile() string {
@@ -73,22 +74,14 @@ func Stop(cfg *config.Config) {
 		os.Remove(pidFile())
 		return
 	}
-	// Fallback: pgrep with specific pattern
+	// Fallback: find by pattern
 	user := cfg.Proxy.SSHUser
 	if user == "" {
 		user = "root"
 	}
 	pattern := fmt.Sprintf("ssh.*-L.*%d:127.0.0.1:%d.*%s@%s",
 		cfg.Proxy.LocalPort(), cfg.Proxy.Port, user, cfg.Proxy.Host)
-	out, err := exec.Command("pgrep", "-f", pattern).Output()
-	if err != nil {
-		return
-	}
-	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
-		pid, err := strconv.Atoi(strings.TrimSpace(line))
-		if err != nil {
-			continue
-		}
+	for _, pid := range platform.FindPIDsByPattern(pattern) {
 		killIfSSH(pid)
 	}
 }
@@ -97,7 +90,7 @@ func Stop(cfg *config.Config) {
 func Running(cfg *config.Config) bool {
 	if data, err := os.ReadFile(pidFile()); err == nil {
 		if pid, err := strconv.Atoi(strings.TrimSpace(string(data))); err == nil {
-			if !isProcessAlive(pid) {
+			if !platform.IsProcessAlive(pid) {
 				os.Remove(pidFile())
 				return false
 			}
@@ -114,29 +107,16 @@ func Running(cfg *config.Config) bool {
 
 // killIfSSH kills a PID only if it looks like an ssh process.
 func killIfSSH(pid int) {
-	if !isProcessAlive(pid) {
+	if !platform.IsProcessAlive(pid) {
 		return
 	}
-	// Verify the process is actually ssh
-	out, err := exec.Command("ps", "-p", strconv.Itoa(pid), "-o", "comm=").Output()
-	if err != nil {
-		return
-	}
-	comm := strings.TrimSpace(string(out))
-	if comm != "ssh" && !strings.HasSuffix(comm, "/ssh") {
+	comm := platform.GetProcessName(pid)
+	if comm != "ssh" && !strings.HasSuffix(comm, "/ssh") && !strings.HasSuffix(comm, "\\ssh.exe") {
 		return // PID was reused by a different process
 	}
 	if proc, err := os.FindProcess(pid); err == nil {
 		proc.Kill()
 	}
-}
-
-func isProcessAlive(pid int) bool {
-	proc, err := os.FindProcess(pid)
-	if err != nil {
-		return false
-	}
-	return proc.Signal(nil) == nil
 }
 
 func savePID(cfg *config.Config) {
@@ -146,13 +126,9 @@ func savePID(cfg *config.Config) {
 	}
 	pattern := fmt.Sprintf("ssh.*-L.*%d:127.0.0.1:%d.*%s@%s",
 		cfg.Proxy.LocalPort(), cfg.Proxy.Port, user, cfg.Proxy.Host)
-	out, err := exec.Command("pgrep", "-f", pattern).Output()
-	if err != nil {
-		return
-	}
-	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
-	if len(lines) > 0 {
+	pids := platform.FindPIDsByPattern(pattern)
+	if len(pids) > 0 {
 		os.MkdirAll(config.DataDir(), 0700)
-		os.WriteFile(pidFile(), []byte(strings.TrimSpace(lines[0])), 0644)
+		os.WriteFile(pidFile(), []byte(strconv.Itoa(pids[0])), 0644)
 	}
 }

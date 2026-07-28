@@ -9,7 +9,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -136,6 +135,9 @@ func DetectSNIBlock(cfg *config.Config) bool {
 		return false
 	}
 
+	// InsecureSkipVerify is intentional: we only test whether the TLS
+	// handshake completes or is reset by GFW SNI filtering. We do not
+	// care about certificate validity for this diagnostic probe.
 	tlsConn := tls.Client(conn, &tls.Config{
 		ServerName:         "google.com",
 		InsecureSkipVerify: true,
@@ -163,11 +165,11 @@ func checkPAC(cfg *config.Config) CheckResult {
 }
 
 func checkPACFile(cfg *config.Config) CheckResult {
-	data, err := exec.Command("grep", "-c", "dnsDomainIs", config.PACPath()).Output()
+	count, err := platform.CountPatternInFile(config.PACPath(), "dnsDomainIs")
 	if err != nil {
 		return CheckResult{"PAC file", false, "not found"}
 	}
-	return CheckResult{"PAC file", true, strings.TrimSpace(string(data)) + " domains"}
+	return CheckResult{"PAC file", true, fmt.Sprintf("%d domains", count)}
 }
 
 func checkPACServer() CheckResult {
