@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-07-28
+
+### Fixed
+- **P0**: Deleted stale `docs/known-issues.md` (all listed issues already fixed)
+- **P0**: Removed `proxy.golang.org` from dev preset — was in both dev (PAC → proxy) and `no_proxy` (CLI → direct), causing split-brain routing
+- **P0**: Replaced Unix-only `grep`/`pgrep`/`ps` shell calls with cross-platform `internal/platform` helpers (build-tagged `proc_unix.go` / `proc_windows.go`)
+- **P1**: `os.UserHomeDir()` error handling with fallback warning instead of silent empty path
+- **P1**: `init` wizard validates port input and rejects URL-style server addresses
+- **P1**: `installSquid` detects `apt`/`yum`/`apk` package managers (was Debian-only)
+- **P1**: Replaced `checkPACFile` shell `grep` with pure Go `strings.Count`
+- **P1**: Fixed `isProcessAlive` on Windows (uses platform helper instead of `kill -0`)
+
+### Added
+- CI matrix: ubuntu + macOS + Windows (was ubuntu-only)
+- `--verbose` / `-v` global flag
+- `agent-proxy update` self-update command
+- Tests for `platform`, `proxy`, `tunnel` packages (3 new test files)
+
+### Changed
+- `SECURITY.md` supported versions updated to 0.4.x / 0.5.x
+
 ## [0.5.1] - 2026-07-28
 
 ### Changed
