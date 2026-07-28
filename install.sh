@@ -145,6 +145,38 @@ main() {
   info "Downloading ${archive_url}..."
   download "$archive_url" "${tmp_dir}/archive.${ext}"
 
+  # Verify checksum
+  local checksums_url
+  if [[ "$MIRROR" == "oss" ]]; then
+    checksums_url="${OSS_BASE}/releases/${tag}/checksums.txt"
+  else
+    checksums_url="https://github.com/${REPO}/releases/download/${tag}/checksums.txt"
+  fi
+  info "Verifying checksum..."
+  if download "$checksums_url" "${tmp_dir}/checksums.txt" 2>/dev/null; then
+    local expected_sha
+    expected_sha=$(grep "$filename" "${tmp_dir}/checksums.txt" | awk '{print $1}')
+    if [[ -n "$expected_sha" ]]; then
+      local actual_sha
+      if command -v sha256sum &>/dev/null; then
+        actual_sha=$(sha256sum "${tmp_dir}/archive.${ext}" | awk '{print $1}')
+      elif command -v shasum &>/dev/null; then
+        actual_sha=$(shasum -a 256 "${tmp_dir}/archive.${ext}" | awk '{print $1}')
+      else
+        warn "No sha256sum or shasum found — skipping checksum verification"
+        actual_sha="$expected_sha"
+      fi
+      if [[ "$actual_sha" != "$expected_sha" ]]; then
+        error "Checksum mismatch! Expected: $expected_sha Got: $actual_sha"
+      fi
+      info "Checksum verified ✓"
+    else
+      warn "No checksum entry for $filename — skipping verification"
+    fi
+  else
+    warn "Could not download checksums.txt — skipping verification"
+  fi
+
   # Extract
   info "Extracting..."
   if [[ "$ext" == "tar.gz" ]]; then

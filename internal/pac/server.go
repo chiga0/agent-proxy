@@ -26,7 +26,8 @@ func ServerRunning() bool {
 		return false
 	}
 	resp.Body.Close()
-	return resp.StatusCode == 200
+	// Verify this is our PAC server, not another HTTP service on the same port
+	return resp.StatusCode == 200 && resp.Header.Get("X-Agent-Proxy") == "pac"
 }
 
 func StartServer() error {
@@ -46,6 +47,7 @@ func StartServer() error {
 		}
 		w.Header().Set("Content-Type", "application/x-ns-proxy-autoconfig")
 		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("X-Agent-Proxy", "pac")
 		w.Write(data)
 	})
 
@@ -96,6 +98,7 @@ func ServeForeground() error {
 		}
 		w.Header().Set("Content-Type", "application/x-ns-proxy-autoconfig")
 		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("X-Agent-Proxy", "pac")
 		w.Write(data)
 	})
 

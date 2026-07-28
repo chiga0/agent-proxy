@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security (Phase A — audit P0)
+- **Tunnel mode is now a strict security boundary**: Squid listens on `127.0.0.1` only (`http_port 127.0.0.1:<port>`), no public IP is fetched or whitelisted, and the `ip` command is disabled in tunnel mode
+- **Squid ACL rewritten to deny-first**: `deny !Safe_ports` → `deny CONNECT !SSL_ports` → `deny to_localhost/to_linklocal/to_rfc1918/to_metadata` → `allow trusted_ip` → `deny all`
+- **Init flow reordered**: tunnel/direct choice is now made *before* Squid deployment, so the Squid config is generated with the correct security model from the start
+- **Removed Basic auth entirely**: `user`/`password` fields, `HasAuth()`, `configureAuth()`, `htpasswd`, `basic_ncsa_auth` ACLs, and Proxy-Authorization header injection are all removed
+- **Public IP fetch hardened**: uses Go HTTP client with environment proxy disabled, validates HTTP status, response size, IP format, and rejects loopback/private/link-local addresses
+- **Squid config deployment is transactional**: temp file → syntax check → backup → atomic replace → restart → health check → rollback on failure
+- **Strict config validation**: mutating commands (`on`, `off`, `setup`, `ip`) now fail on invalid config instead of warning
+
+### Security (Phase B — audit P1)
+- **PAC state save/restore**: `on` saves the original system PAC URL and enabled state; `off` restores it instead of blindly clearing; only modifies PAC if it still belongs to agent-proxy
+- **SSH ControlPath management**: tunnel uses `ssh -O check/-O exit` via ControlMaster socket for precise lifecycle control, replacing fragile PID-file + pattern-matching approach
+- **PAC server identity**: responses include `X-Agent-Proxy: pac` header; `ServerRunning()` verifies the header to avoid false positives from other HTTP services on the same port
+- **Windows tunnel autostart**: added `AgentProxyTunnel` scheduled task alongside the existing PAC task
+- **Autostart error propagation**: macOS/Linux autostart now returns errors for directory creation, file writes, and service registration instead of silently swallowing them
+- **Unified SSH parameters**: all SSH consumers (tunnel, deploy, autostart, trace) use shared `SSHBaseArgs()`/`SSHTarget()` from config; autostart uses `BatchMode=yes`, matching ciphers and ControlPath
+- **Autostart logs**: moved from fixed `/tmp/*.log` to `~/.config/agent-proxy/logs/`
+
+### Security (Phase C — audit P2)
+- **Install script verifies SHA-256 checksums** from release `checksums.txt` before extraction
+- **`update` command** uses the versioned release tag URL instead of executing the mutable `main` branch script
+- **CI**: added `gofmt` check and `go test -race` (non-Windows)
+- **Formatted** `internal/bench/bench.go` and `internal/trace/trace.go`
+- **Docs**: README security section rewritten to describe SSH tunnel as the security boundary; CLI vs PAC routing semantics clarified; shell autoload instructions corrected; Go 1.24+ badge
+
+### Removed
+- `ProxyConfig.User` / `ProxyConfig.Password` fields
+- `Config.HasAuth()` / `Config.ProxyURLNoAuth()`
+- `ecs.configureAuth()` / `ecs.sshRunWithStdin()`
+- Squid `auth_param` / `basic_ncsa_auth` / `authenticated` ACL generation
+- `apache2-utils` / `httpd-tools` from Squid install (no longer needed for htpasswd)
+- Proxy-Authorization header in SNI detection
+- 407 auth check in status forwarding test
+- PID file management in tunnel (replaced by ControlPath)
+
 ## [0.5.2] - 2026-07-28
 
 ### Fixed

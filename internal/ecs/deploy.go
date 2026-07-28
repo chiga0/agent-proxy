@@ -2,14 +2,15 @@ package ecs
 
 import (
 	"fmt"
+	"io"
+	"net"
+	"net/http"
 	"os/exec"
-	"regexp"
 	"strings"
+	"time"
 
 	"github.com/chiga0/agent-proxy/internal/config"
 )
-
-var validUserRe = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 
 func Deploy(cfg *config.Config) error {
 	steps := []struct {
@@ -18,33 +19,14 @@ func Deploy(cfg *config.Config) error {
 	}{
 		{"Connectivity", func() error { return sshRun(cfg, "echo ok") }},
 		{"Install Squid", func() error { return installSquid(cfg) }},
-	}
-
-	if cfg.HasAuth() {
-		steps = append(steps, struct {
-			name string
-			fn   func() error
-		}{"Configure auth", func() error { return configureAuth(cfg) }})
-	}
-
-	steps = append(steps,
-		struct {
-			name string
-			fn   func() error
-		}{"System tuning", func() error {
+		{"System tuning", func() error {
 			return sshRun(cfg, `grep -q tcp_fastopen /etc/sysctl.conf || echo "net.ipv4.tcp_fastopen = 3" >> /etc/sysctl.conf; sysctl -w net.ipv4.tcp_fastopen=3 >/dev/null 2>&1; echo ok`)
 		}},
-		struct {
-			name string
-			fn   func() error
-		}{"Write Squid config", func() error { return writeSquidConfig(cfg) }},
-		struct {
-			name string
-			fn   func() error
-		}{"Restart Squid", func() error {
+		{"Write Squid config", func() error { return writeSquidConfig(cfg) }},
+		{"Restart Squid", func() error {
 			return sshRun(cfg, "systemctl restart squid && sleep 1 && systemctl is-active squid")
 		}},
-	)
+	}
 
 	for _, s := range steps {
 		fmt.Printf("  → %s... ", s.name)
@@ -58,15 +40,19 @@ func Deploy(cfg *config.Config) error {
 }
 
 func RefreshIP(cfg *config.Config) error {
+	if cfg.Proxy.Tunnel {
+		fmt.Println("  Tunnel mode: Squid listens on loopback only — no IP whitelist needed.")
+		return nil
+	}
+
 	ip, err := getPublicIP()
 	if err != nil {
 		return fmt.Errorf("get public IP: %w", err)
 	}
 	fmt.Printf("  Public IP: %s\n", ip)
 
-	squidConf := generateSquidConfig(cfg, ip)
-	cmd := fmt.Sprintf("cat > /etc/squid/squid.conf << 'EOF'\n%s\nEOF\nsystemctl restart squid", squidConf)
-	return sshRun(cfg, cmd)
+	conf := generateSquidConfig(cfg, ip)
+	return deploySquidConfig(cfg, conf)
 }
 
 func CheckSSH(cfg *config.Config) error {
@@ -74,13 +60,12 @@ func CheckSSH(cfg *config.Config) error {
 }
 
 func installSquid(cfg *config.Config) error {
-	// Detect package manager and install accordingly
 	cmd := `if command -v apt >/dev/null 2>&1; then
-		apt update -qq && apt install -y -qq squid apache2-utils >/dev/null 2>&1
+		apt update -qq && apt install -y -qq squid >/dev/null 2>&1
 	elif command -v yum >/dev/null 2>&1; then
-		yum install -y -q squid httpd-tools >/dev/null 2>&1
+		yum install -y -q squid >/dev/null 2>&1
 	elif command -v apk >/dev/null 2>&1; then
-		apk add --quiet squid apache2-utils >/dev/null 2>&1
+		apk add --quiet squid >/dev/null 2>&1
 	else
 		echo "ERROR: unsupported package manager (need apt, yum, or apk)" >&2
 		exit 1
@@ -88,79 +73,124 @@ func installSquid(cfg *config.Config) error {
 	return sshRun(cfg, cmd)
 }
 
-func configureAuth(cfg *config.Config) error {
-	if !validUserRe.MatchString(cfg.Proxy.User) {
-		return fmt.Errorf("invalid proxy username: %q (allowed: a-z, 0-9, . _ -)", cfg.Proxy.User)
+// writeSquidConfig generates and deploys the Squid configuration.
+// In tunnel mode, Squid listens on loopback only and no public IP is fetched.
+func writeSquidConfig(cfg *config.Config) error {
+	var trustedIP string
+	if !cfg.Proxy.Tunnel {
+		ip, err := getPublicIP()
+		if err != nil {
+			return fmt.Errorf("cannot get public IP for direct mode: %w", err)
+		}
+		trustedIP = ip
 	}
-	// Pass password via stdin to avoid shell injection
-	cmd := fmt.Sprintf(
-		"htpasswd -cbi /etc/squid/passwd %s 2>/dev/null && chmod 640 /etc/squid/passwd",
-		cfg.Proxy.User)
-	return sshRunWithStdin(cfg, cmd, cfg.Proxy.Password)
+	conf := generateSquidConfig(cfg, trustedIP)
+	return deploySquidConfig(cfg, conf)
 }
 
-func writeSquidConfig(cfg *config.Config) error {
-	ip, err := getPublicIP()
-	if err != nil {
-		// Tunnel mode: only 127.0.0.1 is needed, public IP is optional
-		if cfg.Proxy.Tunnel {
-			ip = ""
-		} else if !cfg.HasAuth() {
-			return fmt.Errorf("cannot get public IP for IP whitelist (required in direct mode without auth): %w", err)
-		} else {
-			// Direct mode with auth: IP whitelist is nice-to-have
-			ip = ""
-		}
+// deploySquidConfig writes the Squid config transactionally:
+// temp file → syntax check → backup → atomic replace → restart → health check → rollback on failure.
+func deploySquidConfig(cfg *config.Config, conf string) error {
+	// 1. Write to temp file on the remote
+	tmpPath := "/etc/squid/squid.conf.agent-proxy.tmp"
+	writeCmd := fmt.Sprintf("cat > %s << 'SQUID_EOF'\n%s\nSQUID_EOF\nchmod 644 %s", tmpPath, conf, tmpPath)
+	if err := sshRun(cfg, writeCmd); err != nil {
+		return fmt.Errorf("write temp config: %w", err)
 	}
-	conf := generateSquidConfig(cfg, ip)
-	cmd := fmt.Sprintf("cat > /etc/squid/squid.conf << 'SQUID_EOF'\n%s\nSQUID_EOF", conf)
-	return sshRun(cfg, cmd)
+
+	// 2. Syntax check (only if squid is already installed and running)
+	parseCmd := fmt.Sprintf("if systemctl is-active squid >/dev/null 2>&1; then squid -k parse -f %s 2>&1; fi", tmpPath)
+	if err := sshRun(cfg, parseCmd); err != nil {
+		sshRun(cfg, "rm -f "+tmpPath)
+		return fmt.Errorf("squid config syntax check failed: %w", err)
+	}
+
+	// 3. Backup existing config + atomic replace
+	replaceCmd := fmt.Sprintf(
+		"[ -f /etc/squid/squid.conf ] && cp /etc/squid/squid.conf /etc/squid/squid.conf.bak; mv %s /etc/squid/squid.conf", tmpPath)
+	if err := sshRun(cfg, replaceCmd); err != nil {
+		sshRun(cfg, "rm -f "+tmpPath)
+		return fmt.Errorf("replace config: %w", err)
+	}
+
+	// 4. Restart and health check
+	restartCmd := "systemctl restart squid && sleep 1 && systemctl is-active squid"
+	if err := sshRun(cfg, restartCmd); err != nil {
+		// Rollback
+		sshRun(cfg, "[ -f /etc/squid/squid.conf.bak ] && cp /etc/squid/squid.conf.bak /etc/squid/squid.conf && systemctl restart squid")
+		return fmt.Errorf("squid restart failed (rolled back): %w", err)
+	}
+
+	return nil
 }
 
 func generateSquidConfig(cfg *config.Config, trustedIP string) string {
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf("http_port %d\n\n", cfg.Proxy.Port))
 
-	if cfg.HasAuth() {
-		b.WriteString("# Auth (optional, for direct access without SSH tunnel)\n")
-		b.WriteString("auth_param basic program /usr/lib/squid/basic_ncsa_auth /etc/squid/passwd\n")
-		b.WriteString("auth_param basic realm Agent-Proxy\n")
-		b.WriteString("auth_param basic credentialsttl 2 hours\n")
-		b.WriteString("acl authenticated proxy_auth REQUIRED\n\n")
+	// Listen address: loopback-only in tunnel mode, all interfaces in direct mode
+	if cfg.Proxy.Tunnel {
+		b.WriteString(fmt.Sprintf("http_port 127.0.0.1:%d\n\n", cfg.Proxy.Port))
+	} else {
+		b.WriteString(fmt.Sprintf("http_port %d\n\n", cfg.Proxy.Port))
 	}
 
+	// Trusted sources
 	trustedSrcs := "127.0.0.1"
 	if trustedIP != "" {
 		trustedSrcs += " " + trustedIP
 	}
-	b.WriteString("# Trusted: SSH tunnel (127.0.0.1) + your public IP\n")
+	b.WriteString(fmt.Sprintf("# Trusted: SSH tunnel (127.0.0.1)%s\n", func() string {
+		if trustedIP != "" {
+			return " + your public IP"
+		}
+		return ""
+	}()))
 	b.WriteString(fmt.Sprintf("acl trusted_ip src %s\n\n", trustedSrcs))
 
-	b.WriteString("# CONNECT tunneling (HTTPS/WebSocket)\n")
-	b.WriteString("acl SSL_ports port 443\n")
-	b.WriteString("acl SSL_ports port 8443\n")
-	b.WriteString("acl CONNECT method CONNECT\n")
-	b.WriteString("http_access allow CONNECT SSL_ports trusted_ip\n")
-	if cfg.HasAuth() {
-		b.WriteString("http_access allow CONNECT SSL_ports authenticated\n")
-	}
+	// Port and method ACLs
+	b.WriteString("# Safe ports and CONNECT restrictions\n")
+	b.WriteString("acl Safe_ports port 80 443 8443\n")
+	b.WriteString("acl SSL_ports port 443 8443\n")
+	b.WriteString("acl CONNECT method CONNECT\n\n")
+
+	// Dangerous destination ACLs
+	b.WriteString("# Block access to local/private/metadata targets\n")
+	b.WriteString("acl to_localhost dst 127.0.0.0/8\n")
+	b.WriteString("acl to_linklocal dst 169.254.0.0/16\n")
+	b.WriteString("acl to_rfc1918 dst 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16\n")
+	b.WriteString("acl to_metadata dst 169.254.169.254\n\n")
+
+	// Deny-first access rules
+	b.WriteString("# Deny-first access rules\n")
+	b.WriteString("http_access deny !Safe_ports\n")
+	b.WriteString("http_access deny CONNECT !SSL_ports\n")
+	b.WriteString("http_access deny to_localhost\n")
+	b.WriteString("http_access deny to_linklocal\n")
+	b.WriteString("http_access deny to_rfc1918\n")
+	b.WriteString("http_access deny to_metadata\n")
 	b.WriteString("http_access allow trusted_ip\n")
-	if cfg.HasAuth() {
-		b.WriteString("http_access allow authenticated\n")
-	}
 	b.WriteString("http_access deny all\n\n")
 
+	// Privacy
 	b.WriteString("# Privacy\n")
 	b.WriteString("forwarded_for off\n")
 	b.WriteString("request_header_access Via deny all\n\n")
+
+	// Logging
 	b.WriteString("# Logging\n")
 	b.WriteString("access_log /var/log/squid/access.log squid\n")
 	b.WriteString("cache_log /var/log/squid/cache.log\n\n")
+
+	// No caching
 	b.WriteString("# No caching\n")
 	b.WriteString("cache deny all\n\n")
+
+	// DNS
 	b.WriteString("# DNS\n")
 	b.WriteString("dns_nameservers 8.8.8.8 8.8.4.4\n")
 	b.WriteString("visible_hostname agent-proxy\n\n")
+
+	// Performance
 	b.WriteString("# Performance\n")
 	b.WriteString("server_persistent_connections on\n")
 	b.WriteString("client_persistent_connections on\n")
@@ -169,63 +199,64 @@ func generateSquidConfig(cfg *config.Config, trustedIP string) string {
 	b.WriteString("half_closed_clients off\n")
 	b.WriteString("read_timeout 5 minutes\n")
 	b.WriteString("connect_timeout 10 seconds\n\n")
+
+	// DNS cache
 	b.WriteString("# DNS cache\n")
 	b.WriteString("positive_dns_ttl 1 hours\n")
 	b.WriteString("negative_dns_ttl 30 seconds\n\n")
+
+	// File descriptors
 	b.WriteString("# File descriptors\n")
 	b.WriteString("max_filedescriptors 65536\n\n")
+
+	// Request deduplication
 	b.WriteString("# Request deduplication\n")
 	b.WriteString("collapsed_forwarding on\n")
 
 	return b.String()
 }
 
+// getPublicIP fetches the client's public IP with validation.
+// Uses a Go HTTP client with environment proxy disabled to avoid loops.
 func getPublicIP() (string, error) {
-	out, err := exec.Command("curl", "-s", "--max-time", "5", "https://ipinfo.io/ip").Output()
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+		Transport: &http.Transport{
+			Proxy: nil, // bypass environment proxy to avoid loops
+		},
+	}
+	resp, err := client.Get("https://ipinfo.io/ip")
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("request failed: %w", err)
 	}
-	return strings.TrimSpace(string(out)), nil
-}
+	defer resp.Body.Close()
 
-func sshArgs(cfg *config.Config) []string {
-	args := []string{"-o", "StrictHostKeyChecking=accept-new", "-o", "ConnectTimeout=10"}
-	if cfg != nil && cfg.Proxy.SSHKey != "" {
-		args = append(args, "-i", cfg.Proxy.SSHKey)
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("unexpected HTTP %d", resp.StatusCode)
 	}
-	return args
-}
 
-func sshTarget(cfg *config.Config) string {
-	user := "root"
-	host := ""
-	if cfg != nil {
-		if cfg.Proxy.SSHUser != "" {
-			user = cfg.Proxy.SSHUser
-		}
-		host = cfg.Proxy.Host
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 64))
+	if err != nil {
+		return "", fmt.Errorf("read response: %w", err)
 	}
-	return fmt.Sprintf("%s@%s", user, host)
+
+	ip := strings.TrimSpace(string(body))
+	parsed := net.ParseIP(ip)
+	if parsed == nil {
+		return "", fmt.Errorf("invalid IP in response: %q", ip)
+	}
+	if parsed.IsLoopback() || parsed.IsPrivate() || parsed.IsLinkLocalUnicast() {
+		return "", fmt.Errorf("non-public IP in response: %s", ip)
+	}
+
+	return ip, nil
 }
 
 func sshRun(cfg *config.Config, cmd string) error {
-	args := sshArgs(cfg)
-	args = append(args, sshTarget(cfg), cmd)
+	args := cfg.Proxy.SSHBaseArgs()
+	args = append(args, cfg.Proxy.SSHTarget(), cmd)
 
 	out, err := exec.Command("ssh", args...).CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("%s: %w", strings.TrimSpace(string(out)), err)
-	}
-	return nil
-}
-
-func sshRunWithStdin(cfg *config.Config, cmd string, stdin string) error {
-	args := sshArgs(cfg)
-	args = append(args, sshTarget(cfg), cmd)
-
-	proc := exec.Command("ssh", args...)
-	proc.Stdin = strings.NewReader(stdin + "\n")
-	out, err := proc.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("%s: %w", strings.TrimSpace(string(out)), err)
 	}

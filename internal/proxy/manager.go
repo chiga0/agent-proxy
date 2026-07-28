@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -14,6 +15,49 @@ import (
 	"github.com/chiga0/agent-proxy/internal/platform"
 	"github.com/chiga0/agent-proxy/internal/tunnel"
 )
+
+// pacState records the system PAC state before agent-proxy modifies it,
+// so that Off() can restore the original configuration.
+type pacState struct {
+	Service     string `json:"service"`
+	OriginalURL string `json:"original_url"`
+	WasEnabled  bool   `json:"was_enabled"`
+}
+
+func pacStatePath() string {
+	return filepath.Join(config.DataDir(), "pac-state.json")
+}
+
+func savePACState(service string) {
+	pacURL, enabled, err := platform.GetAutoProxy(service)
+	if err != nil {
+		pacURL = ""
+		enabled = false
+	}
+	state := pacState{
+		Service:     service,
+		OriginalURL: pacURL,
+		WasEnabled:  enabled,
+	}
+	data, err := json.Marshal(state)
+	if err != nil {
+		return
+	}
+	os.MkdirAll(config.DataDir(), 0700)
+	os.WriteFile(pacStatePath(), data, 0600)
+}
+
+func loadPACState() (*pacState, error) {
+	data, err := os.ReadFile(pacStatePath())
+	if err != nil {
+		return nil, err
+	}
+	var state pacState
+	if err := json.Unmarshal(data, &state); err != nil {
+		return nil, err
+	}
+	return &state, nil
+}
 
 func On(cfg *config.Config) error {
 	var undo []func()
@@ -56,16 +100,18 @@ func On(cfg *config.Config) error {
 		undo = append(undo, stopPACDaemon)
 	}
 
-	// 4. Set system PAC proxy
+	// 4. Save original PAC state, then set system PAC proxy
 	service, err := platform.DetectNetworkService()
 	if err != nil {
 		return fail(fmt.Errorf("detect network: %w", err))
 	}
+	savePACState(service)
+
 	pacURL := fmt.Sprintf("http://127.0.0.1:%d/proxy.pac", config.PACPort)
 	if err := platform.SetAutoProxy(service, pacURL); err != nil {
 		return fail(fmt.Errorf("set PAC proxy: %w", err))
 	}
-	undo = append(undo, func() { platform.ClearAutoProxy(service) })
+	undo = append(undo, func() { restorePACState(service) })
 
 	// 5. Write CLI env file
 	if err := writeEnvFile(cfg); err != nil {
@@ -95,10 +141,10 @@ func On(cfg *config.Config) error {
 func Off(cfg *config.Config) error {
 	var errs []string
 
-	// 1. Disable system PAC proxy
+	// 1. Restore original system PAC state
 	service, err := platform.DetectNetworkService()
 	if err == nil {
-		platform.ClearAutoProxy(service)
+		restorePACState(service)
 	}
 
 	// 2. Stop PAC HTTP server daemon
@@ -117,6 +163,9 @@ func Off(cfg *config.Config) error {
 		errs = append(errs, fmt.Sprintf("remove env.sh: %v", err))
 	}
 
+	// 6. Remove PAC state file
+	os.Remove(pacStatePath())
+
 	if len(errs) > 0 {
 		fmt.Printf("✓ Proxy disabled (with warnings)\n")
 		for _, e := range errs {
@@ -127,6 +176,30 @@ func Off(cfg *config.Config) error {
 	}
 	fmt.Println("  Current terminal: unset https_proxy http_proxy no_proxy NO_PROXY")
 	return nil
+}
+
+// restorePACState restores the original PAC configuration.
+// If the current PAC URL does not belong to agent-proxy, it is left untouched.
+func restorePACState(currentService string) {
+	state, err := loadPACState()
+	if err != nil {
+		// No saved state — just clear
+		platform.ClearAutoProxy(currentService)
+		return
+	}
+
+	// Only modify if the current PAC still belongs to agent-proxy
+	pacURL, enabled, err := platform.GetAutoProxy(currentService)
+	if err == nil && enabled && !strings.Contains(pacURL, "127.0.0.1:"+strconv.Itoa(config.PACPort)) {
+		// PAC was changed by something else — don't touch it
+		return
+	}
+
+	if state.WasEnabled && state.OriginalURL != "" {
+		platform.SetAutoProxy(currentService, state.OriginalURL)
+	} else {
+		platform.ClearAutoProxy(currentService)
+	}
 }
 
 func pacPIDFile() string {
@@ -156,7 +229,7 @@ func startPACDaemon() (bool, error) {
 
 	pid := cmd.Process.Pid
 	os.MkdirAll(config.DataDir(), 0700)
-	os.WriteFile(pacPIDFile(), []byte(strconv.Itoa(pid)), 0644)
+	os.WriteFile(pacPIDFile(), []byte(strconv.Itoa(pid)), 0600)
 
 	go cmd.Wait()
 

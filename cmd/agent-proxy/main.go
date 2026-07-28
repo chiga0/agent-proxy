@@ -44,7 +44,17 @@ Quick start:
 			}
 			var err error
 			cfg, err = config.Load()
-			return err
+			if err != nil {
+				return err
+			}
+			// Mutating commands require strict validation
+			mutating := map[string]bool{"on": true, "off": true, "setup": true, "ip": true}
+			if mutating[cmd.Name()] {
+				if err := cfg.Validate(); err != nil {
+					return fmt.Errorf("config validation: %w", err)
+				}
+			}
+			return nil
 		},
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -161,12 +171,6 @@ func printFix(r proxy.CheckResult) {
 		fmt.Printf("  ✗ %s: %s\n", r.Name, r.Detail)
 		fmt.Println("    Fix: deploy Squid on your server")
 		fmt.Println("    Run: agent-proxy setup")
-	case strings.Contains(r.Name, "Auth") && !r.OK:
-		fmt.Printf("  ✗ %s: %s\n", r.Name, r.Detail)
-		if strings.Contains(r.Detail, "407") || strings.Contains(r.Detail, "Authentication") {
-			fmt.Println("    Fix: credentials mismatch — re-deploy Squid")
-			fmt.Println("    Run: agent-proxy setup")
-		}
 	case strings.Contains(r.Name, "PAC HTTP") && !r.OK:
 		fmt.Printf("  ✗ %s: %s\n", r.Name, r.Detail)
 		fmt.Println("    Fix: restart proxy services")
@@ -250,7 +254,20 @@ func cmdInit() *cobra.Command {
 				cfg.Proxy.Port = portNum
 			}
 
-			// --- Step 2: SSH connectivity check ---
+			// --- Step 2: SSH tunnel choice (BEFORE deploy so Squid is configured correctly) ---
+			fmt.Printf("\n─── SSH 隧道 ───\n")
+			fmt.Print("  启用 SSH 加密隧道? (中国用户推荐) [Y/n]: ")
+			tunnelAns, _ := reader.ReadString('\n')
+			tunnelAns = strings.TrimSpace(strings.ToLower(tunnelAns))
+			if tunnelAns == "" || tunnelAns == "y" || tunnelAns == "yes" {
+				cfg.Proxy.Tunnel = true
+			} else {
+				cfg.Proxy.Tunnel = false
+				fmt.Println("  ⚠ 直连模式: Squid 将监听公网，仅靠 IP 白名单保护，无代理认证。")
+				fmt.Println("    建议确保 ECS 安全组限制 Squid 端口访问。")
+			}
+
+			// --- Step 3: SSH connectivity check ---
 			fmt.Printf("\n─── 连接检查 ───\n")
 			fmt.Print("  → SSH 连接... ")
 			if err := ecs.CheckSSH(cfg); err != nil {
@@ -259,19 +276,15 @@ func cmdInit() *cobra.Command {
 			}
 			fmt.Println("✓")
 
-			// --- Step 3: Deploy Squid ---
+			// --- Step 4: Deploy Squid (with tunnel choice already set) ---
 			fmt.Printf("\n─── 服务器部署 ───\n")
 			if err := ecs.Deploy(cfg); err != nil {
 				return fmt.Errorf("deploy failed: %w", err)
 			}
 
-			// --- Step 4: SSH tunnel (ask user) ---
-			fmt.Printf("\n─── SSH 隧道 ───\n")
-			fmt.Print("  启用 SSH 加密隧道? (中国用户推荐) [Y/n]: ")
-			tunnelAns, _ := reader.ReadString('\n')
-			tunnelAns = strings.TrimSpace(strings.ToLower(tunnelAns))
-			if tunnelAns == "" || tunnelAns == "y" || tunnelAns == "yes" {
-				cfg.Proxy.Tunnel = true
+			// --- Step 5: Start SSH tunnel if enabled ---
+			if cfg.Proxy.Tunnel {
+				fmt.Printf("\n─── SSH 隧道 ───\n")
 				fmt.Print("  → 建立 SSH 隧道... ")
 				if _, err := tunnel.Start(cfg); err != nil {
 					fmt.Println("✗")
@@ -280,12 +293,9 @@ func cmdInit() *cobra.Command {
 				} else {
 					fmt.Println("✓")
 				}
-			} else {
-				cfg.Proxy.Tunnel = false
-				fmt.Println("  跳过 (直连模式，需确保服务器 IP 在白名单)")
 			}
 
-			// --- Step 5: Validate and save config ---
+			// --- Step 6: Validate and save config ---
 			if err := cfg.Validate(); err != nil {
 				return fmt.Errorf("config validation: %w", err)
 			}
@@ -294,13 +304,13 @@ func cmdInit() *cobra.Command {
 			}
 			fmt.Printf("\n  ✓ 配置已保存: %s\n", config.ConfigPath())
 
-			// --- Step 6: Enable proxy ---
+			// --- Step 7: Enable proxy ---
 			fmt.Printf("\n─── 本地启用 ───\n")
 			if err := proxy.On(cfg); err != nil {
 				return fmt.Errorf("enable proxy: %w", err)
 			}
 
-			// --- Step 7: Verify ---
+			// --- Step 8: Verify ---
 			fmt.Printf("\n─── 连通性验证 ───\n")
 			testDomains := []string{"google.com", "github.com", "youtube.com"}
 			for _, d := range testDomains {
@@ -315,9 +325,10 @@ func cmdInit() *cobra.Command {
 
 			fmt.Printf(`
   🎉 配置完成！
-     新终端窗口自动生效。
+     将以下 source 语句加入 shell profile (~/.zshrc 或 ~/.bashrc) 后，新终端自动生效:
+     [ -f "%s" ] && source "%s"
      当前终端执行: source %s
-`, config.EnvPath())
+`, config.EnvPath(), config.EnvPath(), config.EnvPath())
 			return nil
 		},
 	}
@@ -575,8 +586,13 @@ func cmdSetup() *cobra.Command {
 
 func cmdIP() *cobra.Command {
 	return &cobra.Command{
-		Use: "ip", Short: "Refresh Squid IP whitelist",
+		Use: "ip", Short: "Refresh Squid IP whitelist (direct mode only)",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if cfg.Proxy.Tunnel {
+				fmt.Println("Tunnel mode: Squid listens on 127.0.0.1 only — no IP whitelist needed.")
+				fmt.Println("Your proxy traffic is encrypted via SSH; no public Squid port is exposed.")
+				return nil
+			}
 			return ecs.RefreshIP(cfg)
 		},
 	}
@@ -597,8 +613,16 @@ func cmdUpdate() *cobra.Command {
 		Short: "Update agent-proxy to the latest version",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Println("Updating agent-proxy...")
+			// Use the install script from the current version's release tag,
+			// not from the mutable main branch, to avoid executing unverified code.
+			tag := version
+			if tag == "dev" || tag == "" {
+				tag = "main" // dev builds fall back to main
+			}
+			scriptURL := fmt.Sprintf(
+				"https://raw.githubusercontent.com/chiga0/agent-proxy/%s/install.sh", tag)
 			c := exec.Command("bash", "-c",
-				"curl -fsSL https://raw.githubusercontent.com/chiga0/agent-proxy/main/install.sh | bash")
+				fmt.Sprintf("curl -fsSL %s | bash", scriptURL))
 			c.Stdin = os.Stdin
 			c.Stdout = os.Stdout
 			c.Stderr = os.Stderr

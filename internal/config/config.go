@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"net"
-	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -36,8 +35,6 @@ type Config struct {
 type ProxyConfig struct {
 	Host            string `yaml:"host"`
 	Port            int    `yaml:"port"`
-	User            string `yaml:"user,omitempty"`
-	Password        string `yaml:"password,omitempty"`
 	SSHKey          string `yaml:"ssh_key,omitempty"`
 	SSHUser         string `yaml:"ssh_user,omitempty"`
 	Tunnel          bool   `yaml:"tunnel,omitempty"`
@@ -59,6 +56,37 @@ func (p *ProxyConfig) LocalPort() int {
 		return p.TunnelLocalPort
 	}
 	return p.Port
+}
+
+// SSHUserOrRoot returns the SSH user, defaulting to "root".
+func (p *ProxyConfig) SSHUserOrRoot() string {
+	if p.SSHUser != "" {
+		return p.SSHUser
+	}
+	return "root"
+}
+
+// SSHControlPath returns the ControlPath socket for SSH connection multiplexing.
+func (p *ProxyConfig) SSHControlPath() string {
+	return filepath.Join(DataDir(), "ssh-ctrl-%r@%h:%p")
+}
+
+// SSHBaseArgs returns common SSH connection arguments shared by tunnel,
+// deploy, autostart, and trace.
+func (p *ProxyConfig) SSHBaseArgs() []string {
+	args := []string{
+		"-o", "StrictHostKeyChecking=accept-new",
+		"-o", "ConnectTimeout=10",
+	}
+	if p.SSHKey != "" {
+		args = append(args, "-i", p.SSHKey)
+	}
+	return args
+}
+
+// SSHTarget returns the user@host string for SSH commands.
+func (p *ProxyConfig) SSHTarget() string {
+	return fmt.Sprintf("%s@%s", p.SSHUserOrRoot(), p.Host)
 }
 
 func homeDir() string {
@@ -201,9 +229,6 @@ func (c *Config) Validate() error {
 	if c.Proxy.Port < 1 || c.Proxy.Port > 65535 {
 		return fmt.Errorf("proxy.port must be 1-65535, got %d", c.Proxy.Port)
 	}
-	if (c.Proxy.User == "") != (c.Proxy.Password == "") {
-		return fmt.Errorf("proxy.user and proxy.password must both be set or both be empty")
-	}
 	if c.Proxy.Tunnel && c.Proxy.SSHKey == "" {
 		return fmt.Errorf("proxy.ssh_key is required when tunnel is enabled")
 	}
@@ -279,26 +304,7 @@ func (c *Config) DisablePreset(name string) bool {
 	return false
 }
 
-func (c *Config) HasAuth() bool {
-	return c.Proxy.User != "" && c.Proxy.Password != ""
-}
-
-// ProxyURL returns the proxy URL with proper URL encoding for credentials.
 func (c *Config) ProxyURL() string {
-	host := c.Proxy.EffectiveHost()
-	port := c.Proxy.LocalPort()
-	if c.HasAuth() {
-		u := url.URL{
-			Scheme: "http",
-			User:   url.UserPassword(c.Proxy.User, c.Proxy.Password),
-			Host:   net.JoinHostPort(host, strconv.Itoa(port)),
-		}
-		return u.String()
-	}
-	return c.ProxyURLNoAuth()
-}
-
-func (c *Config) ProxyURLNoAuth() string {
 	return "http://" + net.JoinHostPort(c.Proxy.EffectiveHost(), strconv.Itoa(c.Proxy.LocalPort()))
 }
 

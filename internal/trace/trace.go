@@ -18,12 +18,12 @@ type Hop struct {
 }
 
 type TraceResult struct {
-	From    string
-	To      string
-	Hops    []Hop
-	Loss    float64
-	AvgRTT  time.Duration
-	Error   string
+	From   string
+	To     string
+	Hops   []Hop
+	Loss   float64
+	AvgRTT time.Duration
+	Error  string
 }
 
 // LocalToECS traces from local machine to the proxy ECS.
@@ -145,15 +145,8 @@ func parseTraceroute(output string) []Hop {
 }
 
 func sshExec(cfg *config.Config, cmd string) (string, error) {
-	args := []string{"-o", "StrictHostKeyChecking=accept-new", "-o", "ConnectTimeout=10"}
-	if cfg.Proxy.SSHKey != "" {
-		args = append(args, "-i", cfg.Proxy.SSHKey)
-	}
-	user := cfg.Proxy.SSHUser
-	if user == "" {
-		user = "root"
-	}
-	args = append(args, fmt.Sprintf("%s@%s", user, cfg.Proxy.Host), cmd)
+	args := cfg.Proxy.SSHBaseArgs()
+	args = append(args, cfg.Proxy.SSHTarget(), cmd)
 	out, err := exec.Command("ssh", args...).CombinedOutput()
 	return string(out), err
 }

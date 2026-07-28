@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -88,9 +87,6 @@ func checkForwarding(cfg *config.Config) CheckResult {
 		return CheckResult{"Proxy forwarding", false, detail}
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode == 407 {
-		return CheckResult{"Proxy forwarding", false, "407 auth required — run: agent-proxy setup"}
-	}
 	if resp.StatusCode != 200 {
 		return CheckResult{"Proxy forwarding", false, fmt.Sprintf("HTTP %d", resp.StatusCode)}
 	}
@@ -119,12 +115,7 @@ func DetectSNIBlock(cfg *config.Config) bool {
 	// Set overall deadline for the entire detection
 	conn.SetDeadline(time.Now().Add(10 * time.Second))
 
-	connectReq := fmt.Sprintf("CONNECT google.com:443 HTTP/1.1\r\nHost: google.com:443\r\n")
-	if cfg.HasAuth() {
-		auth := base64.StdEncoding.EncodeToString([]byte(cfg.Proxy.User + ":" + cfg.Proxy.Password))
-		connectReq += "Proxy-Authorization: Basic " + auth + "\r\n"
-	}
-	connectReq += "\r\n"
+	connectReq := fmt.Sprintf("CONNECT google.com:443 HTTP/1.1\r\nHost: google.com:443\r\n\r\n")
 	if _, err := conn.Write([]byte(connectReq)); err != nil {
 		return false
 	}

@@ -1,7 +1,7 @@
 # agent-proxy
 
 [![CI](https://github.com/chiga0/agent-proxy/actions/workflows/ci.yml/badge.svg)](https://github.com/chiga0/agent-proxy/actions/workflows/ci.yml)
-[![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev)
+[![Go](https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go)](https://go.dev)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/chiga0/agent-proxy)](https://github.com/chiga0/agent-proxy/releases)
 
@@ -12,20 +12,22 @@ Domain-based selective proxy routing via an overseas server. Route AI services, 
 ## How It Works
 
 ```
-Browser / Desktop App  ──PAC──▶  Whitelisted domain?  ──Yes──▶  Overseas Proxy  ──▶  Target
-                                        │
-                                       No
-                                        │
-                                        ▼
-                                     Direct connection
+Browser / Desktop App  ──PAC──▶  Whitelisted domain?  ──Yes──▶  Local Proxy Port  ──▶  Target
+                                        │                              │
+                                       No                         SSH Tunnel
+                                        │                              │
+                                        ▼                              ▼
+                                   Direct connection            ECS Squid (loopback)
 
-CLI Tools  ──env vars──▶  https_proxy + no_proxy  ──▶  Same routing logic
+CLI Tools  ──env vars──▶  https_proxy + no_proxy  ──▶  Same local proxy port
 ```
 
 - **PAC (Proxy Auto-Config)** for browsers and Electron apps — selective per-domain routing
-- **Environment variables** (`https_proxy` + `no_proxy`) for CLI tools
-- **Squid forward proxy** on your ECS with password auth + IP whitelist
+- **Environment variables** (`https_proxy` + `no_proxy`) for CLI tools — all HTTP(S) except `no_proxy` goes through the proxy
+- **SSH tunnel** encrypts client→ECS traffic; Squid listens on ECS loopback only (no public data port)
 - **Built-in PAC HTTP server** (pure Go, no external dependencies)
+
+> **Note:** PAC routes only whitelisted domains through the proxy. CLI env vars route *all* HTTP(S) traffic except `no_proxy` entries — the routing semantics differ.
 
 ## Install
 
@@ -65,9 +67,9 @@ The installer auto-detects OS/arch and picks the fastest mirror (GitHub or OSS).
 agent-proxy init
 ```
 
-That's it. `init` walks you through server IP + SSH key, deploys Squid, sets up an encrypted SSH tunnel (bypasses GFW SNI filtering), enables system PAC, configures CLI env vars, and registers auto-start on boot.
+That's it. `init` walks you through server IP + SSH key, chooses tunnel vs direct mode, deploys Squid, sets up an encrypted SSH tunnel (bypasses GFW SNI filtering), enables system PAC, configures CLI env vars, and registers auto-start on boot.
 
-Add to your `~/.zshrc` or `~/.bashrc` for auto-loading CLI env vars:
+Add to your `~/.zshrc` or `~/.bashrc` for auto-loading CLI env vars in new terminals:
 
 ```bash
 [ -f "$HOME/.config/agent-proxy/env.sh" ] && source "$HOME/.config/agent-proxy/env.sh"
@@ -83,7 +85,7 @@ Add to your `~/.zshrc` or `~/.bashrc` for auto-loading CLI env vars:
 | `agent-proxy doctor` | Full diagnostics (config + connectivity) |
 | `agent-proxy init` | Interactive first-time setup |
 | `agent-proxy setup` | Deploy Squid on ECS (idempotent) |
-| `agent-proxy ip` | Refresh Squid IP whitelist (when your public IP changes) |
+| `agent-proxy ip` | Refresh Squid IP whitelist (direct mode only) |
 | `agent-proxy bench [domains...]` | Benchmark proxy vs direct latency |
 | `agent-proxy trace [domain]` | Network path trace: local → ECS → target |
 | `agent-proxy whitelist ls` | List effective whitelist (presets + custom) |
@@ -174,9 +176,7 @@ proxy:
   port: 18443
   ssh_key: ~/.ssh/key.pem # SSH key for tunnel + setup
   ssh_user: root
-  tunnel: true            # SSH tunnel (recommended for China users)
-  # user: myuser          # Optional: only needed for direct mode without tunnel
-  # password: your-pass
+  tunnel: true            # SSH tunnel (recommended; Squid listens on loopback only)
 
 presets:                  # Enabled preset groups
   - ai
@@ -205,17 +205,17 @@ no_proxy:                 # Domains/IPs that bypass proxy
 
 ## Requirements
 
-- Go 1.22+ (for building from source)
+- Go 1.24+ (for building from source)
 - SSH access to your ECS (for `setup` and `ip` commands)
 - No external runtime dependencies
 
 ## Security
 
-- Proxy credentials stored in `config.yaml` with `0600` permissions
-- Squid requires authentication for non-whitelisted IPs
-- Your public IP is whitelisted on Squid for PAC/browser access (no auth prompt)
-- PAC HTTP server binds to `127.0.0.1` only
-- No credentials in the repository
+- **SSH tunnel mode** (recommended): Squid listens on `127.0.0.1` only on the ECS — no public data port is exposed. All proxy traffic is encrypted via SSH. Access control is provided by your SSH key.
+- **Direct mode**: Squid listens on all interfaces with IP whitelist only (no proxy auth). Use only if you understand the risks and restrict access via ECS security groups.
+- Squid ACLs use deny-first ordering: unsafe ports, CONNECT to non-SSL ports, and connections to localhost/link-local/RFC1918/cloud-metadata addresses are blocked.
+- Config stored with `0600` permissions; PAC HTTP server binds to `127.0.0.1` only.
+- Release archives include SHA-256 checksums; the installer verifies them before extraction.
 
 ## Troubleshooting
 

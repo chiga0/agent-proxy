@@ -22,9 +22,18 @@ func launchAgentDir() string {
 	return filepath.Join(home, "Library", "LaunchAgents")
 }
 
+func logDir() string {
+	return filepath.Join(config.DataDir(), "logs")
+}
+
 func InstallAutoStart(cfg *config.Config) error {
 	dir := launchAgentDir()
-	os.MkdirAll(dir, 0755)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("create LaunchAgents dir: %w", err)
+	}
+	if err := os.MkdirAll(logDir(), 0700); err != nil {
+		return fmt.Errorf("create log dir: %w", err)
+	}
 
 	self, err := os.Executable()
 	if err != nil {
@@ -32,9 +41,13 @@ func InstallAutoStart(cfg *config.Config) error {
 	}
 
 	if cfg.Proxy.Tunnel && cfg.Proxy.SSHKey != "" {
-		installTunnelAgent(cfg, dir)
+		if err := installTunnelAgent(cfg, dir); err != nil {
+			return fmt.Errorf("install tunnel agent: %w", err)
+		}
 	}
-	installPACAgent(self, dir)
+	if err := installPACAgent(self, dir); err != nil {
+		return fmt.Errorf("install PAC agent: %w", err)
+	}
 	return nil
 }
 
@@ -54,11 +67,8 @@ func plistString(s string) string {
 	return "<string>" + xmlEscape(s) + "</string>"
 }
 
-func installTunnelAgent(cfg *config.Config, dir string) {
-	user := cfg.Proxy.SSHUser
-	if user == "" {
-		user = "root"
-	}
+func installTunnelAgent(cfg *config.Config, dir string) error {
+	user := cfg.Proxy.SSHUserOrRoot()
 	localPort := cfg.Proxy.LocalPort()
 	remotePort := cfg.Proxy.Port
 
@@ -75,13 +85,21 @@ func installTunnelAgent(cfg *config.Config, dir string) {
         ` + plistString(cfg.Proxy.SSHKey) + `
         <string>-N</string>
         <string>-o</string>
-        <string>ServerAliveInterval=60</string>
+        <string>ServerAliveInterval=30</string>
         <string>-o</string>
         <string>ServerAliveCountMax=3</string>
         <string>-o</string>
         <string>ExitOnForwardFailure=yes</string>
         <string>-o</string>
         <string>StrictHostKeyChecking=accept-new</string>
+        <string>-o</string>
+        <string>BatchMode=yes</string>
+        <string>-o</string>
+        <string>Ciphers=aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com</string>
+        <string>-o</string>
+        <string>Compression=no</string>
+        <string>-o</string>
+        ` + plistString("ControlPath="+cfg.Proxy.SSHControlPath()) + `
         <string>-L</string>
         ` + plistString(fmt.Sprintf("%d:127.0.0.1:%d", localPort, remotePort)) + `
         ` + plistString(fmt.Sprintf("%s@%s", user, cfg.Proxy.Host)) + `
@@ -91,17 +109,15 @@ func installTunnelAgent(cfg *config.Config, dir string) {
     <key>KeepAlive</key>
     <true/>
     <key>StandardErrorPath</key>
-    <string>/tmp/agent-proxy-ssh-tunnel.log</string>
+    ` + plistString(filepath.Join(logDir(), "ssh-tunnel.log")) + `
 </dict>
 </plist>
 `
 	path := filepath.Join(dir, tunnelLabel+".plist")
-	os.WriteFile(path, []byte(plist), 0644)
-	// Don't launchctl load here — On() manages the current session.
-	// The plist in ~/Library/LaunchAgents/ auto-loads on next login.
+	return os.WriteFile(path, []byte(plist), 0644)
 }
 
-func installPACAgent(self string, dir string) {
+func installPACAgent(self string, dir string) error {
 	plist := `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -118,12 +134,12 @@ func installPACAgent(self string, dir string) {
     <key>KeepAlive</key>
     <true/>
     <key>StandardErrorPath</key>
-    <string>/tmp/agent-proxy-pac-server.log</string>
+    ` + plistString(filepath.Join(logDir(), "pac-server.log")) + `
 </dict>
 </plist>
 `
 	path := filepath.Join(dir, pacLabel+".plist")
-	os.WriteFile(path, []byte(plist), 0644)
+	return os.WriteFile(path, []byte(plist), 0644)
 }
 
 func UninstallAutoStart() {

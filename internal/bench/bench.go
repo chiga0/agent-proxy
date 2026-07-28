@@ -27,16 +27,16 @@ type Result struct {
 }
 
 type Summary struct {
-	Domain   string
-	Mode     string
-	Runs     int
-	Success  int
-	LastErr  string
-	DNS      [3]time.Duration // min, avg, max
-	TCP      [3]time.Duration
-	TLS      [3]time.Duration
-	TTFB     [3]time.Duration
-	Total    [3]time.Duration
+	Domain  string
+	Mode    string
+	Runs    int
+	Success int
+	LastErr string
+	DNS     [3]time.Duration // min, avg, max
+	TCP     [3]time.Duration
+	TLS     [3]time.Duration
+	TTFB    [3]time.Duration
+	Total   [3]time.Duration
 }
 
 func Run(cfg *config.Config, domains []string, runs int) []Summary {

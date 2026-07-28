@@ -95,22 +95,16 @@ func TestEffectiveWhitelistDedup(t *testing.T) {
 }
 
 func TestProxyURL(t *testing.T) {
-	cfg := &Config{Proxy: ProxyConfig{Host: "1.2.3.4", Port: 18443, User: "u", Password: "p"}}
-	if cfg.ProxyURL() != "http://u:p@1.2.3.4:18443" {
+	cfg := &Config{Proxy: ProxyConfig{Host: "1.2.3.4", Port: 18443}}
+	if cfg.ProxyURL() != "http://1.2.3.4:18443" {
 		t.Errorf("ProxyURL = %q", cfg.ProxyURL())
-	}
-	if cfg.ProxyURLNoAuth() != "http://1.2.3.4:18443" {
-		t.Errorf("ProxyURLNoAuth = %q", cfg.ProxyURLNoAuth())
 	}
 }
 
 func TestProxyURLNoCredentials(t *testing.T) {
 	cfg := &Config{Proxy: ProxyConfig{Host: "1.2.3.4", Port: 18443}}
-	if cfg.HasAuth() {
-		t.Error("HasAuth should be false without credentials")
-	}
 	if cfg.ProxyURL() != "http://1.2.3.4:18443" {
-		t.Errorf("ProxyURL without auth = %q, want no-auth URL", cfg.ProxyURL())
+		t.Errorf("ProxyURL = %q, want plain URL", cfg.ProxyURL())
 	}
 }
 
@@ -230,13 +224,6 @@ func TestValidate(t *testing.T) {
 	}
 
 	cfg.Proxy.Host = "1.2.3.4"
-	cfg.Proxy.User = "user"
-	cfg.Proxy.Password = ""
-	if err := cfg.Validate(); err == nil {
-		t.Error("user without password should fail")
-	}
-
-	cfg.Proxy.User = ""
 	cfg.Proxy.Tunnel = true
 	cfg.Proxy.SSHKey = ""
 	if err := cfg.Validate(); err == nil {
