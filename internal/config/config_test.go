@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -257,7 +258,8 @@ func TestSaveAndLoad(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Stat: %v", err)
 	}
-	if info.Mode().Perm() != 0600 {
+	// Windows uses ACLs, not Unix permission bits — skip perm check
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0600 {
 		t.Errorf("perm = %o", info.Mode().Perm())
 	}
 	loaded, err := Load()
