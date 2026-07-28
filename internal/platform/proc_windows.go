@@ -9,12 +9,12 @@ import (
 )
 
 // FindPIDsByPattern returns PIDs of processes whose command line matches pattern.
-// Uses PowerShell Get-CimInstance (WMIC is deprecated since Windows Server 2025).
+// Uses PowerShell Get-CimInstance with regex matching (WMIC is deprecated).
 func FindPIDsByPattern(pattern string) []int {
-	// Escape single quotes for PowerShell
+	// Escape the pattern for PowerShell single-quoted string, then use [regex]
 	escaped := strings.ReplaceAll(pattern, "'", "''")
 	// Exclude $PID (the PowerShell process itself) to avoid self-match
-	script := "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*" + escaped + "*' -and $_.ProcessId -ne $PID } | ForEach-Object { $_.ProcessId }"
+	script := "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and [regex]::IsMatch($_.CommandLine, '" + escaped + "') -and $_.ProcessId -ne $PID } | ForEach-Object { $_.ProcessId }"
 	out, err := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", script).Output()
 	if err != nil {
 		return nil

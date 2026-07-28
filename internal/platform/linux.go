@@ -14,12 +14,14 @@ func DetectNetworkService() (string, error) {
 
 func SetAutoProxy(service, url string) error {
 	if !gsettingsAvailable() {
-		return fmt.Errorf("gsettings not available — system PAC not supported; use CLI env vars only")
+		return ErrPACNotSupported
 	}
 	if err := runGsettings("set", "org.gnome.system.proxy", "mode", "auto"); err != nil {
 		return fmt.Errorf("set proxy mode: %w", err)
 	}
 	if err := runGsettings("set", "org.gnome.system.proxy", "autoconfig-url", url); err != nil {
+		// Rollback mode change
+		runGsettings("set", "org.gnome.system.proxy", "mode", "none")
 		return fmt.Errorf("set autoconfig-url: %w", err)
 	}
 	return nil
@@ -34,7 +36,7 @@ func ClearAutoProxy(service string) error {
 
 func GetAutoProxy(service string) (url string, enabled bool, err error) {
 	if !gsettingsAvailable() {
-		return "", false, fmt.Errorf("gsettings not available")
+		return "", false, ErrPACNotSupported
 	}
 	urlOut, err := exec.Command("gsettings", "get", "org.gnome.system.proxy", "autoconfig-url").Output()
 	if err != nil {
@@ -63,15 +65,15 @@ func runGsettings(args ...string) error {
 }
 
 // CaptureExtraState saves the GNOME proxy mode so it can be restored later.
-func CaptureExtraState(service string) map[string]string {
+func CaptureExtraState(service string) (map[string]string, error) {
 	if !gsettingsAvailable() {
-		return nil
+		return nil, nil // no extra state to capture
 	}
 	out, err := exec.Command("gsettings", "get", "org.gnome.system.proxy", "mode").Output()
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("capture proxy mode: %w", err)
 	}
-	return map[string]string{"mode": strings.Trim(strings.TrimSpace(string(out)), "'")}
+	return map[string]string{"mode": strings.Trim(strings.TrimSpace(string(out)), "'")}, nil
 }
 
 // RestoreExtraState restores the GNOME proxy mode.

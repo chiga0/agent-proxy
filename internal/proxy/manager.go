@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -16,16 +17,25 @@ import (
 	"github.com/chiga0/agent-proxy/internal/tunnel"
 )
 
+// pacURL is the exact PAC URL that agent-proxy sets on the system.
+func agentProxyPACURL() string {
+	return fmt.Sprintf("http://127.0.0.1:%d/proxy.pac", config.PACPort)
+}
+
+// isOurPAC returns true if the given URL belongs to agent-proxy.
+func isOurPAC(url string) bool {
+	return url == agentProxyPACURL()
+}
+
 // pacSnapshot records the system PAC state for one network service
 // before agent-proxy modifies it.
 type pacSnapshot struct {
 	OriginalURL string            `json:"original_url"`
 	WasEnabled  bool              `json:"was_enabled"`
-	Extra       map[string]string `json:"extra,omitempty"` // platform-specific state (Linux mode, Windows AutoDetect)
+	Extra       map[string]string `json:"extra,omitempty"`
 }
 
 // pacStateFile maps network service name → snapshot.
-// Per-service storage prevents cross-service snapshot loss.
 type pacStateFile map[string]pacSnapshot
 
 func pacStatePath() string {
@@ -48,7 +58,7 @@ func loadPACStateFile() (pacStateFile, error) {
 		if json.Unmarshal(data, &legacy) == nil && legacy.Service != "" {
 			return pacStateFile{legacy.Service: {OriginalURL: legacy.OriginalURL, WasEnabled: legacy.WasEnabled}}, nil
 		}
-		return nil, err
+		return nil, fmt.Errorf("corrupted PAC state file: %w", err)
 	}
 	return m, nil
 }
@@ -74,13 +84,14 @@ func savePACStateFile(m pacStateFile) error {
 }
 
 // savePACState captures the current PAC state for a service.
-// Idempotent: if the service already has a snapshot and the current PAC
-// is ours, the original snapshot is preserved.
-// GetAutoProxy failure is returned as an error — never masked as "no PAC".
 func savePACState(service string) error {
-	stateMap, _ := loadPACStateFile()
-	if stateMap == nil {
-		stateMap = make(pacStateFile)
+	stateMap, err := loadPACStateFile()
+	if err != nil {
+		if os.IsNotExist(err) {
+			stateMap = make(pacStateFile)
+		} else {
+			return fmt.Errorf("load PAC state (file may be corrupted — inspect or delete %s): %w", pacStatePath(), err)
+		}
 	}
 
 	pacURL, enabled, err := platform.GetAutoProxy(service)
@@ -88,40 +99,50 @@ func savePACState(service string) error {
 		return fmt.Errorf("query current PAC state: %w", err)
 	}
 
-	// If we already have a snapshot for this service and the current PAC
-	// is ours, keep the original snapshot (idempotent re-on).
-	if _, exists := stateMap[service]; exists {
-		if enabled && strings.Contains(pacURL, "127.0.0.1:"+strconv.Itoa(config.PACPort)) {
-			return nil
-		}
+	// Idempotent: if we already have a snapshot and current PAC is ours, keep it.
+	if _, exists := stateMap[service]; exists && enabled && isOurPAC(pacURL) {
+		return nil
+	}
+
+	extra, err := platform.CaptureExtraState(service)
+	if err != nil {
+		return fmt.Errorf("capture platform state: %w", err)
 	}
 
 	stateMap[service] = pacSnapshot{
 		OriginalURL: pacURL,
 		WasEnabled:  enabled,
-		Extra:       platform.CaptureExtraState(service),
+		Extra:       extra,
 	}
 	return savePACStateFile(stateMap)
 }
 
 // restorePACState restores the original PAC for a service from its snapshot.
-// Returns an error if the restore operation fails.
+// Order: PAC URL/enabled state first, platform extra state LAST.
 func restorePACState(service string, snap pacSnapshot) error {
 	// Only modify if the current PAC still belongs to agent-proxy
 	pacURL, enabled, err := platform.GetAutoProxy(service)
-	if err == nil && enabled && !strings.Contains(pacURL, "127.0.0.1:"+strconv.Itoa(config.PACPort)) {
+	if err == nil && enabled && !isOurPAC(pacURL) {
 		return nil // PAC was changed by something else — don't touch it
 	}
 
-	// Restore platform-specific state first (e.g., Linux proxy mode, Windows AutoDetect)
+	// 1. Restore PAC URL / enabled state
+	if snap.WasEnabled && snap.OriginalURL != "" {
+		if err := platform.SetAutoProxy(service, snap.OriginalURL); err != nil {
+			return fmt.Errorf("restore PAC URL: %w", err)
+		}
+	} else {
+		if err := platform.ClearAutoProxy(service); err != nil {
+			return fmt.Errorf("clear PAC: %w", err)
+		}
+	}
+
+	// 2. Restore platform-specific state LAST (Linux mode, Windows AutoDetect)
 	if err := platform.RestoreExtraState(service, snap.Extra); err != nil {
 		return fmt.Errorf("restore platform state: %w", err)
 	}
 
-	if snap.WasEnabled && snap.OriginalURL != "" {
-		return platform.SetAutoProxy(service, snap.OriginalURL)
-	}
-	return platform.ClearAutoProxy(service)
+	return nil
 }
 
 func On(cfg *config.Config) error {
@@ -174,10 +195,7 @@ func On(cfg *config.Config) error {
 		return fail(fmt.Errorf("save PAC state (required for safe restore): %w", err))
 	}
 
-	pacURL := fmt.Sprintf("http://127.0.0.1:%d/proxy.pac", config.PACPort)
-	if err := platform.SetAutoProxy(service, pacURL); err != nil {
-		return fail(fmt.Errorf("set PAC proxy: %w", err))
-	}
+	// Register rollback BEFORE modifying system proxy
 	undo = append(undo, func() {
 		if m, err := loadPACStateFile(); err == nil {
 			if snap, ok := m[service]; ok {
@@ -186,13 +204,24 @@ func On(cfg *config.Config) error {
 		}
 	})
 
+	pacURL := agentProxyPACURL()
+	if err := platform.SetAutoProxy(service, pacURL); err != nil {
+		// Linux without gsettings: skip system PAC, continue with CLI-only
+		if errors.Is(err, platform.ErrPACNotSupported) {
+			fmt.Printf("  ⚠ System PAC not supported: %v\n", err)
+			fmt.Println("    Continuing with CLI env vars only.")
+		} else {
+			return fail(fmt.Errorf("set PAC proxy: %w", err))
+		}
+	}
+
 	// 5. Write CLI env file
 	if err := writeEnvFile(cfg); err != nil {
 		return fail(fmt.Errorf("write env file: %w", err))
 	}
 	undo = append(undo, func() { os.Remove(config.EnvPath()) })
 
-	// 6. Register auto-start (write config files only, don't start services)
+	// 6. Register auto-start
 	if err := platform.InstallAutoStart(cfg); err != nil {
 		fmt.Printf("  ⚠ Auto-start registration failed: %v\n", err)
 	}
@@ -224,26 +253,24 @@ func Off(cfg *config.Config) error {
 				delete(stateMap, service)
 			}
 		}
-		// Only delete the state file if all restores succeeded
 		if len(stateMap) == 0 {
 			os.Remove(pacStatePath())
 		} else {
-			savePACStateFile(stateMap) // persist remaining failed entries
+			savePACStateFile(stateMap)
 		}
+	} else if !os.IsNotExist(stateErr) {
+		// Corrupted state file — try to clear only our own PAC
+		errs = append(errs, fmt.Sprintf("PAC state file error: %v", stateErr))
+		clearOurPACOnly()
 	} else {
-		// No saved state — only clear if current PAC is ours
-		if service, err := platform.DetectNetworkService(); err == nil {
-			pacURL, enabled, _ := platform.GetAutoProxy(service)
-			if enabled && strings.Contains(pacURL, "127.0.0.1:"+strconv.Itoa(config.PACPort)) {
-				platform.ClearAutoProxy(service)
-			}
-		}
+		// No state file — only clear if PAC is ours
+		clearOurPACOnly()
 	}
 
 	// 2. Stop PAC HTTP server daemon
 	stopPACDaemon()
 
-	// 3. Stop SSH tunnel
+	// 3. Stop SSH tunnel (best-effort — don't let invalid config block cleanup)
 	if cfg.Proxy.Tunnel {
 		tunnel.Stop(cfg)
 	}
@@ -268,12 +295,22 @@ func Off(cfg *config.Config) error {
 	return nil
 }
 
+// clearOurPACOnly clears the system PAC only if it currently points to agent-proxy.
+func clearOurPACOnly() {
+	service, err := platform.DetectNetworkService()
+	if err != nil {
+		return
+	}
+	pacURL, enabled, err := platform.GetAutoProxy(service)
+	if err == nil && enabled && isOurPAC(pacURL) {
+		platform.ClearAutoProxy(service)
+	}
+}
+
 func pacPIDFile() string {
 	return filepath.Join(config.DataDir(), "pac-server.pid")
 }
 
-// startPACDaemon starts the PAC server if not already running.
-// Returns (true, nil) if started by this call, (false, nil) if already running.
 func startPACDaemon() (bool, error) {
 	if pac.ServerRunning() {
 		return false, nil
@@ -306,7 +343,6 @@ func startPACDaemon() (bool, error) {
 		}
 	}
 
-	// Cleanup on failure: kill the child and remove stale PID
 	if proc, err := os.FindProcess(pid); err == nil {
 		proc.Kill()
 	}
@@ -321,7 +357,6 @@ func stopPACDaemon() {
 		}
 		os.Remove(pacPIDFile())
 	}
-	// Fallback: find both current and legacy command names
 	for _, pattern := range []string{"serve-pac", "__pac-server"} {
 		for _, pid := range platform.FindPIDsByPattern(pattern) {
 			killIfPACServer(pid, pattern)
@@ -329,8 +364,6 @@ func stopPACDaemon() {
 	}
 }
 
-// killIfPACServer kills a PID only if its args contain one of the expected patterns.
-// Uses os.FindProcess for cross-platform compatibility (no Unix kill dependency).
 func killIfPACServer(pid int, patterns ...string) {
 	args := platform.GetProcessArgs(pid)
 	if args == "" {

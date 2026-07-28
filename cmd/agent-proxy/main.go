@@ -47,9 +47,10 @@ Quick start:
 			if err != nil {
 				return err
 			}
-			// Mutating commands require strict validation
+			// Mutating commands require strict validation (off is excluded —
+			// it must work even with broken config for emergency cleanup)
 			mutating := map[string]bool{
-				"on": true, "off": true, "setup": true, "ip": true,
+				"on": true, "setup": true, "ip": true,
 				"add": true, "rm": true, "remove": true, "del": true,
 				"enable": true, "disable": true,
 			}

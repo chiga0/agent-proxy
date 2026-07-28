@@ -98,7 +98,7 @@ func run(name string, args ...string) error {
 }
 
 // CaptureExtraState returns nil on macOS — URL + enabled is sufficient.
-func CaptureExtraState(service string) map[string]string { return nil }
+func CaptureExtraState(service string) (map[string]string, error) { return nil, nil }
 
 // RestoreExtraState is a no-op on macOS.
 func RestoreExtraState(service string, data map[string]string) error { return nil }
