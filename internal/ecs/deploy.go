@@ -31,6 +31,12 @@ func Deploy(cfg *config.Config) error {
 		struct {
 			name string
 			fn   func() error
+		}{"System tuning", func() error {
+			return sshRun(cfg, `grep -q tcp_fastopen /etc/sysctl.conf || echo "net.ipv4.tcp_fastopen = 3" >> /etc/sysctl.conf; sysctl -w net.ipv4.tcp_fastopen=3 >/dev/null 2>&1; echo ok`)
+		}},
+		struct {
+			name string
+			fn   func() error
 		}{"Write Squid config", func() error { return writeSquidConfig(cfg) }},
 		struct {
 			name string
@@ -156,7 +162,9 @@ func generateSquidConfig(cfg *config.Config, trustedIP string) string {
 	b.WriteString("positive_dns_ttl 1 hours\n")
 	b.WriteString("negative_dns_ttl 30 seconds\n\n")
 	b.WriteString("# File descriptors\n")
-	b.WriteString("max_filedescriptors 65536\n")
+	b.WriteString("max_filedescriptors 65536\n\n")
+	b.WriteString("# Request deduplication\n")
+	b.WriteString("collapsed_forwarding on\n")
 
 	return b.String()
 }

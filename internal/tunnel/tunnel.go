@@ -34,6 +34,9 @@ func Start(cfg *config.Config) (bool, error) {
 		"-o", "Compression=no",
 		"-o", "IPQoS=throughput",
 		"-o", "TCPKeepAlive=yes",
+		"-o", "ControlMaster=auto",
+		"-o", "ControlPath=" + filepath.Join(config.DataDir(), "ssh-ctrl-%r@%h:%p"),
+		"-o", "ControlPersist=600",
 	}
 	if cfg.Proxy.SSHKey != "" {
 		args = append(args, "-i", cfg.Proxy.SSHKey)
