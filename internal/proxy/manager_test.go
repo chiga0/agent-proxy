@@ -4,16 +4,18 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/chiga0/agent-proxy/internal/config"
 )
 
-// setupTestHome redirects HOME to a temp dir so config.DataDir() is isolated.
+// setupTestHome redirects HOME/USERPROFILE to a temp dir so config.DataDir() is isolated.
 func setupTestHome(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
 	t.Setenv("HOME", dir)
+	t.Setenv("USERPROFILE", dir) // Windows uses USERPROFILE
 	return dir
 }
 
@@ -212,13 +214,15 @@ func TestSavePACStateFileAtomicWrite(t *testing.T) {
 		t.Error(".tmp file should not exist after successful save")
 	}
 
-	// Verify file permissions are 0600
+	// Verify file permissions are 0600 (skip on Windows — ACLs, not Unix bits)
 	info, err := os.Stat(pacStatePath())
 	if err != nil {
 		t.Fatalf("stat: %v", err)
 	}
-	if perm := info.Mode().Perm(); perm != 0600 {
-		t.Errorf("file perm = %o, want 0600", perm)
+	if runtime.GOOS != "windows" {
+		if perm := info.Mode().Perm(); perm != 0600 {
+			t.Errorf("file perm = %o, want 0600", perm)
+		}
 	}
 }
 
@@ -328,7 +332,7 @@ func TestWriteEnvFile(t *testing.T) {
 		t.Fatalf("writeEnvFile: %v", err)
 	}
 
-	envPath := filepath.Join(home, config.ConfigDir, config.EnvFile)
+	envPath := config.EnvPath()
 	data, err := os.ReadFile(envPath)
 	if err != nil {
 		t.Fatalf("read env file: %v", err)

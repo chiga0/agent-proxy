@@ -39,6 +39,7 @@ func TestControlSocketPath(t *testing.T) {
 func TestControlSocketExpansion(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("HOME", dir)
+	t.Setenv("USERPROFILE", dir)
 
 	tests := []struct {
 		name     string
@@ -103,6 +104,7 @@ func TestControlSocketExpansion(t *testing.T) {
 func TestControlSocketUnderDataDir(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("HOME", dir)
+	t.Setenv("USERPROFILE", dir)
 
 	cfg := &config.Config{
 		Proxy: config.ProxyConfig{
@@ -121,6 +123,7 @@ func TestControlSocketUnderDataDir(t *testing.T) {
 func TestRunningWithStaleSocket(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("HOME", dir)
+	t.Setenv("USERPROFILE", dir)
 
 	cfg := &config.Config{
 		Proxy: config.ProxyConfig{
