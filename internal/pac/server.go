@@ -80,6 +80,7 @@ func PortOccupied() bool {
 
 func pacHandler(nonce string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		pacRequestsTotal.Add(1)
 		data, err := os.ReadFile(config.PACPath())
 		if err != nil {
 			http.Error(w, "PAC not found", 404)
@@ -107,6 +108,8 @@ func StartServer() error {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/proxy.pac", pacHandler(nonce))
+	mux.HandleFunc("/metrics", metricsHandler())
+	registerDashboard(mux)
 
 	srv = &http.Server{
 		Addr:    fmt.Sprintf("127.0.0.1:%d", config.PACPort),
@@ -166,6 +169,8 @@ func ServeForeground() error {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/proxy.pac", pacHandler(nonce))
+	mux.HandleFunc("/metrics", metricsHandler())
+	registerDashboard(mux)
 
 	// Start config watcher for hot-reload
 	go watchConfigAndReloadPAC()
