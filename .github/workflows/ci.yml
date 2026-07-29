@@ -42,3 +42,11 @@ jobs:
 
       - name: Vet
         run: go vet ./...
+
+  squid-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Run Squid ACL integration tests
+        run: bash test/squid/integration_test.sh

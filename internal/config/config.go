@@ -39,6 +39,11 @@ type ProxyConfig struct {
 	SSHUser         string `yaml:"ssh_user,omitempty"`
 	Tunnel          bool   `yaml:"tunnel,omitempty"`
 	TunnelLocalPort int    `yaml:"tunnel_local_port,omitempty"`
+
+	// Fallback host for automatic failover when primary is unreachable.
+	FallbackHost    string `yaml:"fallback_host,omitempty"`
+	FallbackSSHKey  string `yaml:"fallback_ssh_key,omitempty"`
+	FallbackSSHUser string `yaml:"fallback_ssh_user,omitempty"`
 }
 
 // EffectiveHost returns the proxy host for client connections.
@@ -88,6 +93,46 @@ func (p *ProxyConfig) SSHBaseArgs() []string {
 // SSHTarget returns the user@host string for SSH commands.
 func (p *ProxyConfig) SSHTarget() string {
 	return fmt.Sprintf("%s@%s", p.SSHUserOrRoot(), p.Host)
+}
+
+// HasFallback returns true if a fallback host is configured.
+func (p *ProxyConfig) HasFallback() bool {
+	return p.FallbackHost != ""
+}
+
+// FallbackSSHUserOrRoot returns the fallback SSH user, defaulting to primary or "root".
+func (p *ProxyConfig) FallbackSSHUserOrRoot() string {
+	if p.FallbackSSHUser != "" {
+		return p.FallbackSSHUser
+	}
+	return p.SSHUserOrRoot()
+}
+
+// FallbackSSHKeyOrPrimary returns the fallback SSH key, defaulting to primary.
+func (p *ProxyConfig) FallbackSSHKeyOrPrimary() string {
+	if p.FallbackSSHKey != "" {
+		return p.FallbackSSHKey
+	}
+	return p.SSHKey
+}
+
+// FallbackSSHTarget returns the user@host for the fallback host.
+func (p *ProxyConfig) FallbackSSHTarget() string {
+	return fmt.Sprintf("%s@%s", p.FallbackSSHUserOrRoot(), p.FallbackHost)
+}
+
+// FallbackSSHBaseArgs returns SSH args for the fallback host.
+func (p *ProxyConfig) FallbackSSHBaseArgs() []string {
+	args := []string{
+		"-o", "StrictHostKeyChecking=yes",
+		"-o", "UserKnownHostsFile=" + KnownHostsPath(),
+		"-o", "ConnectTimeout=10",
+	}
+	key := p.FallbackSSHKeyOrPrimary()
+	if key != "" {
+		args = append(args, "-i", key)
+	}
+	return args
 }
 
 func homeDir() string {

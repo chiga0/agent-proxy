@@ -24,13 +24,41 @@ func controlSocket(cfg *config.Config) string {
 }
 
 // Start ensures the SSH tunnel is running.
-// Returns (true, nil) if it was started by this call, (false, nil) if already running.
+// Tries primary host first; if it fails and a fallback is configured, tries fallback.
+// Returns (true, nil) if started, (false, nil) if already running.
 func Start(cfg *config.Config) (bool, error) {
 	if Running(cfg) {
 		return false, nil
 	}
 
-	args := cfg.Proxy.SSHBaseArgs()
+	// Try primary
+	started, err := startTunnel(cfg, false)
+	if err == nil {
+		return started, nil
+	}
+
+	// Try fallback if configured
+	if cfg.Proxy.HasFallback() {
+		fmt.Printf("  ⚠ Primary %s failed (%v), trying fallback %s...\n",
+			cfg.Proxy.Host, err, cfg.Proxy.FallbackHost)
+		return startTunnel(cfg, true)
+	}
+
+	return false, err
+}
+
+func startTunnel(cfg *config.Config, useFallback bool) (bool, error) {
+	var args []string
+	var target string
+
+	if useFallback {
+		args = cfg.Proxy.FallbackSSHBaseArgs()
+		target = cfg.Proxy.FallbackSSHTarget()
+	} else {
+		args = cfg.Proxy.SSHBaseArgs()
+		target = cfg.Proxy.SSHTarget()
+	}
+
 	args = append(args,
 		"-f", "-N",
 		"-o", "ServerAliveInterval=30",
@@ -45,12 +73,12 @@ func Start(cfg *config.Config) (bool, error) {
 		"-o", "ControlPath="+cfg.Proxy.SSHControlPath(),
 		"-o", "ControlPersist=600",
 		"-L", fmt.Sprintf("%d:127.0.0.1:%d", cfg.Proxy.LocalPort(), cfg.Proxy.Port),
-		cfg.Proxy.SSHTarget(),
+		target,
 	)
 
 	cmd := exec.Command("ssh", args...)
 	if out, err := cmd.CombinedOutput(); err != nil {
-		return false, fmt.Errorf("start SSH tunnel: %s: %w", strings.TrimSpace(string(out)), err)
+		return false, fmt.Errorf("start SSH tunnel to %s: %s: %w", target, strings.TrimSpace(string(out)), err)
 	}
 
 	for i := 0; i < 20; i++ {
@@ -59,7 +87,7 @@ func Start(cfg *config.Config) (bool, error) {
 			return true, nil
 		}
 	}
-	return false, fmt.Errorf("SSH tunnel did not start within 2s")
+	return false, fmt.Errorf("SSH tunnel to %s did not start within 2s", target)
 }
 
 // Stop terminates the SSH tunnel via the ControlMaster socket.

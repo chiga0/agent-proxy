@@ -5,255 +5,231 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/chiga0/agent-proxy)](https://github.com/chiga0/agent-proxy/releases)
 
-Domain-based selective proxy routing via an overseas server. Route AI services, developer tools, and search engines through a proxy while keeping everything else direct.
+**Domain-based selective proxy CLI.** Route AI services, developer tools, and search engines through your overseas server — everything else stays direct.
 
-**50+ domains pre-configured. Zero config to start.**
+60+ domains pre-configured. One command to set up. SSH-encrypted tunnel. Zero runtime dependencies.
 
-## How It Works
+## Architecture
 
 ```
-Browser / Desktop App  ──PAC──▶  Whitelisted domain?  ──Yes──▶  Local Proxy Port  ──▶  Target
-                                        │                              │
-                                       No                         SSH Tunnel
-                                        │                              │
-                                        ▼                              ▼
-                                   Direct connection            ECS Squid (loopback)
-
-CLI Tools  ──env vars──▶  https_proxy + no_proxy  ──▶  Same local proxy port
+┌─────────────────────────────────────────────────────────────────┐
+│  Your Machine                                                   │
+│                                                                 │
+│  Browser / Electron ──PAC──▶ 127.0.0.1:18080 (PAC server)      │
+│                                    │                            │
+│  CLI / SDK ──env vars──▶ 127.0.0.1:18443 (SSH tunnel)          │
+│                                    │                            │
+└────────────────────────────────────┼────────────────────────────┘
+                                     │ SSH (encrypted)
+                                     ▼
+┌────────────────────────────────────────────────────────────────┐
+│  Your ECS (Singapore / Tokyo / etc.)                           │
+│                                                                │
+│  127.0.0.1:18443 ──▶ Squid (loopback only) ──▶ Target Site    │
+│                                                                │
+│  • Deny-first ACL (no public data port)                       │
+│  • Blocks localhost / RFC1918 / cloud metadata                │
+└────────────────────────────────────────────────────────────────┘
 ```
 
-- **PAC (Proxy Auto-Config)** for browsers and Electron apps — selective per-domain routing
-- **Environment variables** (`https_proxy` + `no_proxy`) for CLI tools — all HTTP(S) except `no_proxy` goes through the proxy
-- **SSH tunnel** encrypts client→ECS traffic; Squid listens on ECS loopback only (no public data port)
-- **Built-in PAC HTTP server** (pure Go, no external dependencies)
+**Two routing paths, one proxy:**
 
-> **Note:** PAC routes only whitelisted domains through the proxy. CLI env vars route *all* HTTP(S) traffic except `no_proxy` entries — the routing semantics differ.
+| Path | Mechanism | Scope |
+|------|-----------|-------|
+| Browser / Desktop | System PAC → `127.0.0.1:18080` | Only whitelisted domains |
+| CLI / SDK | `https_proxy` + `no_proxy` env vars | All HTTP(S) except `no_proxy` |
 
 ## Install
 
-**China mirror (recommended for CN users):**
-
 ```bash
-curl -fsSL https://agent-proxy.oss-cn-hangzhou.aliyuncs.com/install.sh | bash
-```
-
-**GitHub (international):**
-
-```bash
+# Auto-detect OS/arch, pick fastest mirror, verify SHA-256
 curl -fsSL https://raw.githubusercontent.com/chiga0/agent-proxy/main/install.sh | bash
 ```
 
-**Options:**
+<details>
+<summary>Other install methods</summary>
 
 ```bash
-# Specify version / install directory / mirror
-curl -fsSL ... | bash -s -- --version v0.3.1 --dir ~/.local/bin --mirror oss
+# China mirror (faster for CN users)
+curl -fsSL https://agent-proxy.oss-cn-hangzhou.aliyuncs.com/install.sh | bash
 
-# Via Go
+# Specific version
+curl -fsSL ... | bash -s -- --version v0.6.1
+
+# Go install
 GONOSUMDB=github.com/chiga0/agent-proxy go install github.com/chiga0/agent-proxy/cmd/agent-proxy@latest
 
 # Build from source
 git clone https://github.com/chiga0/agent-proxy.git
-cd agent-proxy && make build && sudo cp bin/agent-proxy /usr/local/bin/
+cd agent-proxy && make build
 ```
-
-The installer auto-detects OS/arch and picks the fastest mirror (GitHub or OSS).
+</details>
 
 ## Quick Start
 
 ```bash
-# One command does everything:
-# SSH check → Squid deploy → SSH tunnel → PAC + env → auto-start → verify
-agent-proxy init
+agent-proxy init          # Interactive setup (SSH key → deploy → tunnel → PAC → verify)
 ```
 
-That's it. `init` walks you through server IP + SSH key, chooses tunnel vs direct mode, deploys Squid, sets up an encrypted SSH tunnel (bypasses GFW SNI filtering), enables system PAC, configures CLI env vars, and registers auto-start on boot.
-
-Add to your `~/.zshrc` or `~/.bashrc` for auto-loading CLI env vars in new terminals:
+Add to `~/.zshrc` or `~/.bashrc`:
 
 ```bash
 [ -f "$HOME/.config/agent-proxy/env.sh" ] && source "$HOME/.config/agent-proxy/env.sh"
 ```
 
+Done. New terminals auto-load proxy env vars. Browsers use system PAC automatically.
+
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `agent-proxy on` | Enable proxy (PAC + env vars + PAC HTTP server) |
-| `agent-proxy off` | Disable proxy |
-| `agent-proxy status` | Quick health check |
-| `agent-proxy doctor` | Full diagnostics (config + connectivity) |
 | `agent-proxy init` | Interactive first-time setup |
-| `agent-proxy setup` | Deploy Squid on ECS (idempotent) |
+| `agent-proxy on` | Enable proxy (tunnel + PAC + env vars) |
+| `agent-proxy off` | Disable proxy (restores original PAC) |
+| `agent-proxy status` | Quick health check (6 checks) |
+| `agent-proxy doctor` | Full diagnostics + no_proxy coverage analysis |
+| `agent-proxy stats` | Traffic statistics: top domains, bandwidth, Chinese traffic % |
+| `agent-proxy setup` | Deploy/redeploy Squid on ECS (idempotent) |
+| `agent-proxy trust-host` | Verify and trust ECS host key (SSH fingerprint) |
 | `agent-proxy ip` | Refresh Squid IP whitelist (direct mode only) |
-| `agent-proxy bench [domains...]` | Benchmark proxy vs direct latency |
-| `agent-proxy trace [domain]` | Network path trace: local → ECS → target |
-| `agent-proxy whitelist ls` | List effective whitelist (presets + custom) |
-| `agent-proxy whitelist add <domain>` | Add custom domain |
-| `agent-proxy whitelist rm <domain>` | Remove custom domain |
-| `agent-proxy preset ls` | List preset groups with domains |
-| `agent-proxy preset enable <name>` | Enable a preset group |
-| `agent-proxy preset disable <name>` | Disable a preset group |
+| `agent-proxy bench` | Benchmark proxy vs direct latency |
+| `agent-proxy trace` | Network path trace: local → ECS → target |
+| `agent-proxy update` | Self-update to latest release |
+| `agent-proxy whitelist add/rm` | Manage custom domains |
+| `agent-proxy preset enable/disable` | Toggle preset groups |
 
-## Presets (Zero-Config)
+## Presets
 
-All presets are **enabled by default**. You get 50+ domains out of the box:
+60+ domains across 5 groups, all enabled by default:
 
-| Preset | Domains | Examples |
-|--------|---------|---------|
-| `ai` | AI services | OpenAI, ChatGPT, Anthropic, Claude, Gemini, OpenRouter, Copilot, Codex, Mistral, Perplexity |
-| `dev` | Developer tools | GitHub, StackOverflow, npm, PyPI, crates.io, Go, Rust, Docker, HuggingFace |
-| `search` | Search engines | Google, DuckDuckGo, Bing, Wikipedia |
-| `cloud` | Cloud providers | AWS, GCP, Azure docs & consoles |
-| `media` | Video & social | YouTube, Twitter/X, Instagram, Facebook, Telegram |
-
-Manage presets:
+| Preset | Examples |
+|--------|---------|
+| `ai` | OpenAI, ChatGPT, Anthropic, Gemini, Copilot, Codex, Perplexity |
+| `dev` | GitHub, StackOverflow, npm, PyPI, crates.io, Docker, HuggingFace |
+| `search` | Google, DuckDuckGo, Bing, Wikipedia |
+| `cloud` | AWS, GCP, Azure docs & consoles |
+| `media` | YouTube, Twitter/X, Instagram, Facebook, Telegram |
 
 ```bash
-agent-proxy preset ls              # Show all presets and their domains
-agent-proxy preset disable cloud   # Disable cloud preset
-agent-proxy preset enable cloud    # Re-enable
-```
-
-Add domains beyond presets:
-
-```bash
-agent-proxy whitelist add ipinfo.io mysite.com
-agent-proxy whitelist rm mysite.com
+agent-proxy preset ls              # Show all presets
+agent-proxy preset disable cloud   # Disable a group
+agent-proxy whitelist add foo.com  # Add custom domain
 ```
 
 ## Diagnostics
 
-### Benchmark
+### Stats — see what's going through your proxy
 
-Compare proxy vs direct latency:
+```bash
+$ agent-proxy stats
+  Requests: 500
+  Total traffic: 42.3 MB
+
+  Top 10 domains by traffic:
+  Domain                                        Requests  Traffic
+  chatgpt.com                                        312   38.1 MB
+  api.openai.com                                      45    3.2 MB
+  github.com                                          28    0.8 MB
+  ...
+
+  🇨 Chinese traffic: 3 requests, 12.1 KB (0% of total)
+```
+
+### Doctor — full health + no_proxy audit
+
+```bash
+$ agent-proxy doctor
+  ✓ SSH tunnel (127.0.0.1:18443 → 1.2.3.4:18443)
+  ✓ Proxy forwarding (exit IP: 1.2.3.4)
+  ✓ System PAC (http://127.0.0.1:18080/proxy.pac)
+  ✓ PAC file (61 domains)
+  ✓ PAC HTTP server (127.0.0.1:18080)
+  ✓ ECS Squid loopback-only
+  ✓ no_proxy coverage
+  ✓ Everything looks good!
+```
+
+### Benchmark
 
 ```bash
 $ agent-proxy bench
-Benchmarking 4 domains × 3 runs (proxy vs direct)...
-
-  Domain                    Mode       TTFB    Total     Runs   Status
-  ---------------------------------------------------------------------------
-  chatgpt.com               proxy      350ms    352ms        3        ✓
-  chatgpt.com               direct       -        -         3        ✗
-  openai.com                proxy      340ms    342ms        3        ✓
-  openai.com                direct     1380ms   1428ms        3        ✓
-  github.com                proxy      320ms    330ms        3        ✓
-  github.com                direct     690ms    700ms        3        ✓
-```
-
-### Network Trace
-
-Trace the full path from your machine to the target via the proxy:
-
-```bash
-$ agent-proxy trace chatgpt.com
-=== Network Trace ===
-
---- DNS Resolution ---
-  203.0.113.1               → 203.0.113.1      (5ms)
-  chatgpt.com               → 104.18.32.47     (12ms)
-
---- Local → ECS (203.0.113.1) ---
-   1  192.168.1.1              2.1ms   1.8ms   2.3ms
-   2  10.0.0.1                 5.2ms   4.9ms   5.5ms
-   ...
-  12  203.0.113.1             82.1ms  81.5ms  83.0ms
-
---- ECS → chatgpt.com ---
-   1  172.16.0.1               0.5ms   0.4ms   0.6ms
-   ...
-   4  104.18.32.47             2.1ms   1.9ms   2.3ms
+  Domain                    Mode       TTFB    Total     Status
+  chatgpt.com               proxy      350ms    352ms       ✓
+  chatgpt.com               direct       -        -         ✗
+  github.com                proxy      320ms    330ms       ✓
+  github.com                direct     235ms    240ms       ✓
 ```
 
 ## Configuration
 
-Config file: `~/.config/agent-proxy/config.yaml` (auto-created with defaults)
+`~/.config/agent-proxy/config.yaml`:
 
 ```yaml
 proxy:
-  host: 1.2.3.4          # Your ECS IP
+  host: 1.2.3.4
   port: 18443
-  ssh_key: ~/.ssh/key.pem # SSH key for tunnel + setup
+  ssh_key: ~/.ssh/key.pem
   ssh_user: root
-  tunnel: true            # SSH tunnel (recommended; Squid listens on loopback only)
+  tunnel: true              # SSH tunnel (recommended)
 
-presets:                  # Enabled preset groups
-  - ai
-  - dev
-  - search
-  - cloud
-  - media
-
-custom_domains: []        # Extra domains beyond presets
-
-no_proxy:                 # Domains/IPs that bypass proxy
-  - localhost
-  - 127.0.0.1
-  - .alibaba-inc.com
-  - .baidu.com
-  # ... (see default config for full list)
+presets: [ai, dev, search, cloud, media]
+custom_domains: []
+no_proxy: [localhost, 127.0.0.1, .alibaba-inc.com, .baidu.com, ...]
 ```
 
-> **`no_proxy` compatibility note:** Wildcard patterns like `10.*` and `172.16.*` are not uniformly supported across all HTTP clients (curl, Go, Python, Node, and Java each differ). Domain suffixes (`.example.com`) have the broadest compatibility. If a specific CLI tool leaks traffic through the proxy, check its `no_proxy` parsing rules.
+> **`no_proxy` note:** Domain suffixes (`.example.com`) have the broadest cross-client compatibility. IP wildcards (`10.*`) behave differently across curl, Go, Python, Node, and Java.
 
-## Platform Support
+## Upgrading
 
-| Platform | System PAC proxy | CLI env vars | ECS setup |
-|----------|-----------------|--------------|-----------|
-| macOS    | ✅ `networksetup` | ✅ | ✅ |
-| Linux    | ✅ GNOME/gsettings | ✅ | ✅ |
-| Windows  | ✅ Registry (IE/Edge) | ✅ | ✅ |
+```bash
+agent-proxy update          # Self-update with SHA-256 verification
 
-## Requirements
-
-- Go 1.24+ (for building from source)
-- SSH access to your ECS (for `setup` and `ip` commands)
-- No external runtime dependencies
+# After upgrading from < v0.6.0:
+agent-proxy trust-host      # Migrate SSH host key to project known_hosts
+agent-proxy setup           # Rewrite ECS Squid to loopback-only
+```
 
 ## Security
 
-- **SSH tunnel mode** (recommended): Squid listens on `127.0.0.1` only on the ECS — no public data port is exposed. All proxy traffic is encrypted via SSH. Access control is provided by your SSH key.
-- **Direct mode**: Squid listens on all interfaces with IP whitelist only (no proxy auth). Use only if you understand the risks and restrict access via ECS security groups.
-- Squid ACLs use deny-first ordering: unsafe ports, CONNECT to non-SSL ports, and connections to localhost/link-local/RFC1918/cloud-metadata addresses are blocked.
-- Config stored with `0600` permissions; PAC HTTP server binds to `127.0.0.1` only.
-- Release archives include SHA-256 checksums; the installer verifies them before extraction.
+- **SSH tunnel mode**: Squid listens on `127.0.0.1` only — no public data port exposed
+- **SSH host key**: project-specific `known_hosts` with `StrictHostKeyChecking=yes` (no TOFU)
+- **Deny-first ACL**: blocks unsafe ports, non-SSL CONNECT, localhost, RFC1918, cloud metadata (AWS + Alibaba)
+- **PAC server**: random nonce per start prevents port-conflict misidentification
+- **Release integrity**: SHA-256 checksums verified by installer; GitHub Actions pinned to commit SHA
+- **Config permissions**: `0600`; PAC server binds `127.0.0.1` only
+
+## Platform Support
+
+| Platform | System PAC | CLI env | Auto-start | SSH tunnel |
+|----------|-----------|---------|------------|------------|
+| macOS    | ✅ | ✅ | ✅ LaunchAgent | ✅ |
+| Linux    | ✅ GNOME | ✅ | ✅ systemd user | ✅ |
+| Windows  | ✅ Registry | ✅ | ✅ Scheduled Task | ✅ |
+
+Linux without GNOME: CLI-only mode (env vars work, system PAC skipped automatically).
 
 ## Troubleshooting
 
-### macOS: "cannot be opened because the developer cannot be verified"
+| Problem | Fix |
+|---------|-----|
+| `host not in project known_hosts` | `agent-proxy trust-host` |
+| ECS Squid not loopback-only | `agent-proxy setup` |
+| Chinese traffic going through proxy | `agent-proxy doctor` → add flagged domains to `no_proxy` |
+| Codex/desktop app can't connect | Restart the app (it caches PAC at startup) |
+| `go build` fails with proxy | `source ~/.config/agent-proxy/env.sh` (updates no_proxy) |
+| macOS "developer cannot be verified" | `xattr -d com.apple.quarantine /usr/local/bin/agent-proxy` |
+| Proxy env breaks `go install` | `unset https_proxy http_proxy && go install ...` |
+| Config corrupted, need emergency off | `agent-proxy off` works even with broken config |
 
-The binary is not Apple-signed. Remove the quarantine attribute:
+## Requirements
 
-```bash
-xattr -d com.apple.quarantine /usr/local/bin/agent-proxy
-```
-
-The `install.sh` script does this automatically.
-
-### `go install` fails with sum.golang.org 500
-
-New modules may not be indexed by the Go checksum database yet. Skip verification:
-
-```bash
-GONOSUMDB=github.com/chiga0/agent-proxy go install github.com/chiga0/agent-proxy/cmd/agent-proxy@latest
-```
-
-Or use the `install.sh` script which downloads directly from GitHub Releases.
-
-### Proxy env vars break `go build` / `go install`
-
-Go module domains are in the default `no_proxy` list. If you have an older config, regenerate:
-
-```bash
-agent-proxy on   # regenerates env.sh with updated no_proxy
-```
-
-Or temporarily unset: `unset https_proxy http_proxy && go build ...`
+- Go 1.24+ (build from source only)
+- SSH access to your ECS
+- No external runtime dependencies
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Please read our [Code of Conduct](CODE_OF_CONDUCT.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
