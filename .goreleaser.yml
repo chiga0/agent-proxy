@@ -36,8 +36,8 @@ brews:
   - name: agent-proxy
     repository:
       owner: chiga0
-      name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+      name: agent-proxy
+    directory: Formula
     homepage: "https://github.com/chiga0/agent-proxy"
     description: "Domain-based selective proxy CLI for overseas ECS"
     license: "MIT"
