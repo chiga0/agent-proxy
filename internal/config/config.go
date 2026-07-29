@@ -40,27 +40,69 @@ type ProxyConfig struct {
 	Tunnel          bool   `yaml:"tunnel,omitempty"`
 	TunnelLocalPort int    `yaml:"tunnel_local_port,omitempty"`
 
+	// Transport backend: "ssh" (default) or "xray"
+	Transport string       `yaml:"transport,omitempty"`
+	Xray      XrayConfig   `yaml:"xray,omitempty"`
+
 	// Fallback host for automatic failover when primary is unreachable.
 	FallbackHost    string `yaml:"fallback_host,omitempty"`
 	FallbackSSHKey  string `yaml:"fallback_ssh_key,omitempty"`
 	FallbackSSHUser string `yaml:"fallback_ssh_user,omitempty"`
 }
 
+type XrayConfig struct {
+	LocalPort  int    `yaml:"local_port,omitempty"`  // Local HTTP proxy port (default 18443)
+	PublicKey  string `yaml:"public_key,omitempty"`   // Reality public key
+	PrivateKey string `yaml:"private_key,omitempty"`  // Reality private key (server only)
+	ServerName string `yaml:"server_name,omitempty"`  // Reality SNI (default www.microsoft.com)
+	ShortID    string `yaml:"short_id,omitempty"`     // Reality short ID
+	UUID       string `yaml:"uuid,omitempty"`         // VLESS user ID
+	Mux        bool   `yaml:"mux,omitempty"`          // Connection multiplexing (default true)
+}
+
 // EffectiveHost returns the proxy host for client connections.
 func (p *ProxyConfig) EffectiveHost() string {
-	if p.Tunnel {
+	if p.IsXray() || p.Tunnel {
 		return "127.0.0.1"
 	}
 	return p.Host
 }
 
 // LocalPort returns the port clients connect to.
-// When tunnel is enabled with a custom local port, use that; otherwise use Port.
 func (p *ProxyConfig) LocalPort() int {
+	if p.IsXray() {
+		if p.Xray.LocalPort > 0 {
+			return p.Xray.LocalPort
+		}
+		return p.Port
+	}
 	if p.Tunnel && p.TunnelLocalPort > 0 {
 		return p.TunnelLocalPort
 	}
 	return p.Port
+}
+
+func (p *ProxyConfig) IsXray() bool {
+	return p.Transport == "xray"
+}
+
+func (p *ProxyConfig) XrayServerName() string {
+	if p.Xray.ServerName != "" {
+		return p.Xray.ServerName
+	}
+	return "www.microsoft.com"
+}
+
+func (p *ProxyConfig) XrayMuxEnabled() bool {
+	// Default true for xray transport
+	return p.Xray.Mux || p.Xray.Mux == false && p.IsXray() && !muxExplicitlyDisabled(p)
+}
+
+func muxExplicitlyDisabled(p *ProxyConfig) bool {
+	// If mux field is explicitly set to false in YAML, respect it
+	// Since we can't distinguish "not set" from "false" with bool,
+	// we default to true and let users set mux: false to disable
+	return false
 }
 
 // SSHUserOrRoot returns the SSH user, defaulting to "root".

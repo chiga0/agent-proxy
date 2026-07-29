@@ -15,6 +15,7 @@ import (
 	"github.com/chiga0/agent-proxy/internal/pac"
 	"github.com/chiga0/agent-proxy/internal/platform"
 	"github.com/chiga0/agent-proxy/internal/tunnel"
+	xraypkg "github.com/chiga0/agent-proxy/internal/xray"
 )
 
 // pacURL is the exact PAC URL that agent-proxy sets on the system.
@@ -158,8 +159,19 @@ func On(cfg *config.Config) error {
 		return err
 	}
 
-	// 1. Start SSH tunnel if enabled
-	if cfg.Proxy.Tunnel {
+	// 1. Start transport (SSH tunnel or Xray)
+	if cfg.Proxy.IsXray() {
+		fmt.Print("  → Xray client... ")
+		started, err := xraypkg.Start(cfg)
+		if err != nil {
+			fmt.Println("✗")
+			return fmt.Errorf("start xray: %w", err)
+		}
+		fmt.Println("✓")
+		if started {
+			undo = append(undo, func() { xraypkg.Stop(cfg) })
+		}
+	} else if cfg.Proxy.Tunnel {
 		fmt.Print("  → SSH tunnel... ")
 		started, err := tunnel.Start(cfg)
 		if err != nil {
@@ -240,7 +252,9 @@ func On(cfg *config.Config) error {
 	fmt.Printf("  PAC (browser/desktop): %s\n", pacURL)
 	fmt.Printf("  CLI env:               %s\n", config.EnvPath())
 	fmt.Printf("  Proxy:                 %s:%d", cfg.Proxy.EffectiveHost(), cfg.Proxy.LocalPort())
-	if cfg.Proxy.Tunnel {
+	if cfg.Proxy.IsXray() {
+		fmt.Printf(" (via Xray VLESS+Reality → %s:%d, mux=%v)", cfg.Proxy.Host, cfg.Proxy.Port, cfg.Proxy.XrayMuxEnabled())
+	} else if cfg.Proxy.Tunnel {
 		fmt.Printf(" (via SSH tunnel → %s:%d)", cfg.Proxy.Host, cfg.Proxy.Port)
 	}
 	fmt.Println()
@@ -280,8 +294,10 @@ func Off(cfg *config.Config) error {
 	// 2. Stop PAC HTTP server daemon
 	stopPACDaemon()
 
-	// 3. Stop SSH tunnel (best-effort — don't let invalid config block cleanup)
-	if cfg.Proxy.Tunnel {
+	// 3. Stop transport (best-effort — don't let invalid config block cleanup)
+	if cfg.Proxy.IsXray() {
+		xraypkg.Stop(cfg)
+	} else if cfg.Proxy.Tunnel {
 		tunnel.Stop(cfg)
 	}
 

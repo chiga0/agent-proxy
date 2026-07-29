@@ -16,6 +16,7 @@ import (
 	"github.com/chiga0/agent-proxy/internal/proxy"
 	"github.com/chiga0/agent-proxy/internal/trace"
 	"github.com/chiga0/agent-proxy/internal/tunnel"
+	xraypkg "github.com/chiga0/agent-proxy/internal/xray"
 	"github.com/spf13/cobra"
 )
 
@@ -355,17 +356,43 @@ func cmdInit() *cobra.Command {
 				cfg.Proxy.Port = portNum
 			}
 
-			// --- Step 2: SSH tunnel choice (BEFORE deploy so Squid is configured correctly) ---
-			fmt.Printf("\n─── SSH 隧道 ───\n")
-			fmt.Print("  启用 SSH 加密隧道? (中国用户推荐) [Y/n]: ")
-			tunnelAns, _ := reader.ReadString('\n')
-			tunnelAns = strings.TrimSpace(strings.ToLower(tunnelAns))
-			if tunnelAns == "" || tunnelAns == "y" || tunnelAns == "yes" {
-				cfg.Proxy.Tunnel = true
-			} else {
+			// --- Step 2: Transport choice ---
+			fmt.Printf("\n─── 传输方式 ───\n")
+			fmt.Print("  选择传输方式:\n")
+			fmt.Print("    1) SSH 隧道 (默认，稳定)\n")
+			fmt.Print("    2) Xray VLESS+Reality (更快，连接复用)\n")
+			fmt.Print("  选择 [1]: ")
+			transportAns, _ := reader.ReadString('\n')
+			transportAns = strings.TrimSpace(transportAns)
+
+			if transportAns == "2" || strings.ToLower(transportAns) == "xray" {
+				cfg.Proxy.Transport = "xray"
 				cfg.Proxy.Tunnel = false
-				fmt.Println("  ⚠ 直连模式: Squid 将监听公网，仅靠 IP 白名单保护，无代理认证。")
-				fmt.Println("    建议确保 ECS 安全组限制 Squid 端口访问。")
+
+				// Generate xray credentials
+				fmt.Print("  → 生成密钥... ")
+				pub, priv, err := xraypkg.GenerateKeys()
+				if err != nil {
+					fmt.Println("✗")
+					return fmt.Errorf("generate xray keys: %w", err)
+				}
+				cfg.Proxy.Xray.PublicKey = pub
+				cfg.Proxy.Xray.PrivateKey = priv
+				cfg.Proxy.Xray.UUID = xraypkg.GenerateUUID()
+				cfg.Proxy.Xray.ShortID = xraypkg.GenerateShortID()
+				cfg.Proxy.Xray.Mux = true
+				fmt.Println("✓")
+			} else {
+				cfg.Proxy.Transport = "ssh"
+				fmt.Print("  启用 SSH 加密隧道? (中国用户推荐) [Y/n]: ")
+				tunnelAns, _ := reader.ReadString('\n')
+				tunnelAns = strings.TrimSpace(strings.ToLower(tunnelAns))
+				if tunnelAns == "" || tunnelAns == "y" || tunnelAns == "yes" {
+					cfg.Proxy.Tunnel = true
+				} else {
+					cfg.Proxy.Tunnel = false
+					fmt.Println("  ⚠ 直连模式: Squid 将监听公网，仅靠 IP 白名单保护。")
+				}
 			}
 
 			// --- Step 3: SSH host key verification ---
@@ -383,14 +410,30 @@ func cmdInit() *cobra.Command {
 			}
 			fmt.Println("✓")
 
-			// --- Step 4: Deploy Squid (with tunnel choice already set) ---
+			// --- Step 4: Deploy (Squid for SSH mode, Xray for xray mode) ---
 			fmt.Printf("\n─── 服务器部署 ───\n")
-			if err := ecs.Deploy(cfg); err != nil {
-				return fmt.Errorf("deploy failed: %w", err)
+			if cfg.Proxy.IsXray() {
+				if err := xraypkg.Deploy(cfg); err != nil {
+					return fmt.Errorf("deploy xray failed: %w", err)
+				}
+			} else {
+				if err := ecs.Deploy(cfg); err != nil {
+					return fmt.Errorf("deploy failed: %w", err)
+				}
 			}
 
-			// --- Step 5: Start SSH tunnel if enabled ---
-			if cfg.Proxy.Tunnel {
+			// --- Step 5: Start transport ---
+			if cfg.Proxy.IsXray() {
+				fmt.Printf("\n─── Xray 客户端 ───\n")
+				fmt.Print("  → 启动 Xray... ")
+				if _, err := xraypkg.Start(cfg); err != nil {
+					fmt.Println("✗")
+					fmt.Printf("    Warning: %v\n", err)
+					fmt.Println("    You can retry later: agent-proxy on")
+				} else {
+					fmt.Println("✓")
+				}
+			} else if cfg.Proxy.Tunnel {
 				fmt.Printf("\n─── SSH 隧道 ───\n")
 				fmt.Print("  → 建立 SSH 隧道... ")
 				if _, err := tunnel.Start(cfg); err != nil {
