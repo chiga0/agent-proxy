@@ -1,0 +1,41 @@
+site_name: agent-proxy
+site_description: Domain-based selective proxy CLI for AI services, developer tools, and search engines
+repo_url: https://github.com/chiga0/agent-proxy
+repo_name: chiga0/agent-proxy
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - toc.follow
+
+nav:
+  - Home: index.md
+  - Quick Start: quickstart.md
+  - Commands: commands.md
+  - Configuration: configuration.md
+  - Security: security.md
+  - Troubleshooting: troubleshooting.md
+  - Contributing: contributing.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - tables
+  - toc:
+      permalink: true
