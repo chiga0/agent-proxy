@@ -86,6 +86,7 @@ Quick start:
 		cmdInit(), cmdWhitelist(), cmdPreset(),
 		cmdSetup(), cmdIP(), cmdBench(), cmdTrace(),
 		cmdVersion(), cmdServePAC(), cmdUpdate(), cmdTrustHost(),
+		cmdStats(),
 	)
 
 	if err := root.Execute(); err != nil {
@@ -182,6 +183,53 @@ func cmdDoctor() *cobra.Command {
 					fmt.Printf("  ⚠ ECS Squid is NOT loopback-only: %s\n", detail)
 					fmt.Println("    Your Squid may still be listening on all interfaces from a previous deployment.")
 					fmt.Println("    Fix: agent-proxy setup   (rewrites Squid config for tunnel mode)")
+				}
+			}
+
+			// no_proxy coverage check: detect Chinese domains going through proxy
+			if cfg.Proxy.Host != "" {
+				fmt.Print("  → no_proxy coverage... ")
+				logText, err := ecs.FetchRecentLogs(cfg, 500)
+				if err != nil {
+					fmt.Printf("⚠ (cannot fetch logs: %v)\n", err)
+				} else {
+					entries := ecs.ParseLogLines(logText)
+					noProxySet := make(map[string]bool)
+					for _, d := range cfg.NoProxy {
+						noProxySet[strings.ToLower(d)] = true
+					}
+					var flagged []string
+					seen := make(map[string]bool)
+					for _, e := range entries {
+						if e.Domain == "" || seen[e.Domain] {
+							continue
+						}
+						seen[e.Domain] = true
+						if ecs.LooksChinese(e.Domain) {
+							// Check if already covered by no_proxy
+							covered := false
+							d := strings.ToLower(e.Domain)
+							for np := range noProxySet {
+								if strings.HasSuffix(d, np) || d == strings.TrimPrefix(np, ".") {
+									covered = true
+									break
+								}
+							}
+							if !covered {
+								flagged = append(flagged, e.Domain)
+							}
+						}
+					}
+					if len(flagged) > 0 {
+						fmt.Printf("⚠ %d Chinese domain(s) routing through proxy:\n", len(flagged))
+						for _, d := range flagged {
+							fmt.Printf("    • %s → add to no_proxy\n", d)
+						}
+						fmt.Println("    Fix: edit config.yaml → no_proxy → add these domains → agent-proxy on")
+						hasFailure = true
+					} else {
+						fmt.Println("✓")
+					}
 				}
 			}
 
@@ -778,6 +826,77 @@ known_hosts file. Run this after upgrading from a version that used
 			return verifyHostKey(cfg, reader)
 		},
 	}
+}
+
+func cmdStats() *cobra.Command {
+	var lines int
+	cmd := &cobra.Command{
+		Use:   "stats",
+		Short: "Show proxy traffic statistics from Squid access logs",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if cfg.Proxy.Host == "" {
+				return fmt.Errorf("proxy.host not configured")
+			}
+			fmt.Printf("Fetching last %d log entries from %s...\n\n", lines, cfg.Proxy.Host)
+			logText, err := ecs.FetchRecentLogs(cfg, lines)
+			if err != nil {
+				return fmt.Errorf("fetch logs: %w", err)
+			}
+			entries := ecs.ParseLogLines(logText)
+			if len(entries) == 0 {
+				fmt.Println("No log entries found.")
+				return nil
+			}
+
+			// Summary
+			var totalBytes int64
+			for _, e := range entries {
+				totalBytes += e.Bytes
+			}
+			fmt.Printf("  Requests: %d\n", len(entries))
+			fmt.Printf("  Total traffic: %s\n\n", ecs.FormatBytes(totalBytes))
+
+			// Top domains by traffic
+			stats := ecs.AggregateByDomain(entries)
+			top := 15
+			if len(stats) < top {
+				top = len(stats)
+			}
+			fmt.Printf("  Top %d domains by traffic:\n", top)
+			fmt.Printf("  %-45s %8s %8s\n", "Domain", "Requests", "Traffic")
+			fmt.Printf("  %-45s %8s %8s\n", strings.Repeat("-", 45), strings.Repeat("-", 8), strings.Repeat("-", 8))
+			for i := 0; i < top; i++ {
+				s := stats[i]
+				marker := ""
+				if ecs.LooksChinese(s.Domain) {
+					marker = " 🇳"
+				}
+				fmt.Printf("  %-45s %8d %8s%s\n", s.Domain, s.Requests, ecs.FormatBytes(s.Bytes), marker)
+			}
+
+			// Chinese domains summary
+			var cnBytes int64
+			var cnReqs int
+			for _, e := range entries {
+				if ecs.LooksChinese(e.Domain) {
+					cnBytes += e.Bytes
+					cnReqs++
+				}
+			}
+			if cnReqs > 0 {
+				pct := float64(cnBytes) / float64(totalBytes) * 100
+				fmt.Printf("\n  🇨 Chinese traffic: %d requests, %s (%.0f%% of total)\n", cnReqs, ecs.FormatBytes(cnBytes), pct)
+				if pct > 10 {
+					fmt.Println("  ⚠ High Chinese traffic through proxy — check no_proxy configuration")
+					fmt.Println("    Run: agent-proxy doctor")
+				}
+			}
+
+			return nil
+		},
+	}
+	cmd.Flags().IntVarP(&lines, "lines", "n", 1000, "Number of log lines to analyze")
+	return cmd
 }
 
 func cmdServePAC() *cobra.Command {

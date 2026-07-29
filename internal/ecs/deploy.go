@@ -330,3 +330,8 @@ func sshRunOutput(cfg *config.Config, cmd string) (string, error) {
 	}
 	return string(out), nil
 }
+
+// FetchRecentLogs fetches the last N lines of Squid access log via SSH.
+func FetchRecentLogs(cfg *config.Config, lines int) (string, error) {
+	return sshRunOutput(cfg, fmt.Sprintf("tail -%d /var/log/squid/access.log 2>/dev/null", lines))
+}

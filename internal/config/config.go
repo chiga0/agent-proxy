@@ -135,7 +135,7 @@ func DefaultConfig() *Config {
 			"172.24.*", "172.25.*", "172.26.*", "172.27.*",
 			"172.28.*", "172.29.*", "172.30.*", "172.31.*",
 			"192.168.*",
-			".alibaba-inc.com", ".aliyun.com", ".aliyuncs.com", ".taobao.org",
+			".alibaba-inc.com", ".aliyun.com", ".aliyuncs.com", ".aliyun-inc.com", ".aliyunportal.com", ".taobao.org",
 			".antgroup.com", ".alipay.com", ".dingtalk.com",
 			".baidu.com", ".qq.com", ".tencent.com",
 			".bilibili.com", ".zhihu.com",

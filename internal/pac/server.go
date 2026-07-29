@@ -147,6 +147,7 @@ func StopServer() {
 // ServeForeground runs the PAC HTTP server in the foreground (blocking).
 // Used by the hidden "serve-pac" command for daemon mode.
 // Nonce is written only after successful listener bind.
+// A config watcher goroutine regenerates the PAC file when config.yaml changes.
 func ServeForeground() error {
 	addr := fmt.Sprintf("127.0.0.1:%d", config.PACPort)
 
@@ -166,6 +167,39 @@ func ServeForeground() error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/proxy.pac", pacHandler(nonce))
 
+	// Start config watcher for hot-reload
+	go watchConfigAndReloadPAC()
+
 	s := &http.Server{Handler: mux}
 	return s.Serve(ln)
+}
+
+// watchConfigAndReloadPAC polls config.yaml mtime and regenerates the PAC file
+// when the config changes. The PAC HTTP handler reads the file on each request,
+// so the new PAC is served immediately without restart.
+func watchConfigAndReloadPAC() {
+	configPath := config.ConfigPath()
+	var lastMod time.Time
+
+	for {
+		time.Sleep(5 * time.Second)
+
+		info, err := os.Stat(configPath)
+		if err != nil {
+			continue
+		}
+		if info.ModTime().Equal(lastMod) {
+			continue
+		}
+		lastMod = info.ModTime()
+
+		// Config changed — reload and regenerate PAC
+		cfg, err := config.Load()
+		if err != nil {
+			continue
+		}
+		if err := Write(cfg); err != nil {
+			continue
+		}
+	}
 }
