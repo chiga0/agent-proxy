@@ -51,13 +51,16 @@ type ProxyConfig struct {
 }
 
 type XrayConfig struct {
-	LocalPort  int    `yaml:"local_port,omitempty"`  // Local HTTP proxy port (default 18443)
-	PublicKey  string `yaml:"public_key,omitempty"`   // Reality public key
-	PrivateKey string `yaml:"private_key,omitempty"`  // Reality private key (server only)
-	ServerName string `yaml:"server_name,omitempty"`  // Reality SNI (default www.microsoft.com)
-	ShortID    string `yaml:"short_id,omitempty"`     // Reality short ID
-	UUID       string `yaml:"uuid,omitempty"`         // VLESS user ID
-	Mux        bool   `yaml:"mux,omitempty"`          // Connection multiplexing (default true)
+	LocalPort  int    `yaml:"local_port,omitempty"`
+	PublicKey  string `yaml:"public_key,omitempty"`
+	PrivateKey string `yaml:"private_key,omitempty"`
+	ServerName string `yaml:"server_name,omitempty"`
+	ShortID    string `yaml:"short_id,omitempty"`
+	UUID       string `yaml:"uuid,omitempty"`
+	Mux        bool   `yaml:"mux,omitempty"`
+	CertSha256 string `yaml:"cert_sha256,omitempty"` // TLS cert pin (hex), alternative to Reality
+	CertFile   string `yaml:"cert_file,omitempty"`   // Server TLS cert path
+	KeyFile    string `yaml:"key_file,omitempty"`    // Server TLS key path
 }
 
 // EffectiveHost returns the proxy host for client connections.
