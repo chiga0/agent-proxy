@@ -1,6 +1,7 @@
 # agent-proxy
 
 [![CI](https://github.com/chiga0/agent-proxy/actions/workflows/ci.yml/badge.svg)](https://github.com/chiga0/agent-proxy/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/Docs-chiga0.github.io-blue?logo=gitbook)](https://chiga0.github.io/agent-proxy/)
 [![Go](https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go)](https://go.dev)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/chiga0/agent-proxy)](https://github.com/chiga0/agent-proxy/releases)
@@ -8,6 +9,8 @@
 **Domain-based selective proxy CLI.** Route AI services, developer tools, and search engines through your overseas server — everything else stays direct.
 
 60+ domains pre-configured. One command to set up. SSH-encrypted tunnel. Zero runtime dependencies.
+
+📖 **Full documentation: [chiga0.github.io/agent-proxy](https://chiga0.github.io/agent-proxy/)**
 
 ## Architecture
 
