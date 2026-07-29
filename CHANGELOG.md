@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2026-07-29
+
+### Added
+- **`agent-proxy config-validate`**: validate config without starting proxy
+- **`agent-proxy doctor --fix`**: auto-add flagged Chinese domains to no_proxy
+- **env.sh hot-reload**: config changes auto-regenerate env.sh (alongside PAC)
+- **SSH agent support**: `SSH_AUTH_SOCK` accepted as alternative to `ssh_key`
+- **Web dashboard**: `/dashboard` with status, whitelist, and live traffic stats
+- **Prometheus metrics**: `/metrics` endpoint on PAC server (6 metrics, stdlib only)
+- **GitHub Pages**: mkdocs-material documentation site
+- **SLSA provenance**: build provenance generated on every release
+- **Issue/PR templates**: bug report, feature request, PR checklist
+- **Windows ControlMaster**: CI smoke test for SSH multiplexing
+
+### Fixed
+- Docs workflow: mkdocs build path corrected
+
 ## [0.7.0] - 2026-07-29
 
 ### Added
