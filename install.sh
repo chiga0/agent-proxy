@@ -11,6 +11,8 @@ INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 VERSION=""
 MIRROR="${MIRROR:-auto}"  # auto | github | oss
 OSS_BASE="https://agent-proxy.oss-cn-hangzhou.aliyuncs.com"
+tmp_dir=""
+trap '[[ -n "$tmp_dir" ]] && rm -rf "$tmp_dir"' EXIT
 
 # Colors
 RED='\033[0;31m'
@@ -140,7 +142,6 @@ main() {
 
   # Download
   tmp_dir=$(mktemp -d)
-  trap 'rm -rf "$tmp_dir"' EXIT
 
   info "Downloading ${archive_url}..."
   download "$archive_url" "${tmp_dir}/archive.${ext}"

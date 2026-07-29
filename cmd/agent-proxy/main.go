@@ -67,7 +67,8 @@ Quick start:
 				}
 			}
 			// SSH commands require the host to be in project known_hosts
-			sshCmds := map[string]bool{"on": true, "setup": true, "ip": true, "trace": true, "trust-host": true}
+			// (trust-host is excluded — it's the command that creates the entry)
+			sshCmds := map[string]bool{"on": true, "setup": true, "ip": true, "trace": true}
 			if sshCmds[cmd.Name()] && cfg.Proxy.Host != "" {
 				if data, err := os.ReadFile(config.KnownHostsPath()); err != nil || !strings.Contains(string(data), cfg.Proxy.Host) {
 					return fmt.Errorf("host %s not in project known_hosts — run: agent-proxy trust-host", cfg.Proxy.Host)
