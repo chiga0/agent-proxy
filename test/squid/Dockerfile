@@ -7,3 +7,5 @@ RUN apt-get update && \
 
 COPY squid-tunnel.conf /etc/squid/squid-tunnel.conf
 COPY squid-direct.conf /etc/squid/squid-direct.conf
+COPY run-acl-tests.sh /usr/local/bin/run-acl-tests.sh
+RUN chmod +x /usr/local/bin/run-acl-tests.sh
