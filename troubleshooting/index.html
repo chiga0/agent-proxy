@@ -14,7 +14,7 @@
         <link rel="prev" href="../security/">
       
       
-        <link rel="next" href="../contributing/">
+        <link rel="next" href="../faq/">
       
       
         
@@ -366,6 +366,60 @@
   
   
     <li class="md-nav__item">
+      <a href="../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../security/" class="md-nav__link">
         
   
@@ -453,33 +507,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#common-issues" class="md-nav__link">
+  <a href="#proxy-wont-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common Issues
+        Proxy won't start
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#diagnostics-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Diagnostics Workflow
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Diagnostics Workflow">
+    <nav class="md-nav" aria-label="Proxy won&#39;t start">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-quick-health-check" class="md-nav__link">
+  <a href="#host-not-in-project-known_hosts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Quick health check
+        "host not in project known_hosts"
       
     </span>
   </a>
@@ -487,10 +530,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-full-diagnostics" class="md-nav__link">
+  <a href="#proxyhost-is-required" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Full diagnostics
+        "proxy.host is required"
       
     </span>
   </a>
@@ -498,10 +541,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-benchmark-connectivity" class="md-nav__link">
+  <a href="#proxyssh_key-is-required-when-tunnel-is-enabled" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Benchmark connectivity
+        "proxy.ssh_key is required when tunnel is enabled"
       
     </span>
   </a>
@@ -509,10 +552,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-trace-the-network-path" class="md-nav__link">
+  <a href="#ssh-tunnel-fails-to-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Trace the network path
+        SSH tunnel fails to start
       
     </span>
   </a>
@@ -525,22 +568,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#faq" class="md-nav__link">
+  <a href="#proxy-is-running-but-not-working" class="md-nav__link">
     <span class="md-ellipsis">
       
-        FAQ
+        Proxy is running but not working
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="FAQ">
+    <nav class="md-nav" aria-label="Proxy is running but not working">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#why-does-my-desktop-app-still-not-work-after-agent-proxy-on" class="md-nav__link">
+  <a href="#browser-shows-proxy-connection-refused" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why does my desktop app still not work after agent-proxy on?
+        Browser shows "proxy connection refused"
       
     </span>
   </a>
@@ -548,10 +591,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#how-do-i-completely-disable-the-proxy-in-an-emergency" class="md-nav__link">
+  <a href="#tls-reset-possible-sni-filtering" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How do I completely disable the proxy in an emergency?
+        "TLS reset — possible SNI filtering"
       
     </span>
   </a>
@@ -559,10 +602,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#how-do-i-check-what-traffic-is-going-through-the-proxy" class="md-nav__link">
+  <a href="#pac-not-working-browser-ignores-proxy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How do I check what traffic is going through the proxy?
+        PAC not working (browser ignores proxy)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#codex-desktop-app-cant-connect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Codex / desktop app can't connect
       
     </span>
   </a>
@@ -571,6 +625,223 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance issues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bandwidth-too-high" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bandwidth too high
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proxy-is-slow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Proxy is slow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tunnel-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tunnel issues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tunnel issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tunnel-drops-frequently" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tunnel drops frequently
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#port-18443-occupied-by-another-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "port 18443 occupied by another process"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecs-squid-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ECS / Squid issues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ECS / Squid issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ecs-squid-is-not-loopback-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "ECS Squid is NOT loopback-only"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#squid-wont-start-on-ecs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Squid won't start on ECS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Config issues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Config issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#config-corrupted-need-emergency-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Config corrupted, need emergency off
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chinese-traffic-going-through-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chinese traffic going through proxy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#go-build-fails-with-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        go build fails with proxy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#macos-specific" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        macOS-specific
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="macOS-specific">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#developer-cannot-be-verified" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "developer cannot be verified"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ssh-key-in-tcc-protected-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSH key in TCC-protected directory
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick reference
+      
+    </span>
+  </a>
   
 </li>
       
@@ -578,6 +849,33 @@
   
 </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -636,33 +934,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#common-issues" class="md-nav__link">
+  <a href="#proxy-wont-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common Issues
+        Proxy won't start
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#diagnostics-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Diagnostics Workflow
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Diagnostics Workflow">
+    <nav class="md-nav" aria-label="Proxy won&#39;t start">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-quick-health-check" class="md-nav__link">
+  <a href="#host-not-in-project-known_hosts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Quick health check
+        "host not in project known_hosts"
       
     </span>
   </a>
@@ -670,10 +957,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-full-diagnostics" class="md-nav__link">
+  <a href="#proxyhost-is-required" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Full diagnostics
+        "proxy.host is required"
       
     </span>
   </a>
@@ -681,10 +968,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-benchmark-connectivity" class="md-nav__link">
+  <a href="#proxyssh_key-is-required-when-tunnel-is-enabled" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Benchmark connectivity
+        "proxy.ssh_key is required when tunnel is enabled"
       
     </span>
   </a>
@@ -692,10 +979,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-trace-the-network-path" class="md-nav__link">
+  <a href="#ssh-tunnel-fails-to-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Trace the network path
+        SSH tunnel fails to start
       
     </span>
   </a>
@@ -708,22 +995,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#faq" class="md-nav__link">
+  <a href="#proxy-is-running-but-not-working" class="md-nav__link">
     <span class="md-ellipsis">
       
-        FAQ
+        Proxy is running but not working
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="FAQ">
+    <nav class="md-nav" aria-label="Proxy is running but not working">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#why-does-my-desktop-app-still-not-work-after-agent-proxy-on" class="md-nav__link">
+  <a href="#browser-shows-proxy-connection-refused" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why does my desktop app still not work after agent-proxy on?
+        Browser shows "proxy connection refused"
       
     </span>
   </a>
@@ -731,10 +1018,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#how-do-i-completely-disable-the-proxy-in-an-emergency" class="md-nav__link">
+  <a href="#tls-reset-possible-sni-filtering" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How do I completely disable the proxy in an emergency?
+        "TLS reset — possible SNI filtering"
       
     </span>
   </a>
@@ -742,10 +1029,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#how-do-i-check-what-traffic-is-going-through-the-proxy" class="md-nav__link">
+  <a href="#pac-not-working-browser-ignores-proxy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How do I check what traffic is going through the proxy?
+        PAC not working (browser ignores proxy)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#codex-desktop-app-cant-connect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Codex / desktop app can't connect
       
     </span>
   </a>
@@ -754,6 +1052,223 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance issues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bandwidth-too-high" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bandwidth too high
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#proxy-is-slow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Proxy is slow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tunnel-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tunnel issues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tunnel issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tunnel-drops-frequently" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tunnel drops frequently
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#port-18443-occupied-by-another-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "port 18443 occupied by another process"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ecs-squid-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ECS / Squid issues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ECS / Squid issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ecs-squid-is-not-loopback-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "ECS Squid is NOT loopback-only"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#squid-wont-start-on-ecs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Squid won't start on ECS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#config-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Config issues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Config issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#config-corrupted-need-emergency-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Config corrupted, need emergency off
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#chinese-traffic-going-through-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chinese traffic going through proxy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#go-build-fails-with-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        go build fails with proxy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#macos-specific" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        macOS-specific
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="macOS-specific">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#developer-cannot-be-verified" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "developer cannot be verified"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ssh-key-in-tcc-protected-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSH key in TCC-protected directory
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick reference
+      
+    </span>
+  </a>
   
 </li>
       
@@ -778,77 +1293,469 @@
 
 
 <h1 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h1>
-<h2 id="common-issues">Common Issues<a class="headerlink" href="#common-issues" title="Permanent link">&para;</a></h2>
+<p>Organized by symptom. Each issue includes the diagnosis command, root cause, and fix.</p>
+<h2 id="proxy-wont-start">Proxy won't start<a class="headerlink" href="#proxy-wont-start" title="Permanent link">&para;</a></h2>
+<h3 id="host-not-in-project-known_hosts">"host not in project known_hosts"<a class="headerlink" href="#host-not-in-project-known_hosts" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong></p>
+<div class="highlight"><pre><span></span><code>Error: host 1.2.3.4 not in project known_hosts — run: agent-proxy trust-host
+</code></pre></div>
+<p><strong>Diagnosis:</strong></p>
+<div class="highlight"><pre><span></span><code>cat<span class="w"> </span>~/.config/agent-proxy/known_hosts
+<span class="c1"># Empty or doesn&#39;t contain your ECS IP</span>
+</code></pre></div>
+<p><strong>Root cause:</strong> agent-proxy enforces <code>StrictHostKeyChecking=yes</code> with a project-specific <code>known_hosts</code> file. Your ECS host key hasn't been added yet (common after upgrading from &lt; v0.6.0 or rebuilding the ECS).</p>
+<p><strong>Fix:</strong></p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>trust-host
+<span class="c1"># Verify the SHA256 fingerprint against your ECS console, then type &quot;yes&quot;</span>
+</code></pre></div>
+<hr />
+<h3 id="proxyhost-is-required">"proxy.host is required"<a class="headerlink" href="#proxyhost-is-required" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong></p>
+<div class="highlight"><pre><span></span><code>Error: config validation: proxy.host is required
+</code></pre></div>
+<p><strong>Root cause:</strong> The <code>proxy.host</code> field is empty in <code>config.yaml</code>. This happens if you ran a mutating command before <code>init</code>.</p>
+<p><strong>Fix:</strong></p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>init
+<span class="c1"># Or manually edit ~/.config/agent-proxy/config.yaml and set proxy.host</span>
+</code></pre></div>
+<hr />
+<h3 id="proxyssh_key-is-required-when-tunnel-is-enabled">"proxy.ssh_key is required when tunnel is enabled"<a class="headerlink" href="#proxyssh_key-is-required-when-tunnel-is-enabled" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong></p>
+<div class="highlight"><pre><span></span><code>Error: config validation: proxy.ssh_key is required when tunnel is enabled (or set SSH_AUTH_SOCK for ssh-agent)
+</code></pre></div>
+<p><strong>Root cause:</strong> Tunnel mode requires SSH authentication. Neither <code>proxy.ssh_key</code> nor <code>SSH_AUTH_SOCK</code> is configured.</p>
+<p><strong>Fix (option A — key file):</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># ~/.config/agent-proxy/config.yaml</span>
+<span class="nt">proxy</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">ssh_key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_ed25519</span>
+</code></pre></div>
+<p><strong>Fix (option B — ssh-agent):</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nb">eval</span><span class="w"> </span><span class="k">$(</span>ssh-agent<span class="k">)</span>
+ssh-add<span class="w"> </span>~/.ssh/id_ed25519
+agent-proxy<span class="w"> </span>on
+</code></pre></div>
+<hr />
+<h3 id="ssh-tunnel-fails-to-start">SSH tunnel fails to start<a class="headerlink" href="#ssh-tunnel-fails-to-start" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong></p>
+<div class="highlight"><pre><span></span><code>  → SSH tunnel... ✗
+Error: start SSH tunnel: start SSH tunnel to root@1.2.3.4: ...: exit status 255
+</code></pre></div>
+<p><strong>Diagnosis:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Test SSH connectivity manually</span>
+ssh<span class="w"> </span>-i<span class="w"> </span>~/.ssh/id_ed25519<span class="w"> </span>root@1.2.3.4<span class="w"> </span><span class="s2">&quot;echo ok&quot;</span>
+
+<span class="c1"># Check if the tunnel port is occupied by another process</span>
+lsof<span class="w"> </span>-i<span class="w"> </span>:18443<span class="w">    </span><span class="c1"># macOS</span>
+ss<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="m">18443</span><span class="w">    </span><span class="c1"># Linux</span>
+</code></pre></div>
+<p><strong>Common root causes:</strong></p>
 <table>
 <thead>
 <tr>
-<th>Problem</th>
+<th>Cause</th>
+<th>How to tell</th>
 <th>Fix</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>host not in project known_hosts</code></td>
-<td><code>agent-proxy trust-host</code></td>
+<td>ECS is down</td>
+<td>SSH connection times out</td>
+<td>Start the ECS, retry</td>
 </tr>
 <tr>
-<td>ECS Squid not loopback-only</td>
-<td><code>agent-proxy setup</code></td>
+<td>Wrong SSH key</td>
+<td>"Permission denied (publickey)"</td>
+<td>Check <code>proxy.ssh_key</code> path</td>
 </tr>
 <tr>
-<td>Chinese traffic going through proxy</td>
-<td><code>agent-proxy doctor</code> → add flagged domains to <code>no_proxy</code></td>
+<td>Port conflict</td>
+<td>Another process on 18443</td>
+<td>Kill the process or set <code>tunnel_local_port</code></td>
 </tr>
 <tr>
-<td>Codex/desktop app can't connect</td>
-<td>Restart the app (it caches PAC at startup)</td>
+<td>Firewall blocks SSH</td>
+<td>Connection refused on port 22</td>
+<td>Open port 22 in ECS security group</td>
 </tr>
 <tr>
-<td><code>go build</code> fails with proxy</td>
-<td><code>source ~/.config/agent-proxy/env.sh</code> (updates no_proxy)</td>
-</tr>
-<tr>
-<td>macOS "developer cannot be verified"</td>
-<td><code>xattr -d com.apple.quarantine /usr/local/bin/agent-proxy</code></td>
-</tr>
-<tr>
-<td>Proxy env breaks <code>go install</code></td>
-<td><code>unset https_proxy http_proxy &amp;&amp; go install ...</code></td>
-</tr>
-<tr>
-<td>Config corrupted, need emergency off</td>
-<td><code>agent-proxy off</code> works even with broken config</td>
+<td>Stale control socket</td>
+<td><code>ssh-ctrl-*</code> file exists but master is dead</td>
+<td><code>rm ~/.config/agent-proxy/ssh-ctrl-*</code> then retry</td>
 </tr>
 </tbody>
 </table>
-<h2 id="diagnostics-workflow">Diagnostics Workflow<a class="headerlink" href="#diagnostics-workflow" title="Permanent link">&para;</a></h2>
-<h3 id="1-quick-health-check">1. Quick health check<a class="headerlink" href="#1-quick-health-check" title="Permanent link">&para;</a></h3>
+<p><strong>Fix for stale control socket:</strong></p>
+<div class="highlight"><pre><span></span><code>rm<span class="w"> </span>-f<span class="w"> </span>~/.config/agent-proxy/ssh-ctrl-*
+agent-proxy<span class="w"> </span>on
+</code></pre></div>
+<hr />
+<h2 id="proxy-is-running-but-not-working">Proxy is running but not working<a class="headerlink" href="#proxy-is-running-but-not-working" title="Permanent link">&para;</a></h2>
+<h3 id="browser-shows-proxy-connection-refused">Browser shows "proxy connection refused"<a class="headerlink" href="#browser-shows-proxy-connection-refused" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong> Whitelisted sites fail to load; non-whitelisted sites work fine.</p>
+<p><strong>Diagnosis:</strong></p>
 <div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>status
 </code></pre></div>
-<p>Runs 6 checks: tunnel, proxy forwarding, system PAC, PAC file, PAC server, and Squid binding.</p>
-<h3 id="2-full-diagnostics">2. Full diagnostics<a class="headerlink" href="#2-full-diagnostics" title="Permanent link">&para;</a></h3>
+<p>Look for:</p>
+<div class="highlight"><pre><span></span><code>  ✗ SSH tunnel (not running — run: agent-proxy on)
+  ✗ Proxy forwarding (dial tcp 127.0.0.1:18443: connect: connection refused)
+</code></pre></div>
+<p><strong>Root cause:</strong> The SSH tunnel is down. The PAC file tells the browser to use <code>PROXY 127.0.0.1:18443</code>, but nothing is listening there.</p>
+<p><strong>Fix:</strong></p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>on
+</code></pre></div>
+<p>If the tunnel keeps dying, check ECS connectivity and SSH keepalive settings (see <a href="#tunnel-drops-frequently">Tunnel drops frequently</a>).</p>
+<hr />
+<h3 id="tls-reset-possible-sni-filtering">"TLS reset — possible SNI filtering"<a class="headerlink" href="#tls-reset-possible-sni-filtering" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong></p>
+<div class="highlight"><pre><span></span><code>  ✗ Proxy forwarding (TLS reset — possible SNI filtering (try: proxy.tunnel: true))
+</code></pre></div>
+<p><strong>Root cause:</strong> You're using direct mode (<code>tunnel: false</code>). The GFW is inspecting the TLS ClientHello and resetting connections to blocked domains. The proxy CONNECT request goes through, but the subsequent TLS handshake is killed.</p>
+<p><strong>Diagnosis:</strong></p>
 <div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>doctor
+<span class="c1"># Look for: &quot;⚠ TLS connections reset after CONNECT — GFW SNI filtering detected&quot;</span>
 </code></pre></div>
-<p>Includes everything in <code>status</code> plus no_proxy coverage analysis. Identifies domestic domains that may be incorrectly routed through the proxy.</p>
-<h3 id="3-benchmark-connectivity">3. Benchmark connectivity<a class="headerlink" href="#3-benchmark-connectivity" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>bench
+<p><strong>Fix:</strong> Enable SSH tunnel mode:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># ~/.config/agent-proxy/config.yaml</span>
+<span class="nt">proxy</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">tunnel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 </code></pre></div>
-<p>Compares proxy vs direct latency for configured domains. Helps identify if the proxy path is degraded.</p>
-<h3 id="4-trace-the-network-path">4. Trace the network path<a class="headerlink" href="#4-trace-the-network-path" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>trace<span class="w"> </span>&lt;domain&gt;
+<p>Then redeploy and restart:</p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>setup<span class="w">    </span><span class="c1"># Rewrites Squid for loopback-only</span>
+agent-proxy<span class="w"> </span>on
 </code></pre></div>
-<p>Shows the full network path from your machine through the ECS to the target domain.</p>
-<h2 id="faq">FAQ<a class="headerlink" href="#faq" title="Permanent link">&para;</a></h2>
-<h3 id="why-does-my-desktop-app-still-not-work-after-agent-proxy-on">Why does my desktop app still not work after <code>agent-proxy on</code>?<a class="headerlink" href="#why-does-my-desktop-app-still-not-work-after-agent-proxy-on" title="Permanent link">&para;</a></h3>
-<p>Many Electron/desktop apps cache the system PAC at startup. Restart the application after enabling the proxy.</p>
-<h3 id="how-do-i-completely-disable-the-proxy-in-an-emergency">How do I completely disable the proxy in an emergency?<a class="headerlink" href="#how-do-i-completely-disable-the-proxy-in-an-emergency" title="Permanent link">&para;</a></h3>
+<hr />
+<h3 id="pac-not-working-browser-ignores-proxy">PAC not working (browser ignores proxy)<a class="headerlink" href="#pac-not-working-browser-ignores-proxy" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong> <code>agent-proxy status</code> shows all checks pass, but the browser still goes direct for whitelisted domains.</p>
+<p><strong>Diagnosis:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Check the system PAC setting</span>
+<span class="c1"># macOS:</span>
+networksetup<span class="w"> </span>-getautoproxyurl<span class="w"> </span>Wi-Fi
+
+<span class="c1"># Verify PAC file is served</span>
+curl<span class="w"> </span>-s<span class="w"> </span>http://127.0.0.1:18080/proxy.pac<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-5
+
+<span class="c1"># Check PAC file content</span>
+cat<span class="w"> </span>~/.config/agent-proxy/proxy.pac<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;chatgpt&quot;</span>
+</code></pre></div>
+<p><strong>Common root causes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>App cached PAC at startup</td>
+<td>Restart the browser/app</td>
+</tr>
+<tr>
+<td>Wrong network service</td>
+<td><code>agent-proxy off &amp;&amp; agent-proxy on</code> (re-detects service)</td>
+</tr>
+<tr>
+<td>PAC server from old version</td>
+<td><code>agent-proxy off &amp;&amp; agent-proxy on</code> (nonce mismatch triggers takeover)</td>
+</tr>
+<tr>
+<td>Browser proxy extension override</td>
+<td>Disable SwitchyOmega or similar extensions</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="codex-desktop-app-cant-connect">Codex / desktop app can't connect<a class="headerlink" href="#codex-desktop-app-cant-connect" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong> Codex desktop, VS Code, or other Electron apps fail to reach AI APIs even though <code>curl</code> works.</p>
+<p><strong>Root cause:</strong> Electron apps cache the system PAC at startup. If you enabled the proxy after launching the app, it doesn't see the new PAC.</p>
+<p><strong>Fix:</strong></p>
+<ol>
+<li>Quit the application completely (not just close the window)</li>
+<li>Ensure the proxy is running: <code>agent-proxy status</code></li>
+<li>Relaunch the application</li>
+</ol>
+<p>For CLI-based tools inside VS Code's integrated terminal, ensure <code>env.sh</code> is sourced:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">source</span><span class="w"> </span>~/.config/agent-proxy/env.sh
+</code></pre></div>
+<hr />
+<h2 id="performance-issues">Performance issues<a class="headerlink" href="#performance-issues" title="Permanent link">&para;</a></h2>
+<h3 id="bandwidth-too-high">Bandwidth too high<a class="headerlink" href="#bandwidth-too-high" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong> Your ECS bandwidth bill is unexpectedly large.</p>
+<p><strong>Diagnosis:</strong></p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>stats<span class="w"> </span>-n<span class="w"> </span><span class="m">2000</span>
+</code></pre></div>
+<p>Look for:</p>
+<ul>
+<li>High-traffic domains you didn't expect</li>
+<li>Chinese traffic percentage (should be near 0%)</li>
+<li>Media preset domains (YouTube, Instagram) consuming bulk bandwidth</li>
+</ul>
+<p><strong>Fixes:</strong></p>
+<ol>
+<li>
+<p><strong>Disable unused presets:</strong></p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>preset<span class="w"> </span>disable<span class="w"> </span>media<span class="w">    </span><span class="c1"># YouTube, Twitter, Instagram</span>
+agent-proxy<span class="w"> </span>preset<span class="w"> </span>disable<span class="w"> </span>cloud<span class="w">    </span><span class="c1"># AWS/GCP/Azure consoles</span>
+</code></pre></div>
+</li>
+<li>
+<p><strong>Fix misrouted domestic traffic:</strong></p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>doctor<span class="w"> </span>--fix
+</code></pre></div>
+</li>
+<li>
+<p><strong>Check for runaway processes:</strong> A CI/CD pipeline or package manager downloading large artifacts through the proxy can consume significant bandwidth. Check <code>stats</code> output for unexpected domains.</p>
+</li>
+</ol>
+<hr />
+<h3 id="proxy-is-slow">Proxy is slow<a class="headerlink" href="#proxy-is-slow" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong> Pages load noticeably slower through the proxy than expected.</p>
+<p><strong>Diagnosis:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Compare proxy vs direct latency</span>
+agent-proxy<span class="w"> </span>bench
+
+<span class="c1"># Trace the network path</span>
+agent-proxy<span class="w"> </span>trace<span class="w"> </span>chatgpt.com
+</code></pre></div>
+<p><strong>Interpreting results:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Finding</th>
+<th>Meaning</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Local → ECS &gt; 200ms</td>
+<td>Your machine is far from the ECS</td>
+<td>Use a closer ECS region</td>
+</tr>
+<tr>
+<td>ECS → Target &gt; 200ms</td>
+<td>ECS is far from the target</td>
+<td>Use a different ECS region</td>
+</tr>
+<tr>
+<td>Both hops fast, total slow</td>
+<td>DNS or TLS overhead</td>
+<td>Check ECS DNS settings</td>
+</tr>
+<tr>
+<td>Direct faster than proxy</td>
+<td>Domain isn't actually blocked</td>
+<td>Remove from whitelist</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Performance tuning:</strong> agent-proxy already enables TCP fast open, persistent connections, collapsed forwarding, and DNS caching on the ECS. If latency is still high, the bottleneck is likely geographic distance.</p>
+<hr />
+<h2 id="tunnel-issues">Tunnel issues<a class="headerlink" href="#tunnel-issues" title="Permanent link">&para;</a></h2>
+<h3 id="tunnel-drops-frequently">Tunnel drops frequently<a class="headerlink" href="#tunnel-drops-frequently" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong> The proxy works initially but stops after a few minutes. <code>agent-proxy status</code> shows the tunnel is down.</p>
+<p><strong>Diagnosis:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Check if the control socket exists</span>
+ls<span class="w"> </span>-la<span class="w"> </span>~/.config/agent-proxy/ssh-ctrl-*
+
+<span class="c1"># Check SSH process</span>
+ps<span class="w"> </span>aux<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;ssh.*-L.*18443&quot;</span>
+</code></pre></div>
+<p><strong>Root causes and fixes:</strong></p>
+<ol>
+<li>
+<p><strong>Network instability:</strong> The SSH keepalive (30s interval, 3 max) declares the tunnel dead after 90 seconds of no response. On unstable networks, this can be too aggressive.</p>
+<p>Unfortunately, agent-proxy's SSH options are hardcoded for security. As a workaround, ensure your local network is stable, or use a wired connection.</p>
+</li>
+<li>
+<p><strong>ECS suspends idle connections:</strong> Some cloud providers throttle or drop idle SSH sessions. The <code>ServerAliveInterval=30</code> should prevent this, but some providers are more aggressive.</p>
+</li>
+<li>
+<p><strong>ControlPersist timeout:</strong> The master socket expires after 600 seconds (10 minutes) of inactivity. If you don't use the proxy for 10 minutes, the tunnel shuts down. Run <code>agent-proxy on</code> to restart it.</p>
+</li>
+</ol>
+<hr />
+<h3 id="port-18443-occupied-by-another-process">"port 18443 occupied by another process"<a class="headerlink" href="#port-18443-occupied-by-another-process" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong></p>
+<div class="highlight"><pre><span></span><code>  ✗ SSH tunnel (port 18443 occupied by another process — not our tunnel)
+</code></pre></div>
+<p><strong>Diagnosis:</strong></p>
+<div class="highlight"><pre><span></span><code>lsof<span class="w"> </span>-i<span class="w"> </span>:18443<span class="w">    </span><span class="c1"># macOS</span>
+ss<span class="w"> </span>-tlnp<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="m">18443</span><span class="w">    </span><span class="c1"># Linux</span>
+</code></pre></div>
+<p><strong>Fix (option A — kill the conflicting process):</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nb">kill</span><span class="w"> </span>&lt;PID&gt;<span class="w">    </span><span class="c1"># Replace with the PID from lsof/ss</span>
+agent-proxy<span class="w"> </span>on
+</code></pre></div>
+<p><strong>Fix (option B — use a different local port):</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># ~/.config/agent-proxy/config.yaml</span>
+<span class="nt">proxy</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">tunnel_local_port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">28443</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>on
+</code></pre></div>
+<hr />
+<h2 id="ecs-squid-issues">ECS / Squid issues<a class="headerlink" href="#ecs-squid-issues" title="Permanent link">&para;</a></h2>
+<h3 id="ecs-squid-is-not-loopback-only">"ECS Squid is NOT loopback-only"<a class="headerlink" href="#ecs-squid-is-not-loopback-only" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong></p>
+<div class="highlight"><pre><span></span><code>  ⚠ ECS Squid is NOT loopback-only: http_port 18443
+    Your Squid may still be listening on all interfaces from a previous deployment.
+    Fix: agent-proxy setup   (rewrites Squid config for tunnel mode)
+</code></pre></div>
+<p><strong>Root cause:</strong> You upgraded from a version that used direct mode, or manually edited the Squid config. Squid is still listening on <code>0.0.0.0</code>, exposing it to the network.</p>
+<p><strong>Fix:</strong></p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>setup
+</code></pre></div>
+<p>This rewrites the Squid config with <code>http_port 127.0.0.1:18443</code> and restarts Squid.</p>
+<hr />
+<h3 id="squid-wont-start-on-ecs">Squid won't start on ECS<a class="headerlink" href="#squid-wont-start-on-ecs" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong> <code>agent-proxy setup</code> fails at "Write Squid config" step.</p>
+<p><strong>Diagnosis:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># SSH into your ECS and check Squid status</span>
+ssh<span class="w"> </span>root@YOUR_ECS_IP
+systemctl<span class="w"> </span>status<span class="w"> </span>squid
+journalctl<span class="w"> </span>-u<span class="w"> </span>squid<span class="w"> </span>--no-pager<span class="w"> </span>-n<span class="w"> </span><span class="m">50</span>
+
+<span class="c1"># Check if the config is valid</span>
+squid<span class="w"> </span>-k<span class="w"> </span>parse
+</code></pre></div>
+<p><strong>Common causes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Squid not installed</td>
+<td><code>apt install -y squid</code> (or yum/apk)</td>
+</tr>
+<tr>
+<td>Port already in use</td>
+<td><code>lsof -i :18443</code> on ECS, kill conflicting process</td>
+</tr>
+<tr>
+<td>SELinux blocking</td>
+<td><code>setsebool -P squid_use_tty 1</code> or check audit log</td>
+</tr>
+<tr>
+<td>Disk full</td>
+<td><code>df -h</code> on ECS, clean up logs</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition info">
+<p class="admonition-title">Automatic rollback</p>
+<p>agent-proxy's deployment is transactional. If Squid fails to restart with the new config, it automatically rolls back to the previous config and restarts. Your ECS won't be left in a broken state.</p>
+</div>
+<hr />
+<h2 id="config-issues">Config issues<a class="headerlink" href="#config-issues" title="Permanent link">&para;</a></h2>
+<h3 id="config-corrupted-need-emergency-off">Config corrupted, need emergency off<a class="headerlink" href="#config-corrupted-need-emergency-off" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong> <code>config.yaml</code> is corrupted (bad YAML, missing fields) and you need to disable the proxy immediately.</p>
+<p><strong>Fix:</strong></p>
 <div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>off
 </code></pre></div>
-<p>This works even if the config file is corrupted or missing. It restores original PAC settings and stops all proxy processes.</p>
-<h3 id="how-do-i-check-what-traffic-is-going-through-the-proxy">How do I check what traffic is going through the proxy?<a class="headerlink" href="#how-do-i-check-what-traffic-is-going-through-the-proxy" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>stats
+<p>This works even with a broken config — it loads a default config and performs best-effort cleanup:</p>
+<div class="highlight"><pre><span></span><code>Warning: config load failed (...), proceeding with best-effort cleanup
+✓ Proxy disabled
 </code></pre></div>
-<p>Shows request counts, bandwidth per domain, and flags any Chinese traffic that may be misrouted.</p>
+<hr />
+<h3 id="chinese-traffic-going-through-proxy">Chinese traffic going through proxy<a class="headerlink" href="#chinese-traffic-going-through-proxy" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong> Domestic sites (Baidu, Bilibili, etc.) are slow because they're routing through your overseas ECS.</p>
+<p><strong>Diagnosis:</strong></p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>doctor
+<span class="c1"># Look for: &quot;⚠ N Chinese domain(s) routing through proxy&quot;</span>
+</code></pre></div>
+<p><strong>Fix (automatic):</strong></p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>doctor<span class="w"> </span>--fix
+<span class="c1"># Adds flagged domains to no_proxy and regenerates env.sh</span>
+</code></pre></div>
+<p><strong>Fix (manual):</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># ~/.config/agent-proxy/config.yaml</span>
+<span class="nt">no_proxy</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.example.cn</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.mysite.com.cn</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>on<span class="w">    </span><span class="c1"># Regenerates env.sh</span>
+</code></pre></div>
+<hr />
+<h3 id="go-build-fails-with-proxy"><code>go build</code> fails with proxy<a class="headerlink" href="#go-build-fails-with-proxy" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong></p>
+<div class="highlight"><pre><span></span><code>go: module lookup disabled by GOPROXY=off
+</code></pre></div>
+<p>Or Go downloads are slow/failing through the proxy.</p>
+<p><strong>Root cause:</strong> <code>proxy.golang.org</code> and <code>sum.golang.org</code> are in the default <code>no_proxy</code> list, but your shell may not have sourced the latest <code>env.sh</code>.</p>
+<p><strong>Fix:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nb">source</span><span class="w"> </span>~/.config/agent-proxy/env.sh
+go<span class="w"> </span>build<span class="w"> </span>./...
+</code></pre></div>
+<p>If the issue persists, verify:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="nv">$no_proxy</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tr<span class="w"> </span><span class="s1">&#39;,&#39;</span><span class="w"> </span><span class="s1">&#39;\n&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>golang
+<span class="c1"># Should show: proxy.golang.org, sum.golang.org, index.golang.org</span>
+</code></pre></div>
+<hr />
+<h2 id="macos-specific">macOS-specific<a class="headerlink" href="#macos-specific" title="Permanent link">&para;</a></h2>
+<h3 id="developer-cannot-be-verified">"developer cannot be verified"<a class="headerlink" href="#developer-cannot-be-verified" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong> macOS Gatekeeper blocks the binary on first launch.</p>
+<p><strong>Fix:</strong></p>
+<div class="highlight"><pre><span></span><code>xattr<span class="w"> </span>-d<span class="w"> </span>com.apple.quarantine<span class="w"> </span>/usr/local/bin/agent-proxy
+</code></pre></div>
+<hr />
+<h3 id="ssh-key-in-tcc-protected-directory">SSH key in TCC-protected directory<a class="headerlink" href="#ssh-key-in-tcc-protected-directory" title="Permanent link">&para;</a></h3>
+<p><strong>Symptom:</strong> The tunnel works in the foreground but fails when started by LaunchAgent (auto-start).</p>
+<p><strong>Root cause:</strong> macOS TCC (Transparency, Consent, and Control) restricts background processes from accessing <code>~/Documents/</code>, <code>~/Desktop/</code>, and <code>~/Downloads/</code>. Your SSH key is in one of these directories.</p>
+<p><strong>Fix:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Copy the key to ~/.ssh/</span>
+cp<span class="w"> </span>~/Documents/my-key.pem<span class="w"> </span>~/.ssh/my-key.pem
+chmod<span class="w"> </span><span class="m">600</span><span class="w"> </span>~/.ssh/my-key.pem
+
+<span class="c1"># Update config</span>
+<span class="c1"># proxy.ssh_key: ~/.ssh/my-key.pem</span>
+</code></pre></div>
+<p>The <code>init</code> wizard detects this and offers to copy automatically.</p>
+<hr />
+<h2 id="quick-reference">Quick reference<a class="headerlink" href="#quick-reference" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>First command to run</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Any issue</td>
+<td><code>agent-proxy status</code></td>
+</tr>
+<tr>
+<td>Need details</td>
+<td><code>agent-proxy doctor</code></td>
+</tr>
+<tr>
+<td>Slow proxy</td>
+<td><code>agent-proxy bench</code></td>
+</tr>
+<tr>
+<td>Network path</td>
+<td><code>agent-proxy trace &lt;domain&gt;</code></td>
+</tr>
+<tr>
+<td>Traffic audit</td>
+<td><code>agent-proxy stats</code></td>
+</tr>
+<tr>
+<td>Emergency stop</td>
+<td><code>agent-proxy off</code></td>
+</tr>
+<tr>
+<td>Full reset</td>
+<td><code>agent-proxy off &amp;&amp; agent-proxy setup &amp;&amp; agent-proxy on</code></td>
+</tr>
+</tbody>
+</table>
 
 
 

@@ -1,0 +1,1349 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Domain-based selective proxy CLI for AI services, developer tools, and search engines">
+      
+      
+      
+      
+        <link rel="prev" href="../troubleshooting/">
+      
+      
+        <link rel="next" href="../contributing/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>FAQ - agent-proxy</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#faq" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="agent-proxy" class="md-header__button md-logo" aria-label="agent-proxy" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            agent-proxy
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              FAQ
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/chiga0/agent-proxy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    chiga0/agent-proxy
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="agent-proxy" class="md-nav__button md-logo" aria-label="agent-proxy" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    agent-proxy
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/chiga0/agent-proxy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    chiga0/agent-proxy
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#general" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="General">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#does-this-work-with-codex-desktop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Does this work with Codex desktop?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#can-i-use-it-without-an-ecs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Can I use it without an ECS?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-when-my-ecs-reboots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What happens when my ECS reboots?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-add-a-new-domain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I add a new domain?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-is-my-bandwidth-high" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why is my bandwidth high?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#is-this-a-vpn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Is this a VPN?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-change-the-proxy-port" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I change the proxy port?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-use-ssh-agent-instead-of-a-key-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I use ssh-agent instead of a key file?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#can-i-use-a-hostname-instead-of-an-ip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Can I use a hostname instead of an IP?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#whats-the-difference-between-whitelist-and-presets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's the difference between whitelist and presets?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-completely-uninstall-agent-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I completely uninstall agent-proxy?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-check-what-traffic-is-going-through-the-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I check what traffic is going through the proxy?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-temporarily-disable-the-proxy-for-one-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I temporarily disable the proxy for one command?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#can-multiple-users-share-one-ecs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Can multiple users share one ECS?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#does-agent-proxy-work-with-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Does agent-proxy work with Docker?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-does-agent-proxy-off-work-even-with-a-broken-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why does agent-proxy off work even with a broken config?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#general" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="General">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#does-this-work-with-codex-desktop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Does this work with Codex desktop?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#can-i-use-it-without-an-ecs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Can I use it without an ECS?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-happens-when-my-ecs-reboots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What happens when my ECS reboots?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-add-a-new-domain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I add a new domain?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-is-my-bandwidth-high" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why is my bandwidth high?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#is-this-a-vpn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Is this a VPN?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-change-the-proxy-port" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I change the proxy port?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-use-ssh-agent-instead-of-a-key-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I use ssh-agent instead of a key file?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#can-i-use-a-hostname-instead-of-an-ip" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Can I use a hostname instead of an IP?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#whats-the-difference-between-whitelist-and-presets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's the difference between whitelist and presets?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Operations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-completely-uninstall-agent-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I completely uninstall agent-proxy?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-check-what-traffic-is-going-through-the-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I check what traffic is going through the proxy?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-do-i-temporarily-disable-the-proxy-for-one-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How do I temporarily disable the proxy for one command?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#can-multiple-users-share-one-ecs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Can multiple users share one ECS?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#does-agent-proxy-work-with-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Does agent-proxy work with Docker?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-does-agent-proxy-off-work-even-with-a-broken-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why does agent-proxy off work even with a broken config?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="faq">FAQ<a class="headerlink" href="#faq" title="Permanent link">&para;</a></h1>
+<p>Common questions about agent-proxy, organized by topic.</p>
+<h2 id="general">General<a class="headerlink" href="#general" title="Permanent link">&para;</a></h2>
+<h3 id="does-this-work-with-codex-desktop">Does this work with Codex desktop?<a class="headerlink" href="#does-this-work-with-codex-desktop" title="Permanent link">&para;</a></h3>
+<p>Yes. Codex desktop (and other Electron apps like VS Code, Cursor, and Claude desktop) use the system PAC settings that agent-proxy configures. However, <strong>Electron apps cache the PAC at startup</strong>, so you must:</p>
+<ol>
+<li>Enable the proxy first: <code>agent-proxy on</code></li>
+<li>Then launch (or restart) the app</li>
+</ol>
+<p>If the app was already running when you enabled the proxy, quit it completely and relaunch. Simply closing the window is not enough — use Cmd+Q (macOS) or Alt+F4 (Windows/Linux).</p>
+<p>For CLI tools running inside VS Code's integrated terminal, also ensure your shell profile sources <code>env.sh</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="o">[</span><span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.config/agent-proxy/env.sh&quot;</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">source</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.config/agent-proxy/env.sh&quot;</span>
+</code></pre></div>
+<hr />
+<h3 id="can-i-use-it-without-an-ecs">Can I use it without an ECS?<a class="headerlink" href="#can-i-use-it-without-an-ecs" title="Permanent link">&para;</a></h3>
+<p>No. agent-proxy requires a Linux server outside the firewall to run Squid. It is not a VPN client or a protocol implementation — it manages a forward proxy on your own server.</p>
+<p>If you don't have an ECS, options include:</p>
+<ul>
+<li><strong>Alibaba Cloud Singapore</strong>: ~¥30/month for a 1 vCPU / 1 GB instance</li>
+<li><strong>AWS Lightsail</strong>: ~$3.50/month for a 512 MB instance</li>
+<li><strong>Any Linux VPS</strong>: Vultr, DigitalOcean, Linode, etc.</li>
+</ul>
+<p>The server needs minimal resources (Squid uses ~30 MB RAM idle) and only SSH access in tunnel mode.</p>
+<hr />
+<h3 id="what-happens-when-my-ecs-reboots">What happens when my ECS reboots?<a class="headerlink" href="#what-happens-when-my-ecs-reboots" title="Permanent link">&para;</a></h3>
+<p>Squid is installed as a system service and starts automatically on boot. The SSH tunnel, however, runs on <strong>your machine</strong> and will die when the ECS goes down.</p>
+<p><strong>What you'll see:</strong> <code>agent-proxy status</code> shows the tunnel is down; proxied sites stop loading.</p>
+<p><strong>What to do:</strong></p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>on<span class="w">    </span><span class="c1"># Restarts the SSH tunnel</span>
+</code></pre></div>
+<p>If you have auto-start configured (LaunchAgent / systemd), the tunnel will also restart on your next login. But if the ECS reboots while you're logged in, you need to run <code>agent-proxy on</code> manually.</p>
+<p>With a <code>fallback_host</code> configured, <code>agent-proxy on</code> automatically tries the fallback ECS if the primary is unreachable.</p>
+<hr />
+<h3 id="how-do-i-add-a-new-domain">How do I add a new domain?<a class="headerlink" href="#how-do-i-add-a-new-domain" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>whitelist<span class="w"> </span>add<span class="w"> </span>example.com
+</code></pre></div>
+<p>This adds the domain to <code>custom_domains</code> in <code>config.yaml</code>, saves the config, and regenerates the PAC file. If the PAC server is running with hot-reload, the change takes effect within 5 seconds.</p>
+<p>To verify:</p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>whitelist<span class="w"> </span>ls<span class="w">    </span><span class="c1"># Should show your domain under &quot;custom&quot;</span>
+curl<span class="w"> </span>-s<span class="w"> </span>http://127.0.0.1:18080/proxy.pac<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>example.com
+</code></pre></div>
+<p>Subdomains are matched automatically — adding <code>example.com</code> also proxies <code>api.example.com</code>, <code>cdn.example.com</code>, etc.</p>
+<hr />
+<h3 id="why-is-my-bandwidth-high">Why is my bandwidth high?<a class="headerlink" href="#why-is-my-bandwidth-high" title="Permanent link">&para;</a></h3>
+<p>Common causes:</p>
+<ol>
+<li>
+<p><strong>Media preset</strong>: YouTube, Instagram, and Facebook stream large amounts of data. If you only need AI/dev tools:</p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>preset<span class="w"> </span>disable<span class="w"> </span>media
+</code></pre></div>
+</li>
+<li>
+<p><strong>Misrouted domestic traffic</strong>: Chinese sites going through your overseas ECS waste bandwidth and add latency:</p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>stats<span class="w">          </span><span class="c1"># Check the 🇨 Chinese traffic percentage</span>
+agent-proxy<span class="w"> </span>doctor<span class="w"> </span>--fix<span class="w">   </span><span class="c1"># Auto-add flagged domains to no_proxy</span>
+</code></pre></div>
+</li>
+<li>
+<p><strong>Package manager downloads</strong>: Large <code>npm install</code>, <code>pip install</code>, or Docker pulls go through the proxy. These are usually one-time bursts, not sustained traffic.</p>
+</li>
+<li>
+<p><strong>Cloud preset</strong>: AWS/GCP/Azure console pages can be heavy. Disable if not needed:</p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>preset<span class="w"> </span>disable<span class="w"> </span>cloud
+</code></pre></div>
+</li>
+</ol>
+<hr />
+<h3 id="is-this-a-vpn">Is this a VPN?<a class="headerlink" href="#is-this-a-vpn" title="Permanent link">&para;</a></h3>
+<p>No. agent-proxy is an HTTP/HTTPS forward proxy. It handles:</p>
+<ul>
+<li>✅ Browser traffic (via PAC)</li>
+<li>✅ CLI tools that respect <code>https_proxy</code> (curl, pip, npm, etc.)</li>
+<li>✅ SDKs and API clients that use system proxy settings</li>
+</ul>
+<p>It does <strong>not</strong> handle:</p>
+<ul>
+<li>❌ Arbitrary TCP/UDP (SSH, gaming, VoIP)</li>
+<li>❌ Apps that ignore system proxy settings</li>
+<li>❌ DNS-level unblocking (DNS must still resolve)</li>
+</ul>
+<p>For full-device tunneling, consider a proper VPN (WireGuard, OpenVPN) or a SOCKS5 proxy.</p>
+<hr />
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<h3 id="how-do-i-change-the-proxy-port">How do I change the proxy port?<a class="headerlink" href="#how-do-i-change-the-proxy-port" title="Permanent link">&para;</a></h3>
+<p>Edit <code>~/.config/agent-proxy/config.yaml</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">proxy</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">28443</span><span class="w">    </span><span class="c1"># Squid port on ECS</span>
+</code></pre></div>
+<p>Then redeploy and restart:</p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>setup<span class="w">    </span><span class="c1"># Rewrites Squid config with new port</span>
+agent-proxy<span class="w"> </span>on<span class="w">       </span><span class="c1"># Restarts tunnel with new port</span>
+</code></pre></div>
+<p>If you only want to change the <strong>local</strong> tunnel endpoint (without changing the ECS port):</p>
+<div class="highlight"><pre><span></span><code><span class="nt">proxy</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">18443</span><span class="w">           </span><span class="c1"># ECS port (unchanged)</span>
+<span class="w">  </span><span class="nt">tunnel_local_port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">28443</span><span class="w">    </span><span class="c1"># Local port</span>
+</code></pre></div>
+<p>Then just <code>agent-proxy on</code> (no <code>setup</code> needed).</p>
+<hr />
+<h3 id="how-do-i-use-ssh-agent-instead-of-a-key-file">How do I use ssh-agent instead of a key file?<a class="headerlink" href="#how-do-i-use-ssh-agent-instead-of-a-key-file" title="Permanent link">&para;</a></h3>
+<p>Remove or leave empty the <code>ssh_key</code> field and ensure <code>SSH_AUTH_SOCK</code> is set:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">proxy</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.2.3.4</span>
+<span class="w">  </span><span class="nt">tunnel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="c1"># ssh_key: (omitted)</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="nb">eval</span><span class="w"> </span><span class="k">$(</span>ssh-agent<span class="k">)</span>
+ssh-add<span class="w"> </span>~/.ssh/id_ed25519
+agent-proxy<span class="w"> </span>on
+</code></pre></div>
+<p>agent-proxy checks for <code>SSH_AUTH_SOCK</code> during validation. If it's set, <code>ssh_key</code> is not required.</p>
+<hr />
+<h3 id="can-i-use-a-hostname-instead-of-an-ip">Can I use a hostname instead of an IP?<a class="headerlink" href="#can-i-use-a-hostname-instead-of-an-ip" title="Permanent link">&para;</a></h3>
+<p>Yes. The <code>proxy.host</code> field accepts any valid hostname:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">proxy</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-proxy.example.com</span>
+</code></pre></div>
+<p>DNS resolution happens at connection time. This is useful if your ECS has a dynamic IP with a DDNS service.</p>
+<hr />
+<h3 id="whats-the-difference-between-whitelist-and-presets">What's the difference between <code>whitelist</code> and <code>presets</code>?<a class="headerlink" href="#whats-the-difference-between-whitelist-and-presets" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p><strong>Presets</strong> are curated domain groups maintained by agent-proxy (<code>ai</code>, <code>dev</code>, <code>search</code>, <code>cloud</code>, <code>media</code>). They're enabled/disabled as groups via <code>agent-proxy preset enable/disable</code>.</p>
+</li>
+<li>
+<p><strong>Custom domains</strong> (formerly <code>whitelist</code>) are individual domains you add via <code>agent-proxy whitelist add</code>. They're always active as long as they're in the list.</p>
+</li>
+</ul>
+<p>The effective whitelist is the union of all enabled preset domains + all custom domains.</p>
+<p>Old configs with a flat <code>whitelist</code> array are automatically migrated to presets + custom domains on load.</p>
+<hr />
+<h2 id="operations">Operations<a class="headerlink" href="#operations" title="Permanent link">&para;</a></h2>
+<h3 id="how-do-i-completely-uninstall-agent-proxy">How do I completely uninstall agent-proxy?<a class="headerlink" href="#how-do-i-completely-uninstall-agent-proxy" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. Disable proxy and restore system settings</span>
+agent-proxy<span class="w"> </span>off
+
+<span class="c1"># 2. Remove auto-start</span>
+<span class="c1"># macOS:</span>
+launchctl<span class="w"> </span>unload<span class="w"> </span>~/Library/LaunchAgents/com.agent-proxy.plist<span class="w"> </span><span class="m">2</span>&gt;/dev/null
+rm<span class="w"> </span>-f<span class="w"> </span>~/Library/LaunchAgents/com.agent-proxy.plist
+
+<span class="c1"># Linux:</span>
+systemctl<span class="w"> </span>--user<span class="w"> </span>disable<span class="w"> </span>agent-proxy<span class="w"> </span><span class="m">2</span>&gt;/dev/null
+rm<span class="w"> </span>-f<span class="w"> </span>~/.config/systemd/user/agent-proxy.service
+
+<span class="c1"># 3. Remove config and data</span>
+rm<span class="w"> </span>-rf<span class="w"> </span>~/.config/agent-proxy
+
+<span class="c1"># 4. Remove the binary</span>
+rm<span class="w"> </span>-f<span class="w"> </span>/usr/local/bin/agent-proxy
+
+<span class="c1"># 5. Remove shell profile line</span>
+<span class="c1"># Delete this line from ~/.zshrc or ~/.bashrc:</span>
+<span class="c1"># [ -f &quot;$HOME/.config/agent-proxy/env.sh&quot; ] &amp;&amp; source &quot;$HOME/.config/agent-proxy/env.sh&quot;</span>
+
+<span class="c1"># 6. (Optional) Remove Squid from ECS</span>
+ssh<span class="w"> </span>root@YOUR_ECS_IP<span class="w"> </span><span class="s2">&quot;systemctl stop squid &amp;&amp; apt remove -y squid&quot;</span>
+</code></pre></div>
+<hr />
+<h3 id="how-do-i-check-what-traffic-is-going-through-the-proxy">How do I check what traffic is going through the proxy?<a class="headerlink" href="#how-do-i-check-what-traffic-is-going-through-the-proxy" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Quick summary with top domains</span>
+agent-proxy<span class="w"> </span>stats
+
+<span class="c1"># Larger sample</span>
+agent-proxy<span class="w"> </span>stats<span class="w"> </span>-n<span class="w"> </span><span class="m">5000</span>
+
+<span class="c1"># Via web dashboard</span>
+open<span class="w"> </span>http://127.0.0.1:18080/dashboard
+
+<span class="c1"># Via JSON API</span>
+curl<span class="w"> </span>-s<span class="w"> </span>http://127.0.0.1:18080/api/stats<span class="w"> </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>json.tool
+</code></pre></div>
+<hr />
+<h3 id="how-do-i-temporarily-disable-the-proxy-for-one-command">How do I temporarily disable the proxy for one command?<a class="headerlink" href="#how-do-i-temporarily-disable-the-proxy-for-one-command" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Unset proxy for a single command</span>
+<span class="nv">https_proxy</span><span class="o">=</span><span class="w"> </span><span class="nv">http_proxy</span><span class="o">=</span><span class="w"> </span>curl<span class="w"> </span>https://www.baidu.com
+
+<span class="c1"># Or in a subshell</span>
+<span class="o">(</span><span class="nb">unset</span><span class="w"> </span>https_proxy<span class="w"> </span>http_proxy<span class="w"> </span>no_proxy<span class="p">;</span><span class="w"> </span>some-command<span class="o">)</span>
+</code></pre></div>
+<p>To disable the proxy entirely:</p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>off
+<span class="c1"># ... do your thing ...</span>
+agent-proxy<span class="w"> </span>on
+</code></pre></div>
+<hr />
+<h3 id="can-multiple-users-share-one-ecs">Can multiple users share one ECS?<a class="headerlink" href="#can-multiple-users-share-one-ecs" title="Permanent link">&para;</a></h3>
+<p>Yes, with caveats:</p>
+<ul>
+<li>Each user runs their own agent-proxy instance on their own machine</li>
+<li>In tunnel mode, each user has their own SSH tunnel — Squid sees all connections from loopback</li>
+<li>The Squid ACL allows all loopback traffic, so there's no per-user isolation on the ECS</li>
+<li>Bandwidth is shared — heavy usage by one user affects others</li>
+</ul>
+<p>For per-user accounting, you'd need to modify the Squid config to use different ports or authentication, which is outside agent-proxy's scope.</p>
+<hr />
+<h3 id="does-agent-proxy-work-with-docker">Does agent-proxy work with Docker?<a class="headerlink" href="#does-agent-proxy-work-with-docker" title="Permanent link">&para;</a></h3>
+<p>Docker respects <code>https_proxy</code> / <code>http_proxy</code> environment variables for image pulls and build-time network access:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Source the proxy env</span>
+<span class="nb">source</span><span class="w"> </span>~/.config/agent-proxy/env.sh
+
+<span class="c1"># Docker pull will go through the proxy</span>
+docker<span class="w"> </span>pull<span class="w"> </span>ubuntu:22.04
+</code></pre></div>
+<p>For the Docker daemon itself (not just the CLI), configure the proxy in <code>/etc/docker/daemon.json</code> or the systemd service file. Note that <code>docker.io</code> and <code>hub.docker.com</code> are in the <code>dev</code> preset, so browser access to Docker Hub also goes through the proxy.</p>
+<hr />
+<h3 id="why-does-agent-proxy-off-work-even-with-a-broken-config">Why does <code>agent-proxy off</code> work even with a broken config?<a class="headerlink" href="#why-does-agent-proxy-off-work-even-with-a-broken-config" title="Permanent link">&para;</a></h3>
+<p>This is by design. The <code>off</code> command is the emergency exit — it must work regardless of config state. When config loading fails, <code>off</code> falls back to a default config and performs best-effort cleanup:</p>
+<ol>
+<li>Clears the system PAC (only if it points to agent-proxy)</li>
+<li>Stops the PAC server daemon (via PID file or process pattern)</li>
+<li>Stops the SSH tunnel (via ControlMaster socket or process pattern)</li>
+<li>Removes auto-start registration</li>
+<li>Deletes the env file</li>
+</ol>
+<p>This ensures you can always recover from a bad state without manual intervention.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -345,22 +345,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#install" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Install
+        Prerequisites
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Install">
+    <nav class="md-nav" aria-label="Prerequisites">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#other-install-methods" class="md-nav__link">
+  <a href="#your-ecs-server" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Other install methods
+        Your ECS server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ssh-key-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSH key access
       
     </span>
   </a>
@@ -373,10 +384,121 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#initialize" class="md-nav__link">
+  <a href="#step-1-install-agent-proxy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Initialize
+        Step 1: Install agent-proxy
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 1: Install agent-proxy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#alternative-install-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternative install methods
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-run-the-setup-wizard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Run the setup wizard
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 2: Run the setup wizard">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2a-server-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2a. Server connection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2b-ssh-tunnel-choice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2b. SSH tunnel choice
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2c-host-key-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2c. Host key verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2d-ssh-connectivity-squid-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2d. SSH connectivity + Squid deployment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2e-tunnel-local-activation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2e. Tunnel + local activation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2f-connectivity-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2f. Connectivity verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-set-up-your-shell-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Set up your shell profile
       
     </span>
   </a>
@@ -384,10 +506,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#shell-profile-setup" class="md-nav__link">
+  <a href="#step-4-verify-everything-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Shell Profile Setup
+        Step 4: Verify everything works
       
     </span>
   </a>
@@ -395,10 +517,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#verify" class="md-nav__link">
+  <a href="#what-just-happened" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Verify
+        What Just Happened?
       
     </span>
   </a>
@@ -410,6 +532,34 @@
     <span class="md-ellipsis">
       
         Upgrading
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Upgrading">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#upgrading-from-v060" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrading from &lt; v0.6.0
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
       
     </span>
   </a>
@@ -485,6 +635,60 @@
   
   
     <li class="md-nav__item">
+      <a href="../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../security/" class="md-nav__link">
         
   
@@ -520,6 +724,33 @@
     
   
     Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
   
 
     
@@ -586,22 +817,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#install" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Install
+        Prerequisites
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Install">
+    <nav class="md-nav" aria-label="Prerequisites">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#other-install-methods" class="md-nav__link">
+  <a href="#your-ecs-server" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Other install methods
+        Your ECS server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ssh-key-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSH key access
       
     </span>
   </a>
@@ -614,10 +856,121 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#initialize" class="md-nav__link">
+  <a href="#step-1-install-agent-proxy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Initialize
+        Step 1: Install agent-proxy
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 1: Install agent-proxy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#alternative-install-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternative install methods
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-run-the-setup-wizard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Run the setup wizard
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 2: Run the setup wizard">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2a-server-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2a. Server connection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2b-ssh-tunnel-choice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2b. SSH tunnel choice
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2c-host-key-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2c. Host key verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2d-ssh-connectivity-squid-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2d. SSH connectivity + Squid deployment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2e-tunnel-local-activation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2e. Tunnel + local activation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2f-connectivity-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2f. Connectivity verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-set-up-your-shell-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Set up your shell profile
       
     </span>
   </a>
@@ -625,10 +978,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#shell-profile-setup" class="md-nav__link">
+  <a href="#step-4-verify-everything-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Shell Profile Setup
+        Step 4: Verify everything works
       
     </span>
   </a>
@@ -636,10 +989,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#verify" class="md-nav__link">
+  <a href="#what-just-happened" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Verify
+        What Just Happened?
       
     </span>
   </a>
@@ -651,6 +1004,34 @@
     <span class="md-ellipsis">
       
         Upgrading
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Upgrading">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#upgrading-from-v060" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrading from &lt; v0.6.0
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
       
     </span>
   </a>
@@ -678,52 +1059,304 @@
 
 
 <h1 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h1>
-<h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
+<p>Get from zero to a working selective proxy in about 5 minutes.</p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<h3 id="your-ecs-server">Your ECS server<a class="headerlink" href="#your-ecs-server" title="Permanent link">&para;</a></h3>
+<p>You need a Linux server outside the firewall (Singapore, Tokyo, US-West, etc.) with:</p>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OS</td>
+<td>Any Linux with <code>apt</code>, <code>yum</code>, or <code>apk</code> (Ubuntu 22.04+, CentOS 7+, Alpine 3.18+ tested)</td>
+</tr>
+<tr>
+<td>RAM</td>
+<td>512 MB minimum (Squid uses ~30 MB idle)</td>
+</tr>
+<tr>
+<td>Disk</td>
+<td>1 GB free (Squid + logs)</td>
+</tr>
+<tr>
+<td>Network</td>
+<td>Public IP, outbound internet access</td>
+</tr>
+<tr>
+<td>SSH</td>
+<td>Port 22 reachable from your machine</td>
+</tr>
+<tr>
+<td>Firewall</td>
+<td>Port 22 open. In tunnel mode, <strong>no other ports needed</strong>. In direct mode, open your Squid port (default 18443) to your IP only</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">Recommended: Alibaba Cloud Singapore</p>
+<p>A 1 vCPU / 1 GB ECS in Singapore costs ~¥30/month and provides low-latency access from mainland China. Any provider works — AWS Lightsail, GCP e2-micro, Vultr, etc.</p>
+</div>
+<h3 id="ssh-key-access">SSH key access<a class="headerlink" href="#ssh-key-access" title="Permanent link">&para;</a></h3>
+<p>agent-proxy authenticates via SSH key (no passwords). If you don't have a key yet:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Generate an Ed25519 key (recommended)</span>
+ssh-keygen<span class="w"> </span>-t<span class="w"> </span>ed25519<span class="w"> </span>-C<span class="w"> </span><span class="s2">&quot;agent-proxy&quot;</span>
+
+<span class="c1"># Copy it to your ECS</span>
+ssh-copy-id<span class="w"> </span>-i<span class="w"> </span>~/.ssh/id_ed25519<span class="w"> </span>root@YOUR_ECS_IP
+</code></pre></div>
+<p>Verify you can connect without a password prompt:</p>
+<div class="highlight"><pre><span></span><code>ssh<span class="w"> </span>-i<span class="w"> </span>~/.ssh/id_ed25519<span class="w"> </span>root@YOUR_ECS_IP<span class="w"> </span><span class="s2">&quot;echo ok&quot;</span>
+<span class="c1"># Expected: ok</span>
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">macOS TCC-protected directories</p>
+<p>If your SSH key is in <code>~/Documents/</code>, <code>~/Desktop/</code>, or <code>~/Downloads/</code>, background services (LaunchAgent) cannot access it due to macOS TCC restrictions. The <code>init</code> wizard will detect this and offer to copy the key to <code>~/.ssh/</code> automatically.</p>
+</div>
+<h2 id="step-1-install-agent-proxy">Step 1: Install agent-proxy<a class="headerlink" href="#step-1-install-agent-proxy" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="c1"># Auto-detect OS/arch, pick fastest mirror, verify SHA-256</span>
 curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/chiga0/agent-proxy/main/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash
 </code></pre></div>
-<h3 id="other-install-methods">Other install methods<a class="headerlink" href="#other-install-methods" title="Permanent link">&para;</a></h3>
+<p>Expected output:</p>
+<div class="highlight"><pre><span></span><code>  → Detected: darwin/arm64
+  → Downloading agent-proxy v0.7.2 ...
+  → Verifying SHA-256 checksum... ✓
+  → Installing to /usr/local/bin/agent-proxy
+  ✓ agent-proxy v0.7.2 installed
+</code></pre></div>
+<h3 id="alternative-install-methods">Alternative install methods<a class="headerlink" href="#alternative-install-methods" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># China mirror (faster for CN users)</span>
 curl<span class="w"> </span>-fsSL<span class="w"> </span>https://agent-proxy.oss-cn-hangzhou.aliyuncs.com/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash
 
 <span class="c1"># Specific version</span>
-curl<span class="w"> </span>-fsSL<span class="w"> </span>...<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash<span class="w"> </span>-s<span class="w"> </span>--<span class="w"> </span>--version<span class="w"> </span>v0.6.1
+curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/chiga0/agent-proxy/main/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash<span class="w"> </span>-s<span class="w"> </span>--<span class="w"> </span>--version<span class="w"> </span>v0.7.2
 
-<span class="c1"># Go install</span>
+<span class="c1"># Go install (requires Go 1.24+)</span>
 <span class="nv">GONOSUMDB</span><span class="o">=</span>github.com/chiga0/agent-proxy<span class="w"> </span>go<span class="w"> </span>install<span class="w"> </span>github.com/chiga0/agent-proxy/cmd/agent-proxy@latest
 
 <span class="c1"># Build from source</span>
 git<span class="w"> </span>clone<span class="w"> </span>https://github.com/chiga0/agent-proxy.git
 <span class="nb">cd</span><span class="w"> </span>agent-proxy<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>make<span class="w"> </span>build
 </code></pre></div>
-<h2 id="initialize">Initialize<a class="headerlink" href="#initialize" title="Permanent link">&para;</a></h2>
-<p>Run the interactive setup wizard:</p>
+<p>Verify the installation:</p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>version
+<span class="c1"># Expected: agent-proxy v0.7.2</span>
+</code></pre></div>
+<h2 id="step-2-run-the-setup-wizard">Step 2: Run the setup wizard<a class="headerlink" href="#step-2-run-the-setup-wizard" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>init
 </code></pre></div>
-<p>This walks you through:</p>
+<p>The interactive wizard walks you through everything. Here's what each step does and what you'll see:</p>
+<h3 id="2a-server-connection">2a. Server connection<a class="headerlink" href="#2a-server-connection" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>  ┌─────────────────────────────────┐
+  │   agent-proxy 首次配置向导       │
+  └─────────────────────────────────┘
+
+服务器 IP: 1.2.3.4
+SSH 用户 [root]:
+SSH 密钥路径 [~/.ssh/id_rsa]: ~/.ssh/id_ed25519
+代理端口 [18443]:
+</code></pre></div>
+<ul>
+<li><strong>Server IP</strong>: Your ECS public IP address (no <code>http://</code> prefix).</li>
+<li><strong>SSH user</strong>: Defaults to <code>root</code>. Use a different user if your ECS requires it.</li>
+<li><strong>SSH key path</strong>: Path to your private key. Defaults to <code>~/.ssh/id_rsa</code>.</li>
+<li><strong>Proxy port</strong>: The port Squid will listen on. Default <code>18443</code> is fine for most setups.</li>
+</ul>
+<h3 id="2b-ssh-tunnel-choice">2b. SSH tunnel choice<a class="headerlink" href="#2b-ssh-tunnel-choice" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>─── SSH 隧道 ───
+  启用 SSH 加密隧道? (中国用户推荐) [Y/n]:
+</code></pre></div>
+<p>Press Enter to accept the default (yes). This is <strong>strongly recommended</strong> for users in China:</p>
+<ul>
+<li>Squid listens on <code>127.0.0.1</code> only — no public data port exposed</li>
+<li>All proxy traffic is encrypted via SSH</li>
+<li>No need to open firewall ports beyond SSH (22)</li>
+</ul>
+<p>If you choose "n" (direct mode), Squid listens on all interfaces and is protected only by an IP whitelist. You'll need to ensure your ECS security group restricts the Squid port.</p>
+<h3 id="2c-host-key-verification">2c. Host key verification<a class="headerlink" href="#2c-host-key-verification" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>─── 主机验证 ───
+  → 获取 1.2.3.4 主机密钥... ✓
+
+  主机密钥指纹:
+    256 SHA256:AbCdEf123456789... (ED25519)
+
+  请核对以上 SHA256 指纹与 ECS 控制台一致。
+  输入 yes 确认: yes
+  ✓ 已保存到 ~/.config/agent-proxy/known_hosts
+</code></pre></div>
+<p>The wizard fetches your ECS host key and displays its SHA256 fingerprint. <strong>Verify this matches your ECS console</strong> before typing <code>yes</code>. This prevents man-in-the-middle attacks on your SSH connection.</p>
+<p>The key is stored in a project-specific <code>known_hosts</code> file (<code>~/.config/agent-proxy/known_hosts</code>) with <code>StrictHostKeyChecking=yes</code> — subsequent connections will reject any key mismatch.</p>
+<h3 id="2d-ssh-connectivity-squid-deployment">2d. SSH connectivity + Squid deployment<a class="headerlink" href="#2d-ssh-connectivity-squid-deployment" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>─── 连接检查 ───
+  → SSH 连接... ✓
+
+─── 服务器部署 ───
+  → Connectivity... ✓
+  → Install Squid... ✓
+  → System tuning... ✓
+  → Write Squid config... ✓
+  → Cleanup legacy... ✓
+</code></pre></div>
+<p>The wizard SSHes into your ECS and:</p>
 <ol>
-<li>SSH key selection</li>
-<li>Squid deployment to your ECS</li>
-<li>SSH tunnel establishment</li>
-<li>System PAC configuration</li>
-<li>End-to-end verification</li>
+<li>Installs Squid via the system package manager (apt/yum/apk)</li>
+<li>Enables TCP fast open for better performance</li>
+<li>Writes a deny-first Squid config (loopback-only in tunnel mode)</li>
+<li>Validates the config syntax, restarts Squid, and verifies it's running</li>
+<li>Cleans up any legacy Basic auth files from older versions</li>
 </ol>
-<h2 id="shell-profile-setup">Shell Profile Setup<a class="headerlink" href="#shell-profile-setup" title="Permanent link">&para;</a></h2>
-<p>Add to <code>~/.zshrc</code> or <code>~/.bashrc</code>:</p>
+<h3 id="2e-tunnel-local-activation">2e. Tunnel + local activation<a class="headerlink" href="#2e-tunnel-local-activation" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>─── SSH 隧道 ───
+  → 建立 SSH 隧道... ✓
+
+  ✓ 配置已保存: ~/.config/agent-proxy/config.yaml
+
+─── 本地启用 ───
+  → SSH tunnel... ✓
+  → PAC server... ✓
+
+✓ Proxy enabled
+  PAC (browser/desktop): http://127.0.0.1:18080/proxy.pac
+  CLI env:               ~/.config/agent-proxy/env.sh
+  Proxy:                 127.0.0.1:18443 (via SSH tunnel → 1.2.3.4:18443)
+  Network service:       Wi-Fi
+  Whitelist:             61 domains (presets: [ai dev search cloud media])
+</code></pre></div>
+<h3 id="2f-connectivity-verification">2f. Connectivity verification<a class="headerlink" href="#2f-connectivity-verification" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>─── 连通性验证 ───
+  → google.com           ✓ 200 0.35s
+  → github.com           ✓ 200 0.28s
+  → youtube.com          ✓ 200 0.41s
+
+  🎉 配置完成！
+</code></pre></div>
+<h2 id="step-3-set-up-your-shell-profile">Step 3: Set up your shell profile<a class="headerlink" href="#step-3-set-up-your-shell-profile" title="Permanent link">&para;</a></h2>
+<p>Add this line to <code>~/.zshrc</code> (or <code>~/.bashrc</code>):</p>
 <div class="highlight"><pre><span></span><code><span class="o">[</span><span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.config/agent-proxy/env.sh&quot;</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">source</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.config/agent-proxy/env.sh&quot;</span>
 </code></pre></div>
-<p>Done. New terminals auto-load proxy env vars. Browsers use system PAC automatically.</p>
-<h2 id="verify">Verify<a class="headerlink" href="#verify" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>status<span class="w">    </span><span class="c1"># Quick health check</span>
-agent-proxy<span class="w"> </span>doctor<span class="w">    </span><span class="c1"># Full diagnostics</span>
+<p>Then reload your current terminal:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">source</span><span class="w"> </span>~/.config/agent-proxy/env.sh
 </code></pre></div>
-<h2 id="upgrading">Upgrading<a class="headerlink" href="#upgrading" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>update<span class="w">          </span><span class="c1"># Self-update with SHA-256 verification</span>
+<p><strong>What does this do?</strong> The <code>env.sh</code> file exports three environment variables:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">https_proxy</span><span class="o">=</span><span class="s1">&#39;http://127.0.0.1:18443&#39;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">http_proxy</span><span class="o">=</span><span class="s1">&#39;http://127.0.0.1:18443&#39;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">no_proxy</span><span class="o">=</span><span class="s1">&#39;localhost,127.0.0.1,::1,10.*,...,.alibaba-inc.com,.baidu.com,...&#39;</span>
+</code></pre></div>
+<ul>
+<li><code>https_proxy</code> / <code>http_proxy</code> — tells CLI tools (curl, pip, npm, etc.) to route through the local SSH tunnel endpoint.</li>
+<li><code>no_proxy</code> — tells CLI tools to skip the proxy for localhost, private IPs, and domestic services.</li>
+</ul>
+<p>Without sourcing this file, only browsers (via PAC) will use the proxy. CLI tools will go direct.</p>
+<h2 id="step-4-verify-everything-works">Step 4: Verify everything works<a class="headerlink" href="#step-4-verify-everything-works" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Quick health check (6 checks)</span>
+agent-proxy<span class="w"> </span>status
+</code></pre></div>
+<p>Expected output:</p>
+<div class="highlight"><pre><span></span><code>  ✓ SSH (22) (via tunnel — direct check skipped)
+  ✓ SSH tunnel (127.0.0.1:18443 → 1.2.3.4:18443)
+  ✓ Proxy forwarding (exit IP: 1.2.3.4)
+  ✓ System PAC (http://127.0.0.1:18080/proxy.pac)
+  ✓ PAC file (61 domains)
+  ✓ PAC HTTP server (127.0.0.1:18080)
 
-<span class="c1"># After upgrading from &lt; v0.6.0:</span>
-agent-proxy<span class="w"> </span>trust-host<span class="w">      </span><span class="c1"># Migrate SSH host key to project known_hosts</span>
-agent-proxy<span class="w"> </span>setup<span class="w">           </span><span class="c1"># Rewrite ECS Squid to loopback-only</span>
+  Result: 6 passed, 0 failed
 </code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># Full diagnostics (includes no_proxy coverage analysis)</span>
+agent-proxy<span class="w"> </span>doctor
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="c1"># Test a proxied request from CLI</span>
+curl<span class="w"> </span>-s<span class="w"> </span>https://httpbin.org/ip
+<span class="c1"># Should return your ECS IP, not your local IP</span>
+
+<span class="c1"># Test that domestic sites go direct</span>
+curl<span class="w"> </span>-s<span class="w"> </span>https://www.baidu.com<span class="w"> </span>&gt;<span class="w"> </span>/dev/null<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;direct OK&quot;</span>
+</code></pre></div>
+<h2 id="what-just-happened">What Just Happened?<a class="headerlink" href="#what-just-happened" title="Permanent link">&para;</a></h2>
+<p>Here's a summary of everything <code>agent-proxy init</code> set up:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Location</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Config file</td>
+<td><code>~/.config/agent-proxy/config.yaml</code></td>
+<td>All settings (host, port, presets, no_proxy)</td>
+</tr>
+<tr>
+<td>SSH known_hosts</td>
+<td><code>~/.config/agent-proxy/known_hosts</code></td>
+<td>ECS host key for StrictHostKeyChecking</td>
+</tr>
+<tr>
+<td>PAC file</td>
+<td><code>~/.config/agent-proxy/proxy.pac</code></td>
+<td>Generated JavaScript for browser routing</td>
+</tr>
+<tr>
+<td>Env file</td>
+<td><code>~/.config/agent-proxy/env.sh</code></td>
+<td>Shell exports for CLI proxy</td>
+</tr>
+<tr>
+<td>PAC state</td>
+<td><code>~/.config/agent-proxy/pac-state.json</code></td>
+<td>Snapshot of original PAC for safe restore</td>
+</tr>
+<tr>
+<td>PID file</td>
+<td><code>~/.config/agent-proxy/pac-server.pid</code></td>
+<td>PAC daemon process tracking</td>
+</tr>
+<tr>
+<td>Nonce file</td>
+<td><code>~/.config/agent-proxy/pac-nonce</code></td>
+<td>PAC server identity verification</td>
+</tr>
+<tr>
+<td>SSH control socket</td>
+<td><code>~/.config/agent-proxy/ssh-ctrl-*</code></td>
+<td>ControlMaster connection multiplexing</td>
+</tr>
+<tr>
+<td>ECS Squid config</td>
+<td><code>/etc/squid/squid.conf</code> (on ECS)</td>
+<td>Deny-first proxy ACLs</td>
+</tr>
+<tr>
+<td>Auto-start</td>
+<td>LaunchAgent / systemd / Scheduled Task</td>
+<td>Start proxy on login</td>
+</tr>
+</tbody>
+</table>
+<h2 id="upgrading">Upgrading<a class="headerlink" href="#upgrading" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Self-update with SHA-256 verification</span>
+agent-proxy<span class="w"> </span>update
+</code></pre></div>
+<h3 id="upgrading-from-v060">Upgrading from &lt; v0.6.0<a class="headerlink" href="#upgrading-from-v060" title="Permanent link">&para;</a></h3>
+<p>Two extra steps are needed for older installations:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Migrate SSH host key to project-specific known_hosts</span>
+agent-proxy<span class="w"> </span>trust-host
+
+<span class="c1"># Rewrite ECS Squid config for loopback-only binding</span>
+agent-proxy<span class="w"> </span>setup
+</code></pre></div>
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Browse the <a href="../commands/">Commands</a> reference for all available commands</li>
+<li>Customize your <a href="../configuration/">Configuration</a> (add domains, adjust no_proxy)</li>
+<li>Explore the <a href="../api/#dashboard">Web Dashboard</a> at <code>http://127.0.0.1:18080/dashboard</code></li>
+<li>Set up <a href="../tutorials/#tutorial-4-monitoring-with-prometheus-grafana">Monitoring</a> with Prometheus</li>
+</ul>
 
 
 

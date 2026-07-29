@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="../configuration/">
+        <link rel="prev" href="../api/">
       
       
         <link rel="next" href="../troubleshooting/">
@@ -363,6 +363,60 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -448,22 +502,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#security-model" class="md-nav__link">
+  <a href="#threat-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security Model
+        Threat Model
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Security Model">
+    <nav class="md-nav" aria-label="Threat Model">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#ssh-tunnel-mode-recommended" class="md-nav__link">
+  <a href="#what-we-protect-against" class="md-nav__link">
     <span class="md-ellipsis">
       
-        SSH Tunnel Mode (Recommended)
+        What we protect against
       
     </span>
   </a>
@@ -471,10 +525,38 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#squid-acl-deny-first" class="md-nav__link">
+  <a href="#what-we-do-not-protect-against" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Squid ACL (Deny-First)
+        What we do NOT protect against
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ssh-tunnel-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSH Tunnel Security
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SSH Tunnel Security">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-tunnel-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why tunnel mode?
       
     </span>
   </a>
@@ -482,6 +564,160 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#cipher-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cipher selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#controlmaster-multiplexing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ControlMaster multiplexing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keepalive-and-failure-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keepalive and failure detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#host-key-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Host key verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#batchmode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BatchMode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#squid-acl-deep-dive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Squid ACL Deep-Dive
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Squid ACL Deep-Dive">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#listen-address" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Listen address
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trusted-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trusted sources
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#port-restrictions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Port restrictions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#destination-blocking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Destination blocking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#final-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Final rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#privacy-headers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Privacy headers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#local-security" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -490,13 +726,75 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Local Security">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File permissions
+      
+    </span>
+  </a>
+  
 </li>
         
           <li class="md-nav__item">
-  <a href="#supply-chain" class="md-nav__link">
+  <a href="#pac-server-nonce" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Supply Chain
+        PAC server nonce
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pac-state-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PAC state machine
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supply-chain-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supply Chain Security
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Supply Chain Security">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#release-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cicd-hardening" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI/CD hardening
       
     </span>
   </a>
@@ -542,6 +840,33 @@
     
   
     Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
   
 
     
@@ -630,22 +955,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#security-model" class="md-nav__link">
+  <a href="#threat-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security Model
+        Threat Model
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Security Model">
+    <nav class="md-nav" aria-label="Threat Model">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#ssh-tunnel-mode-recommended" class="md-nav__link">
+  <a href="#what-we-protect-against" class="md-nav__link">
     <span class="md-ellipsis">
       
-        SSH Tunnel Mode (Recommended)
+        What we protect against
       
     </span>
   </a>
@@ -653,10 +978,38 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#squid-acl-deny-first" class="md-nav__link">
+  <a href="#what-we-do-not-protect-against" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Squid ACL (Deny-First)
+        What we do NOT protect against
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ssh-tunnel-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SSH Tunnel Security
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SSH Tunnel Security">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-tunnel-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why tunnel mode?
       
     </span>
   </a>
@@ -664,6 +1017,160 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#cipher-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cipher selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#controlmaster-multiplexing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ControlMaster multiplexing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keepalive-and-failure-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keepalive and failure detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#host-key-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Host key verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#batchmode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BatchMode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#squid-acl-deep-dive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Squid ACL Deep-Dive
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Squid ACL Deep-Dive">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#listen-address" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Listen address
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trusted-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trusted sources
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#port-restrictions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Port restrictions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#destination-blocking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Destination blocking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#final-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Final rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#privacy-headers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Privacy headers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#local-security" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -672,13 +1179,75 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Local Security">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#file-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File permissions
+      
+    </span>
+  </a>
+  
 </li>
         
           <li class="md-nav__item">
-  <a href="#supply-chain" class="md-nav__link">
+  <a href="#pac-server-nonce" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Supply Chain
+        PAC server nonce
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pac-state-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PAC state machine
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supply-chain-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supply Chain Security
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Supply Chain Security">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#release-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cicd-hardening" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI/CD hardening
       
     </span>
   </a>
@@ -722,72 +1291,359 @@
 
 
 <h1 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h1>
+<p>A deep dive into agent-proxy's security model: what it protects, how, and where the boundaries are.</p>
 <h2 id="supported-versions">Supported Versions<a class="headerlink" href="#supported-versions" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th>Version</th>
-<th>Supported</th>
+<th style="text-align: center;">Supported</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>0.7.x</td>
-<td>✅</td>
+<td style="text-align: center;">✅</td>
 </tr>
 <tr>
 <td>0.6.x</td>
-<td>✅</td>
+<td style="text-align: center;">✅</td>
 </tr>
 <tr>
 <td>&lt; 0.6</td>
-<td>❌</td>
+<td style="text-align: center;">❌ (Basic auth removed, known_hosts not enforced)</td>
 </tr>
 </tbody>
 </table>
 <h2 id="reporting-a-vulnerability">Reporting a Vulnerability<a class="headerlink" href="#reporting-a-vulnerability" title="Permanent link">&para;</a></h2>
 <p>If you discover a security vulnerability, please report it by opening a <strong>private</strong> issue or emailing the maintainer directly. Do <strong>not</strong> open a public issue for security vulnerabilities.</p>
 <p>We will acknowledge receipt within 48 hours and provide a timeline for a fix.</p>
-<h2 id="security-model">Security Model<a class="headerlink" href="#security-model" title="Permanent link">&para;</a></h2>
-<h3 id="ssh-tunnel-mode-recommended">SSH Tunnel Mode (Recommended)<a class="headerlink" href="#ssh-tunnel-mode-recommended" title="Permanent link">&para;</a></h3>
+<h2 id="threat-model">Threat Model<a class="headerlink" href="#threat-model" title="Permanent link">&para;</a></h2>
+<h3 id="what-we-protect-against">What we protect against<a class="headerlink" href="#what-we-protect-against" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Threat</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Eavesdropping on proxy traffic</strong></td>
+<td>SSH tunnel encrypts all data between your machine and the ECS</td>
+</tr>
+<tr>
+<td><strong>Unauthorized use of your Squid</strong></td>
+<td>Deny-first ACL: only loopback (tunnel) or your IP (direct) is allowed; final rule is <code>deny all</code></td>
+</tr>
+<tr>
+<td><strong>SSRF via Squid</strong></td>
+<td>ACLs block localhost, RFC 1918, link-local, and cloud metadata endpoints</td>
+</tr>
+<tr>
+<td><strong>MITM on SSH connection</strong></td>
+<td><code>StrictHostKeyChecking=yes</code> with project-specific <code>known_hosts</code>; fingerprint shown for manual verification</td>
+</tr>
+<tr>
+<td><strong>Tampered release binaries</strong></td>
+<td>SHA-256 checksums verified by installer (fail-closed); checksums signed with cosign</td>
+</tr>
+<tr>
+<td><strong>CI supply chain attacks</strong></td>
+<td>GitHub Actions pinned to commit SHA; GoReleaser version pinned</td>
+</tr>
+<tr>
+<td><strong>Config file disclosure</strong></td>
+<td><code>0600</code> permissions on config, env.sh, known_hosts, PID files, PAC state</td>
+</tr>
+<tr>
+<td><strong>Legacy credential exposure</strong></td>
+<td>Basic auth (<code>proxy.user</code>/<code>proxy.password</code>) removed entirely in v0.6.0; auto-stripped on config load</td>
+</tr>
+</tbody>
+</table>
+<h3 id="what-we-do-not-protect-against">What we do NOT protect against<a class="headerlink" href="#what-we-do-not-protect-against" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Non-goal</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Same-user impersonation</strong></td>
+<td>Any process running as your user can read the config, use the SSH key, and access the proxy. This is a fundamental OS trust boundary, not something agent-proxy can solve.</td>
+</tr>
+<tr>
+<td><strong>Compromised ECS</strong></td>
+<td>If your ECS is rooted, all bets are off. Squid ACLs are a defense-in-depth layer, not a sandbox.</td>
+</tr>
+<tr>
+<td><strong>DNS-level blocking</strong></td>
+<td>If your ISP blocks DNS resolution for target domains, the proxy can't help (the PAC file uses <code>dnsDomainIs</code> on the host string, but DNS must resolve for the connection).</td>
+</tr>
+<tr>
+<td><strong>Non-HTTP protocols</strong></td>
+<td>agent-proxy is an HTTP/HTTPS forward proxy. SSH, gaming, VoIP, and other TCP/UDP protocols are not proxied.</td>
+</tr>
+<tr>
+<td><strong>GFW protocol fingerprinting</strong></td>
+<td>SSH traffic can be fingerprinted. agent-proxy does not implement obfuscation (e.g., obfs4, VLESS).</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="ssh-tunnel-security">SSH Tunnel Security<a class="headerlink" href="#ssh-tunnel-security" title="Permanent link">&para;</a></h2>
+<h3 id="why-tunnel-mode">Why tunnel mode?<a class="headerlink" href="#why-tunnel-mode" title="Permanent link">&para;</a></h3>
+<p>In direct mode, Squid listens on a public port and is protected only by an IP whitelist ACL. This has weaknesses:</p>
 <ul>
-<li>Squid listens on <code>127.0.0.1</code> only on the ECS — <strong>no public data port exposed</strong></li>
-<li>All proxy traffic encrypted via SSH tunnel</li>
-<li>Access control via SSH key authentication</li>
-<li>SSH host key verified via project-specific <code>known_hosts</code> (<code>StrictHostKeyChecking=yes</code>)</li>
-<li><code>init</code> displays SHA256 fingerprint for manual verification against ECS console</li>
+<li>Your public IP changes (mobile networks, DHCP) → whitelist goes stale</li>
+<li>An attacker who spoofs your IP can use your Squid</li>
+<li>Traffic between your machine and the ECS is unencrypted (Squid receives plaintext HTTP CONNECT)</li>
 </ul>
-<h3 id="squid-acl-deny-first">Squid ACL (Deny-First)<a class="headerlink" href="#squid-acl-deny-first" title="Permanent link">&para;</a></h3>
+<p>Tunnel mode eliminates all three: Squid binds to <code>127.0.0.1</code> only, and all traffic flows through an encrypted SSH channel.</p>
+<h3 id="cipher-selection">Cipher selection<a class="headerlink" href="#cipher-selection" title="Permanent link">&para;</a></h3>
+<p>The SSH tunnel is started with an explicit cipher list:</p>
+<div class="highlight"><pre><span></span><code>Ciphers=aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com
+</code></pre></div>
+<p>These are all AEAD ciphers (authenticated encryption with associated data), which provide both confidentiality and integrity. Legacy CBC-mode ciphers are excluded.</p>
+<h3 id="controlmaster-multiplexing">ControlMaster multiplexing<a class="headerlink" href="#controlmaster-multiplexing" title="Permanent link">&para;</a></h3>
+<p>The tunnel uses SSH ControlMaster for connection reuse:</p>
+<div class="highlight"><pre><span></span><code>ControlMaster=auto
+ControlPath=~/.config/agent-proxy/ssh-ctrl-%r@%h:%p
+ControlPersist=600
+</code></pre></div>
 <ul>
-<li><code>deny !Safe_ports</code> — only ports 80, 443, 8443 allowed</li>
-<li><code>deny CONNECT !SSL_ports</code> — CONNECT only to 443, 8443</li>
-<li><code>deny to_localhost</code> — blocks 127.0.0.0/8, ::1</li>
-<li><code>deny to_linklocal</code> — blocks 169.254.0.0/16, fe80::/10</li>
-<li><code>deny to_rfc1918</code> — blocks 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, fc00::/7</li>
-<li><code>deny to_metadata</code> — blocks 169.254.169.254 (AWS), 100.100.100.200 (Alibaba Cloud)</li>
-<li><code>allow trusted_ip</code> → <code>deny all</code></li>
+<li><strong><code>auto</code></strong>: The first SSH connection creates a master socket; subsequent connections reuse it (no re-authentication, faster setup).</li>
+<li><strong><code>ControlPersist=600</code></strong>: The master socket stays alive for 10 minutes after the last session closes, so brief disconnects don't require a full reconnect.</li>
+<li>The control socket lives in <code>~/.config/agent-proxy/</code> with restricted permissions.</li>
 </ul>
-<h3 id="local-security">Local Security<a class="headerlink" href="#local-security" title="Permanent link">&para;</a></h3>
+<h3 id="keepalive-and-failure-detection">Keepalive and failure detection<a class="headerlink" href="#keepalive-and-failure-detection" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>ServerAliveInterval=30
+ServerAliveCountMax=3
+TCPKeepAlive=yes
+ExitOnForwardFailure=yes
+</code></pre></div>
 <ul>
-<li>Config file: <code>0600</code> permissions</li>
-<li>PAC HTTP server: binds <code>127.0.0.1</code> only, random nonce per start</li>
-<li>PAC state file: <code>0600</code>, atomic write, per-service snapshots</li>
-<li>PID/nonce files: <code>0600</code> permissions</li>
-<li>No Basic auth — removed entirely in v0.6.0</li>
+<li>A keepalive probe is sent every 30 seconds. After 3 missed responses (90 seconds), the tunnel is declared dead.</li>
+<li><code>ExitOnForwardFailure=yes</code> ensures the SSH process exits immediately if the port forward can't be established (rather than hanging with a broken tunnel).</li>
 </ul>
-<h3 id="supply-chain">Supply Chain<a class="headerlink" href="#supply-chain" title="Permanent link">&para;</a></h3>
+<h3 id="host-key-verification">Host key verification<a class="headerlink" href="#host-key-verification" title="Permanent link">&para;</a></h3>
+<p>agent-proxy enforces <code>StrictHostKeyChecking=yes</code> with a <strong>project-specific</strong> <code>known_hosts</code> file:</p>
+<div class="highlight"><pre><span></span><code>UserKnownHostsFile=~/.config/agent-proxy/known_hosts
+</code></pre></div>
+<p>This is separate from <code>~/.ssh/known_hosts</code> to avoid conflicts with other tools and to give agent-proxy full control over its trust store.</p>
+<p><strong>Key lifecycle:</strong></p>
+<ol>
+<li><code>agent-proxy init</code> or <code>trust-host</code> fetches the host key via <code>ssh-keyscan</code></li>
+<li>The SHA256 fingerprint is displayed for <strong>manual verification</strong> against the ECS console</li>
+<li>The user must type <code>yes</code> to accept (not just press Enter)</li>
+<li>The key is stored with <code>0600</code> permissions</li>
+<li>All subsequent SSH connections (tunnel, deploy, trace) verify against this key</li>
+</ol>
+<p>The old <code>accept-new</code> strategy (auto-trust on first connection) was removed in the v0.6.0 security audit.</p>
+<h3 id="batchmode">BatchMode<a class="headerlink" href="#batchmode" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>BatchMode=yes
+</code></pre></div>
+<p>Disables interactive password prompts. If key authentication fails, the connection fails immediately rather than hanging waiting for input. This is critical for background tunnel management.</p>
+<hr />
+<h2 id="squid-acl-deep-dive">Squid ACL Deep-Dive<a class="headerlink" href="#squid-acl-deep-dive" title="Permanent link">&para;</a></h2>
+<p>The Squid configuration generated by <code>agent-proxy setup</code> follows a <strong>deny-first</strong> model. Here's every rule explained:</p>
+<h3 id="listen-address">Listen address<a class="headerlink" href="#listen-address" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c"># Tunnel mode (recommended)</span>
+<span class="k">http_port</span><span class="w"> </span><span class="mf">127.0.0.1:1844</span>3
+
+<span class="c"># Direct mode (not recommended)</span>
+<span class="k">http_port</span><span class="w"> </span><span class="m">18443</span>
+</code></pre></div>
+<p>In tunnel mode, Squid is unreachable from the network — only processes on the ECS loopback (i.e., the SSH tunnel endpoint) can connect.</p>
+<h3 id="trusted-sources">Trusted sources<a class="headerlink" href="#trusted-sources" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">acl</span><span class="w"> </span>trusted_ip<span class="w"> </span><span class="k">src</span><span class="w"> </span><span class="mf">127.0.0.1</span><span class="w">           </span><span class="c"># tunnel mode</span>
+<span class="k">acl</span><span class="w"> </span>trusted_ip<span class="w"> </span><span class="k">src</span><span class="w"> </span><span class="mf">127.0.0.1</span><span class="w"> </span>YOUR_IP<span class="w">   </span><span class="c"># direct mode</span>
+</code></pre></div>
+<p>Only the SSH tunnel endpoint (loopback) or your verified public IP is allowed to use the proxy.</p>
+<h3 id="port-restrictions">Port restrictions<a class="headerlink" href="#port-restrictions" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">acl</span><span class="w"> </span>Safe_ports<span class="w"> </span><span class="k">port</span><span class="w"> </span><span class="m">80</span><span class="w"> </span><span class="m">443</span><span class="w"> </span><span class="m">8443</span>
+<span class="k">acl</span><span class="w"> </span>SSL_ports<span class="w"> </span><span class="k">port</span><span class="w"> </span><span class="m">443</span><span class="w"> </span><span class="m">8443</span>
+<span class="k">acl</span><span class="w"> </span>CONNECT<span class="w"> </span><span class="k">method</span><span class="w"> </span>CONNECT
+
+<span class="k">http_access</span><span class="w"> </span><span class="no">deny</span><span class="w"> </span>!Safe_ports
+<span class="k">http_access</span><span class="w"> </span><span class="no">deny</span><span class="w"> </span>CONNECT<span class="w"> </span>!SSL_ports
+</code></pre></div>
 <ul>
-<li>Release archives: SHA-256 checksums verified by installer (fail-closed)</li>
-<li>Checksums signed with cosign (keyless OIDC)</li>
-<li>GitHub Actions pinned to commit SHA</li>
-<li>GoReleaser version pinned to <code>~&gt; v2</code></li>
+<li>Only ports 80 (HTTP), 443 (HTTPS), and 8443 (alt-HTTPS) can be reached through the proxy.</li>
+<li>The CONNECT method (used for HTTPS tunneling) is restricted to SSL ports only.</li>
+<li>This prevents using your Squid as an open relay to arbitrary ports (e.g., SMTP, SSH).</li>
 </ul>
+<h3 id="destination-blocking">Destination blocking<a class="headerlink" href="#destination-blocking" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">acl</span><span class="w"> </span>to_localhost<span class="w"> </span><span class="k">dst</span><span class="w"> </span><span class="mf">127.0.0.0/8</span><span class="w"> </span><span class="mf">::1</span>
+<span class="k">acl</span><span class="w"> </span>to_linklocal<span class="w"> </span><span class="k">dst</span><span class="w"> </span><span class="mf">169.254.0.0/16</span><span class="w"> </span><span class="mf">fe80::/10</span>
+<span class="k">acl</span><span class="w"> </span>to_rfc1918<span class="w"> </span><span class="k">dst</span><span class="w"> </span><span class="mf">10.0.0.0/8</span><span class="w"> </span><span class="mf">172.16.0.0/12</span><span class="w"> </span><span class="mf">192.168.0.0/16</span><span class="w"> </span><span class="mf">fc00::/7</span>
+<span class="k">acl</span><span class="w"> </span>to_metadata<span class="w"> </span><span class="k">dst</span><span class="w"> </span><span class="mf">169.254.169.254</span><span class="w"> </span><span class="mf">100.100.100.200</span>
+
+<span class="k">http_access</span><span class="w"> </span><span class="no">deny</span><span class="w"> </span>to_localhost
+<span class="k">http_access</span><span class="w"> </span><span class="no">deny</span><span class="w"> </span>to_linklocal
+<span class="k">http_access</span><span class="w"> </span><span class="no">deny</span><span class="w"> </span>to_rfc1918
+<span class="k">http_access</span><span class="w"> </span><span class="no">deny</span><span class="w"> </span>to_metadata
+</code></pre></div>
+<p>These rules prevent <strong>Server-Side Request Forgery (SSRF)</strong> through your Squid:</p>
+<table>
+<thead>
+<tr>
+<th>ACL</th>
+<th>Blocks</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>to_localhost</code></td>
+<td><code>127.0.0.0/8</code>, <code>::1</code></td>
+<td>Prevents access to services running on the ECS itself (databases, admin panels)</td>
+</tr>
+<tr>
+<td><code>to_linklocal</code></td>
+<td><code>169.254.0.0/16</code>, <code>fe80::/10</code></td>
+<td>Blocks link-local addresses used by cloud metadata and zeroconf</td>
+</tr>
+<tr>
+<td><code>to_rfc1918</code></td>
+<td><code>10.0.0.0/8</code>, <code>172.16.0.0/12</code>, <code>192.168.0.0/16</code>, <code>fc00::/7</code></td>
+<td>Blocks private network ranges (VPC internal services)</td>
+</tr>
+<tr>
+<td><code>to_metadata</code></td>
+<td><code>169.254.169.254</code>, <code>100.100.100.200</code></td>
+<td>Blocks AWS and Alibaba Cloud instance metadata endpoints (which expose IAM credentials)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="final-rules">Final rules<a class="headerlink" href="#final-rules" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">http_access</span><span class="w"> </span><span class="no">allow</span><span class="w"> </span>trusted_ip
+<span class="k">http_access</span><span class="w"> </span><span class="no">deny</span><span class="w"> </span><span class="no">all</span>
+</code></pre></div>
+<p>After all deny rules, only trusted sources are allowed. The final <code>deny all</code> is the safety net — anything not explicitly allowed is blocked.</p>
+<h3 id="privacy-headers">Privacy headers<a class="headerlink" href="#privacy-headers" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="k">forwarded_for</span><span class="w"> </span><span class="no">off</span>
+request_header_access<span class="w"> </span><span class="no">Via</span><span class="w"> </span><span class="no">deny</span><span class="w"> </span><span class="no">all</span>
+</code></pre></div>
+<ul>
+<li><code>forwarded_for off</code>: Removes the <code>X-Forwarded-For</code> header so target sites don't see your real IP.</li>
+<li><code>Via deny all</code>: Removes the <code>Via</code> header so target sites can't identify Squid.</li>
+</ul>
+<h3 id="other-settings">Other settings<a class="headerlink" href="#other-settings" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>cache<span class="w"> </span><span class="no">deny</span><span class="w"> </span><span class="no">all</span><span class="w">                    </span><span class="c"># No caching (privacy: don&#39;t store responses on ECS)</span>
+<span class="k">dns_nameservers</span><span class="w"> </span><span class="mf">8.8.8.8</span><span class="w"> </span><span class="mf">8.8.4.4</span><span class="w">  </span><span class="c"># Use Google DNS (avoid ISP DNS hijacking)</span>
+max_filedescriptors<span class="w"> </span><span class="m">65536</span><span class="w">         </span><span class="c"># Handle many concurrent connections</span>
+collapsed_forwarding<span class="w"> </span><span class="no">on</span><span class="w">           </span><span class="c"># Deduplicate concurrent requests to the same URL</span>
+</code></pre></div>
+<hr />
+<h2 id="local-security">Local Security<a class="headerlink" href="#local-security" title="Permanent link">&para;</a></h2>
+<h3 id="file-permissions">File permissions<a class="headerlink" href="#file-permissions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th style="text-align: center;">Permissions</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>config.yaml</code></td>
+<td style="text-align: center;"><code>0600</code></td>
+<td>Contains ECS IP, SSH key path</td>
+</tr>
+<tr>
+<td><code>env.sh</code></td>
+<td style="text-align: center;"><code>0600</code></td>
+<td>Contains proxy settings</td>
+</tr>
+<tr>
+<td><code>known_hosts</code></td>
+<td style="text-align: center;"><code>0600</code></td>
+<td>SSH trust store</td>
+</tr>
+<tr>
+<td><code>pac-state.json</code></td>
+<td style="text-align: center;"><code>0600</code></td>
+<td>System PAC state</td>
+</tr>
+<tr>
+<td><code>pac-server.pid</code></td>
+<td style="text-align: center;"><code>0600</code></td>
+<td>Process tracking</td>
+</tr>
+<tr>
+<td><code>pac-nonce</code></td>
+<td style="text-align: center;"><code>0600</code></td>
+<td>Server identity</td>
+</tr>
+<tr>
+<td>Config directory</td>
+<td style="text-align: center;"><code>0700</code></td>
+<td>Parent directory</td>
+</tr>
+</tbody>
+</table>
+<h3 id="pac-server-nonce">PAC server nonce<a class="headerlink" href="#pac-server-nonce" title="Permanent link">&para;</a></h3>
+<p>The PAC HTTP server generates a random 16-byte nonce on each start and includes it as the <code>X-Agent-Proxy</code> response header. The <code>status</code> and <code>doctor</code> commands verify this nonce to confirm they're talking to the <strong>current</strong> agent-proxy PAC server, not another process that happens to occupy port 18080.</p>
+<div class="admonition info">
+<p class="admonition-title">Not an authentication mechanism</p>
+<p>The nonce prevents port-conflict misidentification (e.g., detecting a stale server from a previous version). It does <strong>not</strong> prevent same-user impersonation — any process running as your user can read the nonce file.</p>
+</div>
+<h3 id="pac-state-machine">PAC state machine<a class="headerlink" href="#pac-state-machine" title="Permanent link">&para;</a></h3>
+<p>When <code>agent-proxy on</code> modifies the system PAC, it first saves a snapshot of the original state to <code>pac-state.json</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;Wi-Fi&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;original_url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;was_enabled&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>When <code>agent-proxy off</code> runs, it restores the original state <strong>only if</strong> the current PAC still points to agent-proxy. If another tool has changed the PAC in the meantime, agent-proxy leaves it alone.</p>
+<p>Writes to <code>pac-state.json</code> are atomic (temp file → rename) to prevent corruption.</p>
+<hr />
+<h2 id="supply-chain-security">Supply Chain Security<a class="headerlink" href="#supply-chain-security" title="Permanent link">&para;</a></h2>
+<h3 id="release-verification">Release verification<a class="headerlink" href="#release-verification" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p><strong>SHA-256 checksums</strong>: Every release archive has a <code>.sha256</code> checksum file. The install script verifies the checksum after download and <strong>fails closed</strong> — a mismatch aborts the installation.</p>
+</li>
+<li>
+<p><strong>cosign signing</strong>: Checksum files are signed with <a href="https://github.com/sigstore/cosign">cosign</a> using keyless OIDC (GitHub Actions identity). This ties the checksums to a specific GitHub Actions run.</p>
+</li>
+<li>
+<p><strong>Version-pinned install script</strong>: <code>agent-proxy update</code> downloads the install script from the <strong>current version's release tag</strong>, not the mutable <code>main</code> branch. This prevents a compromised <code>main</code> from serving a malicious install script to updaters.</p>
+</li>
+</ol>
+<h3 id="cicd-hardening">CI/CD hardening<a class="headerlink" href="#cicd-hardening" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>GitHub Actions pinned to commit SHA</strong>: All workflow actions (checkout, setup-go, etc.) are pinned to specific commit hashes, not mutable tags like <code>@v4</code>.</li>
+<li><strong>GoReleaser version pinned</strong>: The release tool is pinned to <code>~&gt; v2</code> to avoid unexpected breaking changes.</li>
+<li><strong>SLSA provenance</strong>: Release artifacts include SLSA provenance metadata for verifiable build reproducibility.</li>
+</ul>
+<hr />
 <h2 id="what-is-not-a-security-boundary">What Is NOT a Security Boundary<a class="headerlink" href="#what-is-not-a-security-boundary" title="Permanent link">&para;</a></h2>
-<ul>
-<li>The PAC nonce prevents port-conflict misidentification, not same-user impersonation</li>
-<li><code>no_proxy</code> wildcards (<code>10.*</code>) have inconsistent cross-client behavior</li>
-<li>SSH <code>accept-new</code> is no longer used; <code>StrictHostKeyChecking=yes</code> with project <code>known_hosts</code> is enforced</li>
-</ul>
+<p>To set clear expectations:</p>
+<ol>
+<li>
+<p><strong>The PAC nonce</strong> prevents port-conflict misidentification, not same-user impersonation. Any process running as your user can read <code>~/.config/agent-proxy/pac-nonce</code>.</p>
+</li>
+<li>
+<p><strong><code>no_proxy</code> wildcards</strong> (<code>10.*</code>) have inconsistent cross-client behavior. Node.js and Java ignore IP wildcards entirely. This is a compatibility issue, not a security vulnerability, but it means some traffic may unexpectedly go through the proxy.</p>
+</li>
+<li>
+<p><strong>SSH <code>accept-new</code> is no longer used.</strong> Versions prior to v0.6.0 used <code>StrictHostKeyChecking=accept-new</code>, which auto-trusts the host key on first connection. This was replaced with <code>StrictHostKeyChecking=yes</code> + project <code>known_hosts</code> + manual fingerprint verification.</p>
+</li>
+<li>
+<p><strong>Squid is not a sandbox.</strong> The ACLs are defense-in-depth. If an attacker gains SSH access to your ECS, they can modify the Squid config, read logs, and access anything on the server.</p>
+</li>
+<li>
+<p><strong>No traffic obfuscation.</strong> SSH has a well-known protocol fingerprint. Deep packet inspection (DPI) can identify and throttle SSH traffic. agent-proxy does not implement obfuscation layers (obfs4, VLESS, Trojan).</p>
+</li>
+</ol>
 
 
 

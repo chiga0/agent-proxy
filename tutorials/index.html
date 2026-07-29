@@ -1,0 +1,1859 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Domain-based selective proxy CLI for AI services, developer tools, and search engines">
+      
+      
+      
+      
+        <link rel="prev" href="../configuration/">
+      
+      
+        <link rel="next" href="../api/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Tutorials - agent-proxy</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tutorials" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="agent-proxy" class="md-header__button md-logo" aria-label="agent-proxy" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            agent-proxy
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Tutorials
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/chiga0/agent-proxy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    chiga0/agent-proxy
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="agent-proxy" class="md-nav__button md-logo" aria-label="agent-proxy" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    agent-proxy
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/chiga0/agent-proxy" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    chiga0/agent-proxy
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tutorial-1-fresh-ecs-setup-from-scratch-alibaba-cloud" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tutorial 1: Fresh ECS Setup from Scratch (Alibaba Cloud)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tutorial 1: Fresh ECS Setup from Scratch (Alibaba Cloud)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-create-the-ecs-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Create the ECS instance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-configure-ssh-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Configure SSH access
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-install-and-initialize-agent-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Install and initialize agent-proxy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-configure-your-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Configure your shell
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Verify
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-set-up-the-ecs-security-group-tunnel-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Set up the ECS security group (tunnel mode)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tutorial-2-upgrading-from-v05x-to-v07x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tutorial 2: Upgrading from v0.5.x to v0.7.x
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tutorial 2: Upgrading from v0.5.x to v0.7.x">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-update-the-binary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Update the binary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-migrate-ssh-host-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Migrate SSH host keys
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-redeploy-squid-loopback-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Redeploy Squid (loopback-only)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-clean-up-legacy-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Clean up legacy config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-restart-the-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Restart the proxy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tutorial-3-multi-ecs-failover-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tutorial 3: Multi-ECS Failover Setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tutorial 3: Multi-ECS Failover Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-1-provision-the-fallback-ecs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Provision the fallback ECS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-deploy-squid-on-the-fallback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Deploy Squid on the fallback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-configure-failover" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Configure failover
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Verify
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-test-failover" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Test failover
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tutorial-4-monitoring-with-prometheus-grafana" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tutorial 4: Monitoring with Prometheus + Grafana
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tutorial 4: Monitoring with Prometheus + Grafana">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-verify-metrics-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Verify metrics endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-configure-prometheus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Configure Prometheus
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-verify-scraping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Verify scraping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-create-a-grafana-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Create a Grafana dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-alerting-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example alerting rule
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tutorial-5-using-the-web-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tutorial 5: Using the Web Dashboard
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tutorial 5: Using the Web Dashboard">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-open-the-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Open the dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-read-the-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Read the dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-use-the-json-apis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Use the JSON APIs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting-the-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting the dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tutorial-1-fresh-ecs-setup-from-scratch-alibaba-cloud" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tutorial 1: Fresh ECS Setup from Scratch (Alibaba Cloud)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tutorial 1: Fresh ECS Setup from Scratch (Alibaba Cloud)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-create-the-ecs-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Create the ECS instance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-configure-ssh-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Configure SSH access
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-install-and-initialize-agent-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Install and initialize agent-proxy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-configure-your-shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Configure your shell
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Verify
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-set-up-the-ecs-security-group-tunnel-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Set up the ECS security group (tunnel mode)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tutorial-2-upgrading-from-v05x-to-v07x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tutorial 2: Upgrading from v0.5.x to v0.7.x
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tutorial 2: Upgrading from v0.5.x to v0.7.x">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-update-the-binary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Update the binary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-migrate-ssh-host-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Migrate SSH host keys
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-redeploy-squid-loopback-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Redeploy Squid (loopback-only)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-clean-up-legacy-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Clean up legacy config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-restart-the-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Restart the proxy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tutorial-3-multi-ecs-failover-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tutorial 3: Multi-ECS Failover Setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tutorial 3: Multi-ECS Failover Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-1-provision-the-fallback-ecs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Provision the fallback ECS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-deploy-squid-on-the-fallback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Deploy Squid on the fallback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-configure-failover" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Configure failover
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Verify
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-test-failover" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Test failover
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tutorial-4-monitoring-with-prometheus-grafana" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tutorial 4: Monitoring with Prometheus + Grafana
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tutorial 4: Monitoring with Prometheus + Grafana">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-verify-metrics-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Verify metrics endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-configure-prometheus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Configure Prometheus
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-verify-scraping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Verify scraping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-create-a-grafana-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Create a Grafana dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-alerting-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example alerting rule
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tutorial-5-using-the-web-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tutorial 5: Using the Web Dashboard
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tutorial 5: Using the Web Dashboard">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-open-the-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Open the dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-read-the-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Read the dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-use-the-json-apis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Use the JSON APIs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting-the-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting the dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="tutorials">Tutorials<a class="headerlink" href="#tutorials" title="Permanent link">&para;</a></h1>
+<p>Step-by-step guides for common scenarios beyond the basic quick start.</p>
+<h2 id="tutorial-1-fresh-ecs-setup-from-scratch-alibaba-cloud">Tutorial 1: Fresh ECS Setup from Scratch (Alibaba Cloud)<a class="headerlink" href="#tutorial-1-fresh-ecs-setup-from-scratch-alibaba-cloud" title="Permanent link">&para;</a></h2>
+<p>This tutorial walks through provisioning a new Alibaba Cloud ECS and configuring agent-proxy from zero.</p>
+<h3 id="step-1-create-the-ecs-instance">Step 1: Create the ECS instance<a class="headerlink" href="#step-1-create-the-ecs-instance" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Log in to the <a href="https://ecs.console.aliyun.com/">Alibaba Cloud Console</a></li>
+<li>Click <strong>Create Instance</strong></li>
+<li>
+<p>Choose these settings:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Recommended value</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Region</td>
+<td>Singapore / Tokyo / US-West</td>
+<td>Low latency from China, outside the firewall</td>
+</tr>
+<tr>
+<td>Instance type</td>
+<td>ecs.t6-c1m1.large (1 vCPU, 1 GB)</td>
+<td>Squid needs ~30 MB RAM; this is plenty</td>
+</tr>
+<tr>
+<td>OS</td>
+<td>Ubuntu 22.04 64-bit</td>
+<td>Best tested with agent-proxy</td>
+</tr>
+<tr>
+<td>Disk</td>
+<td>40 GB ESSD</td>
+<td>Logs grow slowly; 40 GB lasts months</td>
+</tr>
+<tr>
+<td>Network</td>
+<td>Assign public IP, 1 Mbps+</td>
+<td>Pay-by-traffic is cheapest for proxy use</td>
+</tr>
+<tr>
+<td>Security group</td>
+<td>Allow TCP 22 inbound</td>
+<td>SSH access; no other ports needed in tunnel mode</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p>Set the login method to <strong>SSH key pair</strong> (create one in the console if needed)</p>
+</li>
+<li>Launch the instance and note the <strong>public IP address</strong></li>
+</ol>
+<h3 id="step-2-configure-ssh-access">Step 2: Configure SSH access<a class="headerlink" href="#step-2-configure-ssh-access" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Download the key pair from Alibaba Cloud console (or use your own)</span>
+chmod<span class="w"> </span><span class="m">600</span><span class="w"> </span>~/Downloads/my-ecs-key.pem
+
+<span class="c1"># Test SSH connectivity</span>
+ssh<span class="w"> </span>-i<span class="w"> </span>~/Downloads/my-ecs-key.pem<span class="w"> </span>root@YOUR_ECS_IP<span class="w"> </span><span class="s2">&quot;uname -a&quot;</span>
+<span class="c1"># Expected: Linux iZ... 5.15.0-... #1 SMP ... x86_64 x86_64 x86_64 GNU/Linux</span>
+</code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Copy the key to ~/.ssh/</p>
+<p>macOS background services can't access <code>~/Downloads/</code> due to TCC restrictions. Copy the key now:</p>
+<div class="highlight"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>~/.ssh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>chmod<span class="w"> </span><span class="m">700</span><span class="w"> </span>~/.ssh
+cp<span class="w"> </span>~/Downloads/my-ecs-key.pem<span class="w"> </span>~/.ssh/ecs-singapore.pem
+chmod<span class="w"> </span><span class="m">600</span><span class="w"> </span>~/.ssh/ecs-singapore.pem
+</code></pre></div>
+</div>
+<h3 id="step-3-install-and-initialize-agent-proxy">Step 3: Install and initialize agent-proxy<a class="headerlink" href="#step-3-install-and-initialize-agent-proxy" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Install</span>
+curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/chiga0/agent-proxy/main/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash
+
+<span class="c1"># Run the wizard</span>
+agent-proxy<span class="w"> </span>init
+</code></pre></div>
+<p>When prompted:</p>
+<div class="highlight"><pre><span></span><code>服务器 IP: YOUR_ECS_IP
+SSH 用户 [root]:                    ← press Enter
+SSH 密钥路径 [~/.ssh/id_rsa]: ~/.ssh/ecs-singapore.pem
+代理端口 [18443]:                   ← press Enter
+启用 SSH 加密隧道? [Y/n]:          ← press Enter (yes)
+</code></pre></div>
+<p>Verify the host key fingerprint against the Alibaba Cloud console (Instance → Security → Key Pair fingerprint), then type <code>yes</code>.</p>
+<h3 id="step-4-configure-your-shell">Step 4: Configure your shell<a class="headerlink" href="#step-4-configure-your-shell" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;[ -f &quot;$HOME/.config/agent-proxy/env.sh&quot; ] &amp;&amp; source &quot;$HOME/.config/agent-proxy/env.sh&quot;&#39;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/.zshrc
+<span class="nb">source</span><span class="w"> </span>~/.config/agent-proxy/env.sh
+</code></pre></div>
+<h3 id="step-5-verify">Step 5: Verify<a class="headerlink" href="#step-5-verify" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>status
+<span class="c1"># All 6 checks should pass</span>
+
+curl<span class="w"> </span>-s<span class="w"> </span>https://httpbin.org/ip<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>origin
+<span class="c1"># Should show your ECS IP, not your local IP</span>
+
+curl<span class="w"> </span>-s<span class="w"> </span>https://www.baidu.com<span class="w"> </span>&gt;<span class="w"> </span>/dev/null<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;domestic OK&quot;</span>
+<span class="c1"># Should print &quot;domestic OK&quot; (goes direct, not through proxy)</span>
+</code></pre></div>
+<h3 id="step-6-set-up-the-ecs-security-group-tunnel-mode">Step 6: Set up the ECS security group (tunnel mode)<a class="headerlink" href="#step-6-set-up-the-ecs-security-group-tunnel-mode" title="Permanent link">&para;</a></h3>
+<p>In tunnel mode, only SSH (port 22) needs to be open. Verify your security group:</p>
+<ol>
+<li>Go to <strong>ECS Console → Security Groups</strong></li>
+<li>Find your instance's security group</li>
+<li>Ensure inbound rules allow <strong>only</strong> TCP 22 from your IP (or <code>0.0.0.0/0</code> if your IP changes)</li>
+<li><strong>Remove</strong> any rules opening port 18443 or other Squid ports — they're unnecessary in tunnel mode</li>
+</ol>
+<hr />
+<h2 id="tutorial-2-upgrading-from-v05x-to-v07x">Tutorial 2: Upgrading from v0.5.x to v0.7.x<a class="headerlink" href="#tutorial-2-upgrading-from-v05x-to-v07x" title="Permanent link">&para;</a></h2>
+<p>Versions before v0.6.0 used Basic auth and system <code>known_hosts</code>. This tutorial migrates cleanly.</p>
+<h3 id="step-1-update-the-binary">Step 1: Update the binary<a class="headerlink" href="#step-1-update-the-binary" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>update
+agent-proxy<span class="w"> </span>version
+<span class="c1"># Expected: agent-proxy v0.7.x</span>
+</code></pre></div>
+<h3 id="step-2-migrate-ssh-host-keys">Step 2: Migrate SSH host keys<a class="headerlink" href="#step-2-migrate-ssh-host-keys" title="Permanent link">&para;</a></h3>
+<p>v0.6.0+ uses a project-specific <code>known_hosts</code> file instead of <code>~/.ssh/known_hosts</code>:</p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>trust-host
+</code></pre></div>
+<p>If your ECS key is found in <code>~/.ssh/known_hosts</code>, the command offers to migrate it:</p>
+<div class="highlight"><pre><span></span><code>  → 在系统 known_hosts 中发现 1.2.3.4 的密钥
+  迁移到项目专用 known_hosts? [Y/n]: y
+  ✓ 已迁移到 /Users/you/.config/agent-proxy/known_hosts
+</code></pre></div>
+<h3 id="step-3-redeploy-squid-loopback-only">Step 3: Redeploy Squid (loopback-only)<a class="headerlink" href="#step-3-redeploy-squid-loopback-only" title="Permanent link">&para;</a></h3>
+<p>v0.6.0+ uses loopback-only Squid in tunnel mode (no public data port):</p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>setup
+</code></pre></div>
+<p>This rewrites the Squid config, removing Basic auth and binding to <code>127.0.0.1</code> only.</p>
+<h3 id="step-4-clean-up-legacy-config">Step 4: Clean up legacy config<a class="headerlink" href="#step-4-clean-up-legacy-config" title="Permanent link">&para;</a></h3>
+<p>The config loader automatically:</p>
+<ul>
+<li>Strips <code>proxy.user</code> and <code>proxy.password</code> fields (Basic auth removed)</li>
+<li>Migrates flat <code>whitelist</code> arrays to <code>presets</code> + <code>custom_domains</code></li>
+</ul>
+<p>Verify:</p>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>config-validate
+<span class="c1"># Should show valid config with presets listed</span>
+</code></pre></div>
+<h3 id="step-5-restart-the-proxy">Step 5: Restart the proxy<a class="headerlink" href="#step-5-restart-the-proxy" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>off
+agent-proxy<span class="w"> </span>on
+agent-proxy<span class="w"> </span>doctor
+<span class="c1"># Should show all checks passing, Squid loopback-only confirmed</span>
+</code></pre></div>
+<hr />
+<h2 id="tutorial-3-multi-ecs-failover-setup">Tutorial 3: Multi-ECS Failover Setup<a class="headerlink" href="#tutorial-3-multi-ecs-failover-setup" title="Permanent link">&para;</a></h2>
+<p>Set up a secondary ECS that agent-proxy automatically falls back to when the primary is unreachable.</p>
+<h3 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>Your Machine
+    │
+    ├─ SSH tunnel ──▶ Primary ECS (Singapore) ──▶ Squid ──▶ Internet
+    │
+    └─ (failover) ──▶ Fallback ECS (Tokyo) ──▶ Squid ──▶ Internet
+</code></pre></div>
+<h3 id="step-1-provision-the-fallback-ecs">Step 1: Provision the fallback ECS<a class="headerlink" href="#step-1-provision-the-fallback-ecs" title="Permanent link">&para;</a></h3>
+<p>Set up a second ECS following <a href="#tutorial-1-fresh-ecs-setup-from-scratch-alibaba-cloud">Tutorial 1</a>. Use a different region for geographic diversity.</p>
+<h3 id="step-2-deploy-squid-on-the-fallback">Step 2: Deploy Squid on the fallback<a class="headerlink" href="#step-2-deploy-squid-on-the-fallback" title="Permanent link">&para;</a></h3>
+<p>agent-proxy's <code>setup</code> command targets the primary host. To deploy Squid on the fallback, temporarily switch the config:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Save current config</span>
+cp<span class="w"> </span>~/.config/agent-proxy/config.yaml<span class="w"> </span>~/.config/agent-proxy/config.yaml.bak
+
+<span class="c1"># Edit config to point to fallback</span>
+<span class="c1"># proxy.host: FALLBACK_ECS_IP</span>
+<span class="c1"># proxy.ssh_key: ~/.ssh/fallback-key.pem</span>
+
+agent-proxy<span class="w"> </span>trust-host<span class="w">    </span><span class="c1"># Trust the fallback host key</span>
+agent-proxy<span class="w"> </span>setup<span class="w">         </span><span class="c1"># Deploy Squid to fallback</span>
+
+<span class="c1"># Restore original config</span>
+cp<span class="w"> </span>~/.config/agent-proxy/config.yaml.bak<span class="w"> </span>~/.config/agent-proxy/config.yaml
+</code></pre></div>
+<h3 id="step-3-configure-failover">Step 3: Configure failover<a class="headerlink" href="#step-3-configure-failover" title="Permanent link">&para;</a></h3>
+<p>Edit <code>~/.config/agent-proxy/config.yaml</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">proxy</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.2.3.4</span><span class="w">                    </span><span class="c1"># Primary (Singapore)</span>
+<span class="w">  </span><span class="nt">ssh_key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/ecs-singapore.pem</span>
+<span class="w">  </span><span class="nt">tunnel</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+
+<span class="w">  </span><span class="nt">fallback_host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5.6.7.8</span><span class="w">           </span><span class="c1"># Fallback (Tokyo)</span>
+<span class="w">  </span><span class="nt">fallback_ssh_key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/ecs-tokyo.pem</span>
+<span class="w">  </span><span class="nt">fallback_ssh_user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span><span class="w">           </span><span class="c1"># Optional, defaults to primary ssh_user</span>
+</code></pre></div>
+<h3 id="step-4-verify">Step 4: Verify<a class="headerlink" href="#step-4-verify" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>config-validate
+<span class="c1"># Should show: Fallback: 5.6.7.8</span>
+
+agent-proxy<span class="w"> </span>on
+<span class="c1"># Connects to primary</span>
+</code></pre></div>
+<h3 id="step-5-test-failover">Step 5: Test failover<a class="headerlink" href="#step-5-test-failover" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Stop the primary ECS (or block its IP temporarily)</span>
+agent-proxy<span class="w"> </span>off
+agent-proxy<span class="w"> </span>on
+</code></pre></div>
+<p>Expected output when primary is down:</p>
+<div class="highlight"><pre><span></span><code>  → SSH tunnel... ⚠ Primary 1.2.3.4 failed (connection timed out), trying fallback 5.6.7.8...
+  → SSH tunnel... ✓
+</code></pre></div>
+<div class="admonition info">
+<p class="admonition-title">Failover scope</p>
+<p>Failover applies to tunnel startup only. If the primary goes down mid-session, the tunnel dies and you need to run <code>agent-proxy on</code> again (or rely on auto-start at next login). The <code>ControlPersist=600</code> setting keeps the tunnel alive for 10 minutes of inactivity, which handles brief network blips.</p>
+</div>
+<hr />
+<h2 id="tutorial-4-monitoring-with-prometheus-grafana">Tutorial 4: Monitoring with Prometheus + Grafana<a class="headerlink" href="#tutorial-4-monitoring-with-prometheus-grafana" title="Permanent link">&para;</a></h2>
+<p>agent-proxy exposes Prometheus metrics on the PAC server. This tutorial sets up scraping and a dashboard.</p>
+<h3 id="step-1-verify-metrics-endpoint">Step 1: Verify metrics endpoint<a class="headerlink" href="#step-1-verify-metrics-endpoint" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>http://127.0.0.1:18080/metrics
+</code></pre></div>
+<p>Expected output:</p>
+<div class="highlight"><pre><span></span><code># HELP agent_proxy_pac_requests_total Total PAC file requests served.
+# TYPE agent_proxy_pac_requests_total counter
+agent_proxy_pac_requests_total 42
+
+# HELP agent_proxy_pac_server_up Whether the PAC server is running.
+# TYPE agent_proxy_pac_server_up gauge
+agent_proxy_pac_server_up 1
+
+# HELP agent_proxy_config_domains_total Number of whitelisted domains.
+# TYPE agent_proxy_config_domains_total gauge
+agent_proxy_config_domains_total 61
+
+# HELP agent_proxy_config_presets_total Number of enabled presets.
+# TYPE agent_proxy_config_presets_total gauge
+agent_proxy_config_presets_total 5
+
+# HELP agent_proxy_config_noproxy_total Number of no_proxy entries.
+# TYPE agent_proxy_config_noproxy_total gauge
+agent_proxy_config_noproxy_total 32
+
+# HELP agent_proxy_tunnel_enabled Whether tunnel mode is enabled.
+# TYPE agent_proxy_tunnel_enabled gauge
+agent_proxy_tunnel_enabled 1
+</code></pre></div>
+<h3 id="step-2-configure-prometheus">Step 2: Configure Prometheus<a class="headerlink" href="#step-2-configure-prometheus" title="Permanent link">&para;</a></h3>
+<p>Add to your <code>prometheus.yml</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">scrape_configs</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;agent-proxy&#39;</span>
+<span class="w">    </span><span class="nt">scrape_interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span>
+<span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;127.0.0.1:18080&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/metrics</span>
+</code></pre></div>
+<p>Restart Prometheus:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Docker</span>
+docker<span class="w"> </span>restart<span class="w"> </span>prometheus
+
+<span class="c1"># Systemd</span>
+sudo<span class="w"> </span>systemctl<span class="w"> </span>restart<span class="w"> </span>prometheus
+</code></pre></div>
+<h3 id="step-3-verify-scraping">Step 3: Verify scraping<a class="headerlink" href="#step-3-verify-scraping" title="Permanent link">&para;</a></h3>
+<p>Open the Prometheus UI (<code>http://localhost:9090</code>) and query:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">agent_proxy_pac_server_up</span>
+</code></pre></div>
+<p>Should return <code>1</code>.</p>
+<h3 id="step-4-create-a-grafana-dashboard">Step 4: Create a Grafana dashboard<a class="headerlink" href="#step-4-create-a-grafana-dashboard" title="Permanent link">&para;</a></h3>
+<p>Import or create a dashboard with these panels:</p>
+<table>
+<thead>
+<tr>
+<th>Panel</th>
+<th>Query</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PAC Server Status</td>
+<td><code>agent_proxy_pac_server_up</code></td>
+<td>Stat (green/red)</td>
+</tr>
+<tr>
+<td>PAC Requests Rate</td>
+<td><code>rate(agent_proxy_pac_requests_total[5m])</code></td>
+<td>Time series</td>
+</tr>
+<tr>
+<td>Whitelisted Domains</td>
+<td><code>agent_proxy_config_domains_total</code></td>
+<td>Stat</td>
+</tr>
+<tr>
+<td>Enabled Presets</td>
+<td><code>agent_proxy_config_presets_total</code></td>
+<td>Stat</td>
+</tr>
+<tr>
+<td>No-Proxy Entries</td>
+<td><code>agent_proxy_config_noproxy_total</code></td>
+<td>Stat</td>
+</tr>
+<tr>
+<td>Tunnel Mode</td>
+<td><code>agent_proxy_tunnel_enabled</code></td>
+<td>Stat (Enabled/Disabled)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="example-alerting-rule">Example alerting rule<a class="headerlink" href="#example-alerting-rule" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># alert-rules.yml</span>
+<span class="nt">groups</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">agent-proxy</span>
+<span class="w">    </span><span class="nt">rules</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PACServerDown</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">agent_proxy_pac_server_up == 0</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1m</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">warning</span>
+<span class="w">        </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;agent-proxy</span><span class="nv"> </span><span class="s">PAC</span><span class="nv"> </span><span class="s">server</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">down&quot;</span>
+<span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Run:</span><span class="nv"> </span><span class="s">agent-proxy</span><span class="nv"> </span><span class="s">on&quot;</span>
+</code></pre></div>
+<hr />
+<h2 id="tutorial-5-using-the-web-dashboard">Tutorial 5: Using the Web Dashboard<a class="headerlink" href="#tutorial-5-using-the-web-dashboard" title="Permanent link">&para;</a></h2>
+<p>agent-proxy includes a self-contained web dashboard — no external dependencies, no build step.</p>
+<h3 id="step-1-open-the-dashboard">Step 1: Open the dashboard<a class="headerlink" href="#step-1-open-the-dashboard" title="Permanent link">&para;</a></h3>
+<p>With the proxy running (<code>agent-proxy on</code>), open:</p>
+<div class="highlight"><pre><span></span><code>http://127.0.0.1:18080/dashboard
+</code></pre></div>
+<h3 id="step-2-read-the-dashboard">Step 2: Read the dashboard<a class="headerlink" href="#step-2-read-the-dashboard" title="Permanent link">&para;</a></h3>
+<p>The dashboard has three sections:</p>
+<p><strong>Proxy Status</strong> — cards showing:</p>
+<table>
+<thead>
+<tr>
+<th>Card</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Host</td>
+<td>Your ECS IP address</td>
+</tr>
+<tr>
+<td>Port</td>
+<td>Squid port</td>
+</tr>
+<tr>
+<td>Tunnel Mode</td>
+<td>Whether SSH tunnel is enabled</td>
+</tr>
+<tr>
+<td>Fallback Host</td>
+<td>Fallback ECS IP (or "None")</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Whitelist &amp; No-Proxy</strong> — cards showing:</p>
+<table>
+<thead>
+<tr>
+<th>Card</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Active Presets</td>
+<td>Which preset groups are enabled (badges)</td>
+</tr>
+<tr>
+<td>Whitelist Domains</td>
+<td>Total number of proxied domains</td>
+</tr>
+<tr>
+<td>No-Proxy Entries</td>
+<td>Number of no_proxy exclusions</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Recent Traffic</strong> — a table of the top 10 domains by traffic from the last 200 Squid access log lines:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Domain</td>
+<td>The requested domain</td>
+</tr>
+<tr>
+<td>Requests</td>
+<td>Number of requests in the sample</td>
+</tr>
+<tr>
+<td>Bytes</td>
+<td>Total traffic volume</td>
+</tr>
+</tbody>
+</table>
+<h3 id="step-3-use-the-json-apis">Step 3: Use the JSON APIs<a class="headerlink" href="#step-3-use-the-json-apis" title="Permanent link">&para;</a></h3>
+<p>The dashboard is powered by two JSON endpoints you can use programmatically:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Proxy status</span>
+curl<span class="w"> </span>-s<span class="w"> </span>http://127.0.0.1:18080/api/status<span class="w"> </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>json.tool
+
+<span class="c1"># Traffic stats</span>
+curl<span class="w"> </span>-s<span class="w"> </span>http://127.0.0.1:18080/api/stats<span class="w"> </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>json.tool
+</code></pre></div>
+<p>See the <a href="../api/">API Reference</a> for full endpoint documentation.</p>
+<h3 id="troubleshooting-the-dashboard">Troubleshooting the dashboard<a class="headerlink" href="#troubleshooting-the-dashboard" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>Cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Page won't load</td>
+<td>PAC server not running</td>
+<td><code>agent-proxy on</code></td>
+</tr>
+<tr>
+<td>Status shows error</td>
+<td>Config file missing/corrupt</td>
+<td><code>agent-proxy config-validate</code></td>
+</tr>
+<tr>
+<td>Traffic table empty</td>
+<td>No Squid logs yet, or SSH failed</td>
+<td>Use the proxy, then refresh</td>
+</tr>
+<tr>
+<td>Traffic shows error</td>
+<td>Can't SSH to ECS for logs</td>
+<td>Check SSH connectivity</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

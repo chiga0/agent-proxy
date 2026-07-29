@@ -316,10 +316,71 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#why-agent-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why agent-proxy?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#architecture" class="md-nav__link">
     <span class="md-ellipsis">
       
         Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-the-pac-path-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the PAC path works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-the-cli-path-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the CLI path works
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feature-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feature Matrix
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#who-is-this-for" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Who Is This For?
       
     </span>
   </a>
@@ -466,6 +527,60 @@
   
   
     <li class="md-nav__item">
+      <a href="tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="security/" class="md-nav__link">
         
   
@@ -501,6 +616,33 @@
     
   
     Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
   
 
     
@@ -567,10 +709,71 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#why-agent-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why agent-proxy?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#architecture" class="md-nav__link">
     <span class="md-ellipsis">
       
         Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-the-pac-path-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the PAC path works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-the-cli-path-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How the CLI path works
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#feature-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Feature Matrix
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#who-is-this-for" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Who Is This For?
       
     </span>
   </a>
@@ -644,6 +847,70 @@
 <h1 id="agent-proxy">agent-proxy<a class="headerlink" href="#agent-proxy" title="Permanent link">&para;</a></h1>
 <p><strong>Domain-based selective proxy CLI.</strong> Route AI services, developer tools, and search engines through your overseas server — everything else stays direct.</p>
 <p>60+ domains pre-configured. One command to set up. SSH-encrypted tunnel. Zero runtime dependencies.</p>
+<h2 id="why-agent-proxy">Why agent-proxy?<a class="headerlink" href="#why-agent-proxy" title="Permanent link">&para;</a></h2>
+<p>If you're a developer in China (or behind a restrictive firewall), you've probably tried several approaches to reach services like ChatGPT, GitHub, and Google. Here's how agent-proxy compares:</p>
+<table>
+<thead>
+<tr>
+<th>Approach</th>
+<th style="text-align: center;">Selective routing</th>
+<th style="text-align: center;">CLI/SDK support</th>
+<th style="text-align: center;">Encryption</th>
+<th style="text-align: center;">Setup effort</th>
+<th style="text-align: center;">Ongoing maintenance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>agent-proxy</strong></td>
+<td style="text-align: center;">✅ Domain-based PAC + env</td>
+<td style="text-align: center;">✅ <code>https_proxy</code> + <code>no_proxy</code></td>
+<td style="text-align: center;">✅ SSH tunnel</td>
+<td style="text-align: center;">One command</td>
+<td style="text-align: center;">Near-zero</td>
+</tr>
+<tr>
+<td>ClashX / Clash</td>
+<td style="text-align: center;">✅ Rule-based</td>
+<td style="text-align: center;">Partial (env vars)</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">Medium (rule files, GUI)</td>
+<td style="text-align: center;">Rule updates, GUI quirks</td>
+</tr>
+<tr>
+<td>V2Ray / Xray</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">Manual</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">High (protocol config, ports)</td>
+<td style="text-align: center;">Protocol tuning, key rotation</td>
+</tr>
+<tr>
+<td>Manual <code>export https_proxy=...</code></td>
+<td style="text-align: center;">❌ All-or-nothing</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">Depends</td>
+<td style="text-align: center;">Low</td>
+<td style="text-align: center;">Breaks domestic sites</td>
+</tr>
+<tr>
+<td>Browser extension (SwitchyOmega)</td>
+<td style="text-align: center;">✅ Browser only</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">Low</td>
+<td style="text-align: center;">Per-browser config</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key differentiators:</strong></p>
+<ul>
+<li><strong>Zero-config presets.</strong> 60+ domains across AI, dev, search, cloud, and media are pre-configured. Run <code>agent-proxy init</code> and everything works — no rule files, no YAML editing, no GUI.</li>
+<li><strong>Two routing paths, one proxy.</strong> Browsers and desktop apps use the system PAC file; CLI tools and SDKs use <code>https_proxy</code>/<code>no_proxy</code> environment variables. Both paths go through the same Squid proxy on your ECS.</li>
+<li><strong>SSH-encrypted by default.</strong> In tunnel mode, Squid listens on loopback only — no public data port is exposed. All proxy traffic is encrypted through an SSH tunnel with modern ciphers (AES-GCM, ChaCha20).</li>
+<li><strong>Self-contained binary.</strong> No Python, no Node, no Docker at runtime. A single Go binary handles everything: deployment, tunnel management, PAC serving, and diagnostics.</li>
+<li><strong>Domestic traffic protection.</strong> Built-in <code>no_proxy</code> defaults and <code>doctor --fix</code> ensure Chinese/domestic sites (Alibaba, Baidu, Bilibili, etc.) never accidentally route through your overseas proxy.</li>
+</ul>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>┌─────────────────────────────────────────────────────────────────┐
 │  Your Machine                                                   │
@@ -686,38 +953,126 @@
 </tr>
 </tbody>
 </table>
+<h3 id="how-the-pac-path-works">How the PAC path works<a class="headerlink" href="#how-the-pac-path-works" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>agent-proxy on</code> starts a local HTTP server on <code>127.0.0.1:18080</code> that serves a generated <code>proxy.pac</code> file.</li>
+<li>The system proxy settings are updated to point to <code>http://127.0.0.1:18080/proxy.pac</code>.</li>
+<li>For every HTTP request, the browser evaluates the PAC JavaScript: whitelisted domains go through <code>PROXY 127.0.0.1:18443</code>, everything else goes <code>DIRECT</code>.</li>
+<li>The PAC server hot-reloads when <code>config.yaml</code> changes — no restart needed.</li>
+</ol>
+<h3 id="how-the-cli-path-works">How the CLI path works<a class="headerlink" href="#how-the-cli-path-works" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>agent-proxy on</code> generates <code>~/.config/agent-proxy/env.sh</code> with <code>https_proxy</code>, <code>http_proxy</code>, and <code>no_proxy</code> exports.</li>
+<li>Your shell profile sources this file, so every new terminal inherits the proxy settings.</li>
+<li>Tools like <code>curl</code>, <code>pip</code>, <code>npm</code>, and Go's HTTP client respect these variables automatically.</li>
+<li>The <code>no_proxy</code> list ensures domestic services (Alibaba Cloud, Baidu, etc.) bypass the proxy.</li>
+</ol>
+<h2 id="feature-matrix">Feature Matrix<a class="headerlink" href="#feature-matrix" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Presets</strong></td>
+<td>5 groups (ai, dev, search, cloud, media), 60+ domains, all enabled by default</td>
+</tr>
+<tr>
+<td><strong>Custom domains</strong></td>
+<td><code>whitelist add/rm</code> with instant PAC regeneration</td>
+</tr>
+<tr>
+<td><strong>SSH tunnel</strong></td>
+<td>ControlMaster multiplexing, AES-GCM/ChaCha20 ciphers, keepalive, auto-failover</td>
+</tr>
+<tr>
+<td><strong>Squid deployment</strong></td>
+<td>Idempotent, transactional (syntax check → backup → replace → rollback on failure)</td>
+</tr>
+<tr>
+<td><strong>PAC server</strong></td>
+<td>Local HTTP, nonce-protected, hot-reload on config change</td>
+</tr>
+<tr>
+<td><strong>Web dashboard</strong></td>
+<td>Self-contained HTML at <code>/dashboard</code> with status + traffic stats</td>
+</tr>
+<tr>
+<td><strong>Prometheus metrics</strong></td>
+<td>6 metrics at <code>/metrics</code> for monitoring</td>
+</tr>
+<tr>
+<td><strong>Diagnostics</strong></td>
+<td><code>status</code> (6 checks), <code>doctor</code> (full + no_proxy analysis), <code>bench</code>, <code>trace</code></td>
+</tr>
+<tr>
+<td><strong>Traffic stats</strong></td>
+<td>Squid access log parsing, top domains, bandwidth, Chinese traffic detection</td>
+</tr>
+<tr>
+<td><strong>Self-update</strong></td>
+<td>SHA-256 verified, version-pinned install script</td>
+</tr>
+<tr>
+<td><strong>Auto-start</strong></td>
+<td>LaunchAgent (macOS), systemd user (Linux), Scheduled Task (Windows)</td>
+</tr>
+<tr>
+<td><strong>Emergency off</strong></td>
+<td><code>agent-proxy off</code> works even with corrupted config</td>
+</tr>
+<tr>
+<td><strong>Multi-ECS failover</strong></td>
+<td>Optional <code>fallback_host</code> for automatic tunnel failover</td>
+</tr>
+</tbody>
+</table>
+<h2 id="who-is-this-for">Who Is This For?<a class="headerlink" href="#who-is-this-for" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>AI developers in China</strong> who need reliable access to OpenAI, Anthropic, Gemini, and Copilot APIs from both browsers and CLI tools.</li>
+<li><strong>Full-stack developers</strong> who use GitHub, npm, PyPI, Docker Hub, and StackOverflow daily and are tired of toggling proxy settings.</li>
+<li><strong>Teams</strong> that want a simple, auditable proxy setup without maintaining a full VPN or V2Ray infrastructure.</li>
+<li><strong>Anyone</strong> who wants selective proxying — proxy only what needs it, keep everything else direct for speed and reliability.</li>
+</ul>
+<div class="admonition info">
+<p class="admonition-title">Not a VPN</p>
+<p>agent-proxy is an HTTP/HTTPS forward proxy, not a VPN. It handles web traffic (browsers, curl, package managers, SDKs) but does not tunnel arbitrary TCP/UDP (SSH, gaming, VoIP). For those use cases, consider a full VPN solution.</p>
+</div>
 <h2 id="platform-support">Platform Support<a class="headerlink" href="#platform-support" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th>Platform</th>
-<th>System PAC</th>
-<th>CLI env</th>
-<th>Auto-start</th>
-<th>SSH tunnel</th>
+<th style="text-align: center;">System PAC</th>
+<th style="text-align: center;">CLI env</th>
+<th style="text-align: center;">Auto-start</th>
+<th style="text-align: center;">SSH tunnel</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>macOS</td>
-<td>✅</td>
-<td>✅</td>
-<td>✅ LaunchAgent</td>
-<td>✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅ LaunchAgent</td>
+<td style="text-align: center;">✅</td>
 </tr>
 <tr>
 <td>Linux</td>
-<td>✅ GNOME</td>
-<td>✅</td>
-<td>✅ systemd user</td>
-<td>✅</td>
+<td style="text-align: center;">✅ GNOME</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅ systemd user</td>
+<td style="text-align: center;">✅</td>
 </tr>
 <tr>
 <td>Windows</td>
-<td>✅ Registry</td>
-<td>✅</td>
-<td>✅ Scheduled Task</td>
-<td>✅</td>
+<td style="text-align: center;">✅ Registry</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅ Scheduled Task</td>
+<td style="text-align: center;">✅</td>
 </tr>
 </tbody>
 </table>
@@ -734,19 +1089,19 @@
 <tbody>
 <tr>
 <td><code>ai</code></td>
-<td>OpenAI, ChatGPT, Anthropic, Gemini, Copilot, Codex, Perplexity</td>
+<td>OpenAI, ChatGPT, Anthropic, Claude, Gemini, Copilot, Codex, Perplexity, Mistral, OpenRouter</td>
 </tr>
 <tr>
 <td><code>dev</code></td>
-<td>GitHub, StackOverflow, npm, PyPI, crates.io, Docker, HuggingFace</td>
+<td>GitHub, StackOverflow, npm, PyPI, crates.io, Docker Hub, HuggingFace, go.dev, docs.rs</td>
 </tr>
 <tr>
 <td><code>search</code></td>
-<td>Google, DuckDuckGo, Bing, Wikipedia</td>
+<td>Google (Mail, Docs, Drive, Scholar, Maps), DuckDuckGo, Bing, Wikipedia</td>
 </tr>
 <tr>
 <td><code>cloud</code></td>
-<td>AWS, GCP, Azure docs &amp; consoles</td>
+<td>AWS docs/console, GCP console, Azure portal, Microsoft Learn</td>
 </tr>
 <tr>
 <td><code>media</code></td>
@@ -754,11 +1109,12 @@
 </tr>
 </tbody>
 </table>
+<p>See <a href="commands/#preset">Commands → preset</a> for managing presets, or <a href="configuration/#presets">Configuration → presets</a> for the full domain list.</p>
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">&para;</a></h2>
 <ul>
-<li>Go 1.24+ (build from source only)</li>
-<li>SSH access to your ECS</li>
-<li>No external runtime dependencies</li>
+<li><strong>Your machine:</strong> macOS, Linux, or Windows. No runtime dependencies.</li>
+<li><strong>Your server:</strong> Any Linux ECS with SSH access (Alibaba Cloud, AWS, GCP, etc.). apt, yum, or apk package manager.</li>
+<li><strong>Build from source only:</strong> Go 1.24+</li>
 </ul>
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
 <p><a href="https://github.com/chiga0/agent-proxy/blob/main/LICENSE">MIT</a></p>
