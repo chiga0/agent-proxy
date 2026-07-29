@@ -32,6 +32,20 @@ changelog:
       - Merge pull request
       - Merge branch
 
+brews:
+  - name: agent-proxy
+    repository:
+      owner: chiga0
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: "https://github.com/chiga0/agent-proxy"
+    description: "Domain-based selective proxy CLI for overseas ECS"
+    license: "MIT"
+    install: |
+      bin.install "agent-proxy"
+    test: |
+      system "#{bin}/agent-proxy", "version"
+
 release:
   github:
     owner: chiga0
