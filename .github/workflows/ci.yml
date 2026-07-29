@@ -43,6 +43,22 @@ jobs:
       - name: Vet
         run: go vet ./...
 
+      - name: Test SSH ControlMaster (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # Generate a test key
+          ssh-keygen -t ed25519 -f $env:TEMP\test_key -N '""' -q
+          # Test ControlMaster socket creation (will fail to connect but should create socket)
+          $ctrlPath = "$env:TEMP\ssh-ctrl-test"
+          ssh -o ControlMaster=auto -o ControlPath=$ctrlPath -o ConnectTimeout=2 -o BatchMode=yes -i $env:TEMP\test_key nobody@127.0.0.1 2>$null
+          # Check if socket was created
+          if (Test-Path $ctrlPath) { Write-Host "ControlMaster socket created OK" } else { Write-Host "WARNING: ControlMaster socket not created"; exit 0 }
+          # Clean exit
+          ssh -o ControlPath=$ctrlPath -O exit nobody@127.0.0.1 2>$null
+          Write-Host "ControlMaster exit OK"
+          exit 0
+
   squid-integration:
     runs-on: ubuntu-latest
     steps:

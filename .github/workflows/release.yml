@@ -18,6 +18,8 @@ jobs:
   goreleaser:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -59,6 +61,24 @@ jobs:
             dist/checksums.txt.pem \
             --repo chiga0/agent-proxy \
             --clobber
+
+      - name: Generate subject hashes for SLSA
+        id: hash
+        run: |
+          cd dist
+          sha256sum *.tar.gz *.zip checksums.txt | base64 -w0 > ../hashes.txt
+          echo "hashes=$(cat ../hashes.txt)" >> $GITHUB_OUTPUT
+
+  provenance:
+    needs: [goreleaser]
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
+    with:
+      base64-subjects: "${{ needs.goreleaser.outputs.hashes }}"
+      upload-assets: true
 
   upload-oss:
     needs: goreleaser
