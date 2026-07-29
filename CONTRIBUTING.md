@@ -15,24 +15,42 @@ make build
 
 ```
 cmd/agent-proxy/       CLI entry point (cobra commands)
-internal/config/       Config loading/saving (YAML)
-internal/pac/          PAC file generation + local HTTP server
-internal/proxy/        Proxy on/off/status logic
-internal/platform/     OS-specific code (macOS networksetup)
-internal/ecs/          SSH-based Squid deployment
+internal/config/       Config loading/saving, presets, validation
+internal/pac/          PAC generation, HTTP server, nonce, hot-reload
+internal/proxy/        Proxy on/off/status/doctor lifecycle
+internal/platform/     OS-specific code (build-tagged: darwin/linux/windows)
+internal/ecs/          SSH-based Squid deployment, log parsing
+internal/tunnel/       SSH tunnel management via ControlMaster
+internal/bench/        Proxy vs direct latency benchmarking
+internal/trace/        Network path tracing
+test/squid/            Docker-based Squid ACL integration tests
 ```
+
+## Before Submitting
+
+```bash
+go build ./...          # Must compile
+go test ./...           # All tests pass
+go test -race ./...     # No race conditions
+go vet ./...            # No vet warnings
+gofmt -l .              # No unformatted files (must be empty)
+```
+
+CI runs all of the above on ubuntu, macOS, and Windows, plus Docker-based Squid ACL integration tests.
 
 ## Guidelines
 
-- Keep dependencies minimal
-- No hardcoded IPs, credentials, or personal info
-- Run `go vet ./...` and `go build ./...` before submitting
-- Test on macOS (primary target platform)
+- **Minimal dependencies** — prefer stdlib; no new deps without discussion
+- **No secrets** — no hardcoded IPs, credentials, or personal info
+- **Cross-platform** — use `internal/platform/` build tags for OS-specific code; never call `pgrep`/`wmic`/`networksetup` directly from shared code
+- **Windows compatibility** — always set `USERPROFILE` in tests; skip Unix permission checks with `runtime.GOOS != "windows"`
+- **Error propagation** — never silently swallow errors; return them or log with `⚠` prefix
+- **Tests** — new features need tests; bug fixes need regression tests
 
 ## Pull Requests
 
 1. Fork the repo
 2. Create a feature branch
-3. Make your changes
-4. Ensure `make build` and `go vet ./...` pass
-5. Submit a PR with a clear description
+3. Make your changes with tests
+4. Run the full check suite above
+5. Submit a PR with a clear description of what and why

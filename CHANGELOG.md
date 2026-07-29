@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-07-29
+
+### Added
+- **`agent-proxy stats`**: traffic statistics from Squid logs — top domains by bandwidth, request counts, Chinese traffic percentage
+- **`agent-proxy doctor` no_proxy audit**: analyzes recent Squid logs to detect Chinese domains routing through proxy that should be in `no_proxy`
+- **PAC hot-reload**: `serve-pac` watches `config.yaml` mtime and regenerates PAC file automatically — no `off/on` needed after config changes
+- **Multi-ECS failover**: `fallback_host` / `fallback_ssh_key` / `fallback_ssh_user` config; tunnel auto-switches on primary failure
+- **Homebrew**: GoReleaser publishes formula to `Formula/` in this repo — `brew tap chiga0/agent-proxy && brew install agent-proxy`
+- **Release signing**: cosign keyless OIDC signs `checksums.txt` on every release
+- **Docker integration tests**: CI runs real Squid container validating deny-first ACL (CONNECT port 22 denied, metadata denied, etc.)
+- **Test coverage**: +942 lines of tests — PAC state machine (14 tests), tunnel lifecycle (10 tests), log parser (22 tests), platform helpers (14 tests)
+
+### Changed
+- **README rewritten**: architecture diagram, updated commands table, troubleshooting table, upgrade guide, collapsible install methods
+- **Default `no_proxy`**: added `.aliyun-inc.com`, `.aliyunportal.com`
+
+### Fixed
+- **Bandwidth waste**: `.aliyuncs.com` was missing from `no_proxy`, causing Alibaba Cloud SDK traffic (DataWorks logs, MaaS, RUM) to route through Singapore proxy — ~8 Mbps wasted, now ~0.7 Mbps
+- **Squid log parser**: corrected field order (`status/code bytes method url`, not `status/bytes method url`)
+- **Windows CI**: `USERPROFILE` env in tests, permission check skip, path normalization
+
 ## [0.6.0] - 2026-07-28
 
 ### Security (P2 hardening)
