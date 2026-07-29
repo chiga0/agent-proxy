@@ -226,6 +226,7 @@ func TestValidate(t *testing.T) {
 	cfg.Proxy.Host = "1.2.3.4"
 	cfg.Proxy.Tunnel = true
 	cfg.Proxy.SSHKey = ""
+	t.Setenv("SSH_AUTH_SOCK", "") // ensure ssh-agent doesn't bypass the check
 	if err := cfg.Validate(); err == nil {
 		t.Error("tunnel without ssh_key should fail")
 	}

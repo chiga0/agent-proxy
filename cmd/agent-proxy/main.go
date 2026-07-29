@@ -87,6 +87,7 @@ Quick start:
 		cmdSetup(), cmdIP(), cmdBench(), cmdTrace(),
 		cmdVersion(), cmdServePAC(), cmdUpdate(), cmdTrustHost(),
 		cmdStats(),
+		cmdConfigValidate(),
 	)
 
 	if err := root.Execute(); err != nil {
@@ -133,7 +134,8 @@ func cmdStatus() *cobra.Command {
 }
 
 func cmdDoctor() *cobra.Command {
-	return &cobra.Command{
+	var fix bool
+	cmd := &cobra.Command{
 		Use:   "doctor",
 		Short: "Run full diagnostics with actionable suggestions",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -223,10 +225,24 @@ func cmdDoctor() *cobra.Command {
 					if len(flagged) > 0 {
 						fmt.Printf("⚠ %d Chinese domain(s) routing through proxy:\n", len(flagged))
 						for _, d := range flagged {
-							fmt.Printf("    • %s → add to no_proxy\n", d)
+							fmt.Printf("    • %s\n", d)
 						}
-						fmt.Println("    Fix: edit config.yaml → no_proxy → add these domains → agent-proxy on")
-						hasFailure = true
+						if fix {
+							// Auto-add flagged domains to no_proxy
+							for _, d := range flagged {
+								cfg.NoProxy = append(cfg.NoProxy, d)
+							}
+							if err := cfg.Save(); err != nil {
+								fmt.Printf("    ✗ Failed to save config: %v\n", err)
+							} else {
+								cfg.WriteEnvFile()
+								fmt.Printf("    ✓ Added %d domain(s) to no_proxy and regenerated env.sh\n", len(flagged))
+							}
+						} else {
+							fmt.Println("    Fix: agent-proxy doctor --fix   (auto-add to no_proxy)")
+							fmt.Println("    Or:  edit config.yaml → no_proxy → add these domains → agent-proxy on")
+							hasFailure = true
+						}
 					} else {
 						fmt.Println("✓")
 					}
@@ -242,6 +258,8 @@ func cmdDoctor() *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().BoolVar(&fix, "fix", false, "Auto-fix no_proxy issues by adding flagged domains to config")
+	return cmd
 }
 
 func printFix(r proxy.CheckResult) {
@@ -897,6 +915,32 @@ func cmdStats() *cobra.Command {
 	}
 	cmd.Flags().IntVarP(&lines, "lines", "n", 1000, "Number of log lines to analyze")
 	return cmd
+}
+
+func cmdConfigValidate() *cobra.Command {
+	return &cobra.Command{
+		Use:   "config-validate",
+		Short: "Validate config file without starting proxy",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := config.Load()
+			if err != nil {
+				return fmt.Errorf("config load: %w", err)
+			}
+			if err := cfg.Validate(); err != nil {
+				return fmt.Errorf("config validation: %w", err)
+			}
+			fmt.Printf("✓ Config valid: %s\n", config.ConfigPath())
+			fmt.Printf("  Host: %s:%d\n", cfg.Proxy.Host, cfg.Proxy.Port)
+			fmt.Printf("  Tunnel: %v\n", cfg.Proxy.Tunnel)
+			fmt.Printf("  Presets: %v\n", cfg.Presets)
+			fmt.Printf("  Whitelist: %d domains\n", len(cfg.EffectiveWhitelist()))
+			fmt.Printf("  No-proxy: %d entries\n", len(cfg.NoProxy))
+			if cfg.Proxy.HasFallback() {
+				fmt.Printf("  Fallback: %s\n", cfg.Proxy.FallbackHost)
+			}
+			return nil
+		},
+	}
 }
 
 func cmdServePAC() *cobra.Command {

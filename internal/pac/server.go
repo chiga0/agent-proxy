@@ -193,7 +193,7 @@ func watchConfigAndReloadPAC() {
 		}
 		lastMod = info.ModTime()
 
-		// Config changed — reload and regenerate PAC
+		// Config changed — reload and regenerate PAC + env.sh
 		cfg, err := config.Load()
 		if err != nil {
 			continue
@@ -201,5 +201,6 @@ func watchConfigAndReloadPAC() {
 		if err := Write(cfg); err != nil {
 			continue
 		}
+		cfg.WriteEnvFile() // best-effort env.sh hot-reload
 	}
 }

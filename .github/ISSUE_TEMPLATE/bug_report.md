@@ -27,4 +27,5 @@ labels: bug
 # Paste output of:
 agent-proxy doctor
 agent-proxy status
+agent-proxy config-validate
 ```

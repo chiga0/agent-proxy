@@ -328,8 +328,8 @@ func TestWriteEnvFile(t *testing.T) {
 		NoProxy: []string{"localhost"},
 	}
 
-	if err := writeEnvFile(cfg); err != nil {
-		t.Fatalf("writeEnvFile: %v", err)
+	if err := cfg.WriteEnvFile(); err != nil {
+		t.Fatalf("WriteEnvFile: %v", err)
 	}
 
 	envPath := config.EnvPath()
