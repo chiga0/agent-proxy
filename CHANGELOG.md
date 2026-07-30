@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.4] - 2026-07-30
+
+### Added
+- **`agent-proxy autostart install|uninstall|status`**: register LaunchAgent (macOS) / systemd (Linux) / Task Scheduler (Windows) so SSH tunnel and PAC server survive reboots and crashes
+- **`launchctl load` on install**: macOS autostart now loads agents immediately (previously only wrote plist files)
+- **`serve-pac` auto-sets system PAC**: PAC server configures system proxy on startup, so browsers work after reboot without manual `agent-proxy on`
+- **Domain rule subscriptions**: health monitor watches proxy connectivity and auto-recovers on failure
+- **`agent-proxy doctor` autostart check**: warns if auto-start is not installed
+- **Init wizard auto-installs autostart**: new users get watchdog protection by default
+
+### Fixed
+- **15 audit fixes**: health monitor, domain rules, config validation, dashboard rendering
+- **Fallback tunnel management**: second-pass audit cleanup for multi-ECS failover
+- **Doctor forwarding check**: switched from `ipinfo.io/json` to `/ip` (faster, less timeout-prone), timeout 15s → 20s
+- **Windows CI**: set `USERPROFILE` in tests, skip Unix permission checks on NTFS
+
+## [0.7.3] - 2026-07-30
+
+### Added
+- **`agent-proxy log [tunnel|pac]`**: view SSH tunnel and PAC server logs with `-n`/`--lines` and `-f`/`--follow`
+- **Windows env files**: `on` generates `env.bat` (cmd) and `env.ps1` (PowerShell) alongside `env.sh`; `off` cleans up all three
+- **Platform-aware `on` output**: shows platform-appropriate activation instructions
+
+### Changed
+- **Test coverage boost**: pac 33% → 84%, proxy 11% → 56%, platform 13% → 43%, config 68% → 72%
+- **PR template**: added docs-site checklist item
+
+## [0.7.2] - 2026-07-30
+
+### Changed
+- **Removed all legacy compat code**: whitelist migration, Basic auth stripping, no_proxy auto-merge on load, pac-state legacy format, Squid passwd cleanup, known_hosts migration — `Load()` is now pure read → parse → validate
+- **Config is single source of truth**: no_proxy defaults only written on first-run creation; user deletions are permanent
+- **English UI**: init wizard and trust-host prompts converted from Chinese to English
+- **Removed internal design docs**: `docs/socks5-design.md` and `docs/network-optimization.md` (outdated drafts)
+- **Docs-site cleanup**: 20 stale references fixed across 8 files (Chinese UI samples, removed features, tutorial renumbering)
+- **Branch cleanup**: 7 stale branches deleted (local + remote)
+
 ## [0.7.1] - 2026-07-29
 
 ### Added
