@@ -1193,11 +1193,10 @@ agent-proxy<span class="w"> </span>on
 <p><strong>Presets</strong> are curated domain groups maintained by agent-proxy (<code>ai</code>, <code>dev</code>, <code>search</code>, <code>cloud</code>, <code>media</code>). They're enabled/disabled as groups via <code>agent-proxy preset enable/disable</code>.</p>
 </li>
 <li>
-<p><strong>Custom domains</strong> (formerly <code>whitelist</code>) are individual domains you add via <code>agent-proxy whitelist add</code>. They're always active as long as they're in the list.</p>
+<p><strong>Custom domains</strong> are individual domains you add via <code>agent-proxy whitelist add</code>. They're always active as long as they're in the list.</p>
 </li>
 </ul>
 <p>The effective whitelist is the union of all enabled preset domains + all custom domains.</p>
-<p>Old configs with a flat <code>whitelist</code> array are automatically migrated to presets + custom domains on load.</p>
 <hr />
 <h2 id="operations">Operations<a class="headerlink" href="#operations" title="Permanent link">&para;</a></h2>
 <h3 id="how-do-i-completely-uninstall-agent-proxy">How do I completely uninstall agent-proxy?<a class="headerlink" href="#how-do-i-completely-uninstall-agent-proxy" title="Permanent link">&para;</a></h3>

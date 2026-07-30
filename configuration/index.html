@@ -565,17 +565,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#config-migration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Config Migration
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#validation" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -945,17 +934,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#config-migration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Config Migration
-      
-    </span>
-  </a>
   
 </li>
       
@@ -1728,16 +1706,6 @@
 <span class="w">  </span><span class="nt">ssh_key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~/.ssh/id_ed25519</span>
 </code></pre></div>
 <p>Useful when port 18443 is already in use by another service. The PAC file and env.sh will point to <code>127.0.0.1:28443</code>.</p>
-<h2 id="config-migration">Config Migration<a class="headerlink" href="#config-migration" title="Permanent link">&para;</a></h2>
-<p>agent-proxy automatically handles two legacy migrations on load:</p>
-<ol>
-<li>
-<p><strong><code>whitelist</code> → <code>custom_domains</code> + presets:</strong> Old configs with a flat <code>whitelist</code> array are migrated to the preset system. Domains that match a preset are absorbed; the rest become <code>custom_domains</code>.</p>
-</li>
-<li>
-<p><strong>Basic auth removal:</strong> Old configs with <code>proxy.user</code> and <code>proxy.password</code> fields (removed in v0.6.0) are automatically stripped and saved.</p>
-</li>
-</ol>
 <h2 id="validation">Validation<a class="headerlink" href="#validation" title="Permanent link">&para;</a></h2>
 <p>Validate your config without making changes:</p>
 <div class="highlight"><pre><span></span><code>agent-proxy<span class="w"> </span>config-validate

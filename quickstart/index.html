@@ -536,23 +536,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Upgrading">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#upgrading-from-v060" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Upgrading from &lt; v0.6.0
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
@@ -1008,23 +991,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Upgrading">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#upgrading-from-v060" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Upgrading from &lt; v0.6.0
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
@@ -1152,13 +1118,13 @@ git<span class="w"> </span>clone<span class="w"> </span>https://github.com/chiga
 <p>The interactive wizard walks you through everything. Here's what each step does and what you'll see:</p>
 <h3 id="2a-server-connection">2a. Server connection<a class="headerlink" href="#2a-server-connection" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>  ┌─────────────────────────────────┐
-  │   agent-proxy 首次配置向导       │
+  │   agent-proxy setup wizard      │
   └─────────────────────────────────┘
 
-服务器 IP: 1.2.3.4
-SSH 用户 [root]:
-SSH 密钥路径 [~/.ssh/id_rsa]: ~/.ssh/id_ed25519
-代理端口 [18443]:
+Server IP: 1.2.3.4
+SSH user [root]:
+SSH key path [~/.ssh/id_rsa]: ~/.ssh/id_ed25519
+Proxy port [18443]:
 </code></pre></div>
 <ul>
 <li><strong>Server IP</strong>: Your ECS public IP address (no <code>http://</code> prefix).</li>
@@ -1167,8 +1133,8 @@ SSH 密钥路径 [~/.ssh/id_rsa]: ~/.ssh/id_ed25519
 <li><strong>Proxy port</strong>: The port Squid will listen on. Default <code>18443</code> is fine for most setups.</li>
 </ul>
 <h3 id="2b-ssh-tunnel-choice">2b. SSH tunnel choice<a class="headerlink" href="#2b-ssh-tunnel-choice" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>─── SSH 隧道 ───
-  启用 SSH 加密隧道? (中国用户推荐) [Y/n]:
+<div class="highlight"><pre><span></span><code>─── SSH Tunnel ───
+  Enable SSH encrypted tunnel? (recommended for China users) [Y/n]:
 </code></pre></div>
 <p>Press Enter to accept the default (yes). This is <strong>strongly recommended</strong> for users in China:</p>
 <ul>
@@ -1178,28 +1144,27 @@ SSH 密钥路径 [~/.ssh/id_rsa]: ~/.ssh/id_ed25519
 </ul>
 <p>If you choose "n" (direct mode), Squid listens on all interfaces and is protected only by an IP whitelist. You'll need to ensure your ECS security group restricts the Squid port.</p>
 <h3 id="2c-host-key-verification">2c. Host key verification<a class="headerlink" href="#2c-host-key-verification" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>─── 主机验证 ───
-  → 获取 1.2.3.4 主机密钥... ✓
+<div class="highlight"><pre><span></span><code>─── Host Verification ───
+  → Fetching host key from 1.2.3.4... ✓
 
-  主机密钥指纹:
+  Host key fingerprint:
     256 SHA256:AbCdEf123456789... (ED25519)
 
-  请核对以上 SHA256 指纹与 ECS 控制台一致。
-  输入 yes 确认: yes
-  ✓ 已保存到 ~/.config/agent-proxy/known_hosts
+  Verify the SHA256 fingerprint above matches your ECS console.
+  Type yes to confirm: yes
+  ✓ Saved to ~/.config/agent-proxy/known_hosts
 </code></pre></div>
 <p>The wizard fetches your ECS host key and displays its SHA256 fingerprint. <strong>Verify this matches your ECS console</strong> before typing <code>yes</code>. This prevents man-in-the-middle attacks on your SSH connection.</p>
 <p>The key is stored in a project-specific <code>known_hosts</code> file (<code>~/.config/agent-proxy/known_hosts</code>) with <code>StrictHostKeyChecking=yes</code> — subsequent connections will reject any key mismatch.</p>
 <h3 id="2d-ssh-connectivity-squid-deployment">2d. SSH connectivity + Squid deployment<a class="headerlink" href="#2d-ssh-connectivity-squid-deployment" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>─── 连接检查 ───
-  → SSH 连接... ✓
+<div class="highlight"><pre><span></span><code>─── Connectivity ───
+  → SSH connection... ✓
 
-─── 服务器部署 ───
+─── Server Deployment ───
   → Connectivity... ✓
   → Install Squid... ✓
   → System tuning... ✓
   → Write Squid config... ✓
-  → Cleanup legacy... ✓
 </code></pre></div>
 <p>The wizard SSHes into your ECS and:</p>
 <ol>
@@ -1207,15 +1172,14 @@ SSH 密钥路径 [~/.ssh/id_rsa]: ~/.ssh/id_ed25519
 <li>Enables TCP fast open for better performance</li>
 <li>Writes a deny-first Squid config (loopback-only in tunnel mode)</li>
 <li>Validates the config syntax, restarts Squid, and verifies it's running</li>
-<li>Cleans up any legacy Basic auth files from older versions</li>
 </ol>
 <h3 id="2e-tunnel-local-activation">2e. Tunnel + local activation<a class="headerlink" href="#2e-tunnel-local-activation" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>─── SSH 隧道 ───
-  → 建立 SSH 隧道... ✓
+<div class="highlight"><pre><span></span><code>─── SSH Tunnel ───
+  → Establishing SSH tunnel... ✓
 
-  ✓ 配置已保存: ~/.config/agent-proxy/config.yaml
+  ✓ Config saved: ~/.config/agent-proxy/config.yaml
 
-─── 本地启用 ───
+─── Enable Proxy ───
   → SSH tunnel... ✓
   → PAC server... ✓
 
@@ -1227,12 +1191,12 @@ SSH 密钥路径 [~/.ssh/id_rsa]: ~/.ssh/id_ed25519
   Whitelist:             61 domains (presets: [ai dev search cloud media])
 </code></pre></div>
 <h3 id="2f-connectivity-verification">2f. Connectivity verification<a class="headerlink" href="#2f-connectivity-verification" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>─── 连通性验证 ───
+<div class="highlight"><pre><span></span><code>─── Connectivity Check ───
   → google.com           ✓ 200 0.35s
   → github.com           ✓ 200 0.28s
   → youtube.com          ✓ 200 0.41s
 
-  🎉 配置完成！
+  🎉 Setup complete!
 </code></pre></div>
 <h2 id="step-3-set-up-your-shell-profile">Step 3: Set up your shell profile<a class="headerlink" href="#step-3-set-up-your-shell-profile" title="Permanent link">&para;</a></h2>
 <p>Add this line to <code>~/.zshrc</code> (or <code>~/.bashrc</code>):</p>
@@ -1341,13 +1305,11 @@ curl<span class="w"> </span>-s<span class="w"> </span>https://www.baidu.com<span
 <h2 id="upgrading">Upgrading<a class="headerlink" href="#upgrading" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><span class="c1"># Self-update with SHA-256 verification</span>
 agent-proxy<span class="w"> </span>update
-</code></pre></div>
-<h3 id="upgrading-from-v060">Upgrading from &lt; v0.6.0<a class="headerlink" href="#upgrading-from-v060" title="Permanent link">&para;</a></h3>
-<p>Two extra steps are needed for older installations:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Migrate SSH host key to project-specific known_hosts</span>
+
+<span class="c1"># Verify and trust the ECS SSH host key (after key rotation)</span>
 agent-proxy<span class="w"> </span>trust-host
 
-<span class="c1"># Rewrite ECS Squid config for loopback-only binding</span>
+<span class="c1"># Rewrite ECS Squid config (e.g., switching to tunnel mode)</span>
 agent-proxy<span class="w"> </span>setup
 </code></pre></div>
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
@@ -1355,7 +1317,7 @@ agent-proxy<span class="w"> </span>setup
 <li>Browse the <a href="../commands/">Commands</a> reference for all available commands</li>
 <li>Customize your <a href="../configuration/">Configuration</a> (add domains, adjust no_proxy)</li>
 <li>Explore the <a href="../api/#dashboard">Web Dashboard</a> at <code>http://127.0.0.1:18080/dashboard</code></li>
-<li>Set up <a href="../tutorials/#tutorial-4-monitoring-with-prometheus-grafana">Monitoring</a> with Prometheus</li>
+<li>Set up <a href="../tutorials/#tutorial-3-monitoring-with-prometheus-grafana">Monitoring</a> with Prometheus</li>
 </ul>
 
 

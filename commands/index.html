@@ -1401,7 +1401,6 @@ Proxy:      1.2.3.4:18443 (SSH tunnel enabled)
 <li>Atomic replace via <code>mv</code></li>
 <li>Restarts Squid and health-checks</li>
 <li><strong>Rolls back automatically</strong> if restart fails</li>
-<li><strong>Cleanup legacy</strong> — removes old Basic auth password files</li>
 </ol>
 <p><strong>Sample output:</strong></p>
 <div class="highlight"><pre><span></span><code>Deploying to 1.2.3.4:18443...
@@ -1410,7 +1409,6 @@ Proxy:      1.2.3.4:18443 (SSH tunnel enabled)
   → Install Squid... ✓
   → System tuning... ✓
   → Write Squid config... ✓
-  → Cleanup legacy... ✓
 
 ✓ Setup complete. Next: agent-proxy on
 </code></pre></div>
@@ -1421,22 +1419,21 @@ Proxy:      1.2.3.4:18443 (SSH tunnel enabled)
 </code></pre></div>
 <p><strong>When to use:</strong></p>
 <ul>
-<li>After upgrading from a version that used <code>~/.ssh/known_hosts</code></li>
 <li>After ECS host key rotation (e.g., server rebuild)</li>
 <li>If you see <code>host not in project known_hosts</code> errors</li>
 </ul>
 <p><strong>Sample output:</strong></p>
-<div class="highlight"><pre><span></span><code>  → 获取 1.2.3.4 主机密钥... ✓
+<div class="highlight"><pre><span></span><code>  → Fetching host key from 1.2.3.4... ✓
 
-  主机密钥指纹:
+  Host key fingerprint:
     256 SHA256:xR3jKq9mN2vB8wY5tL7pA1cD4fG6hJ0kM3nQ9sU2wX8 (ED25519)
     3072 SHA256:aB1cD2eF3gH4iJ5kL6mN7oP8qR9sT0uV1wX2yZ3aB4c (RSA)
 
-  请核对以上 SHA256 指纹与 ECS 控制台一致。
-  输入 yes 确认: yes
-  ✓ 已保存到 /Users/you/.config/agent-proxy/known_hosts
+  Verify the SHA256 fingerprint above matches your ECS console.
+  Type yes to confirm: yes
+  ✓ Saved to /Users/you/.config/agent-proxy/known_hosts
 </code></pre></div>
-<p>If the host key is already in the project <code>known_hosts</code>, it reports success immediately. If found in the system <code>~/.ssh/known_hosts</code>, it offers to migrate the entry.</p>
+<p>If the host key is already in the project <code>known_hosts</code>, it reports success immediately.</p>
 <hr />
 <h3 id="ip">ip<a class="headerlink" href="#ip" title="Permanent link">&para;</a></h3>
 <p>Refresh the Squid IP whitelist with your current public IP. <strong>Only relevant in direct mode</strong> (when <code>proxy.tunnel: false</code>).</p>
