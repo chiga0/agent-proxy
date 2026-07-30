@@ -911,6 +911,12 @@ func cmdServePAC() *cobra.Command {
 		Hidden: true,
 		Short:  "Run PAC HTTP server (used internally)",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Ensure system PAC is enabled so browsers use this server.
+			// This is critical when started by autostart (LaunchAgent/systemd)
+			// because the system PAC preference doesn't survive reboots on all platforms.
+			if cfg, err := config.LoadOrCreate(); err == nil {
+				proxy.EnsureSystemPAC(cfg)
+			}
 			return pac.ServeForeground()
 		},
 	}

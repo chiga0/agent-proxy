@@ -393,3 +393,16 @@ func killIfPACServer(pid int, patterns ...string) {
 		}
 	}
 }
+
+// EnsureSystemPAC sets the system auto-proxy to agent-proxy's PAC URL.
+// Used by serve-pac (autostart) to ensure browsers use the proxy after reboot.
+func EnsureSystemPAC(cfg *config.Config) {
+	service, err := platform.DetectNetworkService()
+	if err != nil {
+		return
+	}
+	if _, _, err := platform.GetAutoProxy(service); err != nil && errors.Is(err, platform.ErrPACNotSupported) {
+		return
+	}
+	platform.SetAutoProxy(service, agentProxyPACURL())
+}
