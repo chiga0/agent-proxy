@@ -20,5 +20,5 @@
 
 - [ ] Code follows existing style
 - [ ] No hardcoded credentials or personal info
-- [ ] README updated if needed
+- [ ] README / docs-site updated if user-facing behavior changed
 - [ ] CHANGELOG.md updated

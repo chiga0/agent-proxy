@@ -36,3 +36,4 @@ config.yml
 env.sh
 proxy.pac
 *.pid
+agent-proxy

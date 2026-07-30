@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -38,7 +39,7 @@ Quick start:
   agent-proxy status        Check health
   agent-proxy doctor        Full diagnostics`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			skip := map[string]bool{"version": true, "init": true, "serve-pac": true}
+			skip := map[string]bool{"version": true, "init": true, "serve-pac": true, "log": true}
 			if skip[cmd.Name()] {
 				return nil
 			}
@@ -85,7 +86,7 @@ Quick start:
 		cmdInit(), cmdWhitelist(), cmdPreset(),
 		cmdSetup(), cmdIP(), cmdBench(), cmdTrace(),
 		cmdVersion(), cmdServePAC(), cmdUpdate(), cmdTrustHost(),
-		cmdStats(),
+		cmdStats(), cmdLog(),
 		cmdConfigValidate(),
 	)
 
@@ -885,6 +886,94 @@ func cmdStats() *cobra.Command {
 		},
 	}
 	cmd.Flags().IntVarP(&lines, "lines", "n", 1000, "Number of log lines to analyze")
+	return cmd
+}
+
+func cmdLog() *cobra.Command {
+	var lines int
+	var follow bool
+
+	logDir := filepath.Join(config.DataDir(), "logs")
+	tunnelLog := filepath.Join(logDir, "ssh-tunnel.log")
+	pacLog := filepath.Join(logDir, "pac-server.log")
+
+	showLog := func(name, path string, n int) error {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			if os.IsNotExist(err) {
+				fmt.Printf("No %s log found at %s\n", name, path)
+				fmt.Println("Logs are created when autostart is installed: agent-proxy on")
+				return nil
+			}
+			return fmt.Errorf("read %s log: %w", name, err)
+		}
+		fmt.Printf("=== %s (%s) ===\n", name, path)
+		allLines := strings.Split(strings.TrimRight(string(data), "\n"), "\n")
+		start := 0
+		if len(allLines) > n {
+			start = len(allLines) - n
+		}
+		for _, line := range allLines[start:] {
+			fmt.Println(line)
+		}
+		return nil
+	}
+
+	cmd := &cobra.Command{
+		Use:   "log [tunnel|pac]",
+		Short: "Show tunnel and PAC server logs",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			target := ""
+			if len(args) > 0 {
+				target = args[0]
+			}
+
+			if follow {
+				var files []string
+				switch target {
+				case "tunnel":
+					files = []string{tunnelLog}
+				case "pac":
+					files = []string{pacLog}
+				case "":
+					files = []string{tunnelLog, pacLog}
+				default:
+					return fmt.Errorf("unknown log target %q — use 'tunnel' or 'pac'", target)
+				}
+				for _, f := range files {
+					if _, err := os.Stat(f); os.IsNotExist(err) {
+						fmt.Printf("No log found at %s\n", f)
+						fmt.Println("Logs are created when autostart is installed: agent-proxy on")
+						return nil
+					}
+				}
+				tailArgs := []string{"-n", fmt.Sprintf("%d", lines), "-f"}
+				tailArgs = append(tailArgs, files...)
+				c := exec.Command("tail", tailArgs...)
+				c.Stdout = os.Stdout
+				c.Stderr = os.Stderr
+				return c.Run()
+			}
+
+			switch target {
+			case "tunnel":
+				return showLog("SSH Tunnel", tunnelLog, lines)
+			case "pac":
+				return showLog("PAC Server", pacLog, lines)
+			case "":
+				if err := showLog("SSH Tunnel", tunnelLog, lines); err != nil {
+					return err
+				}
+				fmt.Println()
+				return showLog("PAC Server", pacLog, lines)
+			default:
+				return fmt.Errorf("unknown log target %q — use 'tunnel' or 'pac'", target)
+			}
+		},
+	}
+	cmd.Flags().IntVarP(&lines, "lines", "n", 50, "Number of lines to show")
+	cmd.Flags().BoolVarP(&follow, "follow", "f", false, "Follow log output (tail -f)")
 	return cmd
 }
 
