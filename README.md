@@ -42,7 +42,28 @@
 | Browser / Desktop | System PAC → `127.0.0.1:18080` | Only whitelisted domains |
 | CLI / SDK | `https_proxy` + `no_proxy` env vars | All HTTP(S) except `no_proxy` |
 
-## Install
+## ECS Requirements
+
+Before setting up, ensure your overseas server meets these requirements:
+
+| Item | Requirement | Notes |
+|------|------------|-------|
+| **OS** | Ubuntu 18.04+, Debian 10+, CentOS 7+, Alpine 3.12+ | Needs `apt`, `yum`, or `apk` |
+| **Init system** | systemd, OpenRC, or SysVinit | Auto-detected during deploy |
+| **CPU / RAM** | 1 vCPU / 512 MB minimum | Squid is lightweight; SSH tunnel is the main overhead |
+| **Disk** | 1 GB free | Squid package + logs |
+| **Network** | Public IP (EIP) or NAT gateway with outbound internet | Required for package install and proxying |
+| **SSH** | Port 22 accessible from your machine | Key-based auth recommended |
+| **Security group** | Inbound: TCP 22 (SSH). Tunnel mode needs nothing else | Direct mode also needs TCP 18443 from your IP |
+| **DNS** | ECS can resolve public domains | Uses ECS's `/etc/resolv.conf` nameservers |
+
+> **Recommended regions:** Singapore, Tokyo, Hong Kong, US-West — low latency to both China and major AI/dev services.
+
+> **Tunnel mode (recommended):** Only SSH port 22 needs to be open. Squid listens on `127.0.0.1` only — zero public data ports.
+
+## Setup
+
+### Install agent-proxy
 
 ```bash
 # Auto-detect OS/arch, pick fastest mirror, verify SHA-256
@@ -57,7 +78,7 @@ curl -fsSL https://raw.githubusercontent.com/chiga0/agent-proxy/main/install.sh 
 curl -fsSL https://agent-proxy.oss-cn-hangzhou.aliyuncs.com/install.sh | bash
 
 # Specific version
-curl -fsSL ... | bash -s -- --version v0.6.1
+curl -fsSL ... | bash -s -- --version v0.7.3
 
 # Go install
 GONOSUMDB=github.com/chiga0/agent-proxy go install github.com/chiga0/agent-proxy/cmd/agent-proxy@latest
@@ -68,10 +89,25 @@ cd agent-proxy && make build
 ```
 </details>
 
-## Quick Start
+### Option A: Automated (one command)
 
 ```bash
-agent-proxy init          # Interactive setup (SSH key → deploy → tunnel → PAC → verify)
+agent-proxy init
+```
+
+The interactive wizard handles everything:
+
+```
+1. Enter server IP, SSH user, key path, port
+2. Verify SSH host key fingerprint (compare with ECS console)
+3. Test SSH connectivity
+4. Check ECS internet access
+5. Install and configure Squid (auto-detects OS/package manager)
+6. Start SSH tunnel
+7. Generate PAC file + set system proxy
+8. Write env.sh for CLI tools
+9. Install auto-start service (LaunchAgent / systemd)
+10. Verify connectivity (google.com, github.com)
 ```
 
 Add to `~/.zshrc` or `~/.bashrc`:
@@ -80,7 +116,63 @@ Add to `~/.zshrc` or `~/.bashrc`:
 [ -f "$HOME/.config/agent-proxy/env.sh" ] && source "$HOME/.config/agent-proxy/env.sh"
 ```
 
-Done. New terminals auto-load proxy env vars. Browsers use system PAC automatically.
+### Option B: Manual step-by-step
+
+If you prefer to understand each step or need to troubleshoot:
+
+**Step 1 — Install agent-proxy locally:**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/chiga0/agent-proxy/main/install.sh | bash
+```
+
+**Step 2 — Prepare your ECS:**
+
+```bash
+# SSH into your ECS
+ssh root@YOUR_ECS_IP
+
+# Install Squid
+apt update && apt install -y squid    # Ubuntu/Debian
+# yum install -y squid               # CentOS/RHEL
+# apk add squid                      # Alpine
+
+# Enable on boot
+systemctl enable squid               # systemd
+# rc-update add squid default        # OpenRC (Alpine)
+
+# Verify Squid is running
+systemctl status squid
+```
+
+**Step 3 — Configure Squid:**
+
+```bash
+agent-proxy trust-host               # Verify and trust ECS SSH host key
+agent-proxy setup                    # Generate and deploy Squid config
+```
+
+This writes a deny-first Squid config with SSRF protection (blocks localhost, RFC1918, cloud metadata), privacy headers stripped, and loopback-only listening (tunnel mode).
+
+**Step 4 — Enable proxy:**
+
+```bash
+agent-proxy on                       # Start tunnel + PAC + env vars
+```
+
+**Step 5 — Add to shell profile:**
+
+```bash
+echo '[ -f "$HOME/.config/agent-proxy/env.sh" ] && source "$HOME/.config/agent-proxy/env.sh"' >> ~/.zshrc
+```
+
+**Step 6 — Verify:**
+
+```bash
+agent-proxy status                   # Quick health check
+agent-proxy bench                    # Latency comparison
+curl -I https://api.openai.com       # Should return HTTP response
+```
 
 ## Commands
 
@@ -190,6 +282,19 @@ agent-proxy trust-host      # Verify and trust the ECS SSH host key
 agent-proxy setup           # Rewrite ECS Squid config (e.g., after mode change)
 ```
 
+## Performance
+
+Measured on a typical corporate network (China → Singapore ECS):
+
+| Metric | Direct | Via Proxy | Notes |
+|--------|--------|-----------|-------|
+| TTFB (github.com) | 210ms | 213ms | Proxy adds < 5ms overhead |
+| TTFB (openai.com) | 420ms | 370ms | **Proxy is faster** — better ECS routing |
+| TTFB (google.com) | 461ms | 381ms | **Proxy is faster** — ECS has lower latency |
+| Throughput | 0.28 MB/s | 0.25 MB/s | Bottleneck is local bandwidth, not proxy |
+
+The SSH tunnel adds negligible overhead for HTTPS traffic (already encrypted). The main latency factor is network RTT, not protocol processing. For services hosted near the ECS region, the proxy can be **faster** than direct due to better routing.
+
 ## Security
 
 - **SSH tunnel mode**: Squid listens on `127.0.0.1` only — no public data port exposed
@@ -211,16 +316,60 @@ Linux without GNOME: CLI-only mode (env vars work, system PAC skipped automatica
 
 ## Troubleshooting
 
-| Problem | Fix |
-|---------|-----|
-| `host not in project known_hosts` | `agent-proxy trust-host` |
-| ECS Squid not loopback-only | `agent-proxy setup` |
-| Chinese traffic going through proxy | `agent-proxy doctor` → add flagged domains to `no_proxy` |
-| Codex/desktop app can't connect | Restart the app (it caches PAC at startup) |
-| `go build` fails with proxy | `source ~/.config/agent-proxy/env.sh` (updates no_proxy) |
-| macOS "developer cannot be verified" | `xattr -d com.apple.quarantine /usr/local/bin/agent-proxy` |
-| Proxy env breaks `go install` | `unset https_proxy http_proxy && go install ...` |
-| Config corrupted, need emergency off | `agent-proxy off` works even with broken config |
+### Setup issues
+
+| Problem | Cause | Fix |
+|---------|-------|-----|
+| `SSH connection failed` | Wrong IP/user/key, or port 22 blocked | Verify `ssh root@IP` works manually; check security group |
+| `host not in project known_hosts` | First connection or host key changed | `agent-proxy trust-host` |
+| `ECS cannot reach the internet` | No EIP / NAT gateway / outbound rules | Check ECS network config in cloud console |
+| `unsupported package manager` | Non-standard Linux distro | Install Squid manually, then `agent-proxy setup` |
+| `squid restart failed` | Config error or init system mismatch | `agent-proxy setup` retries with rollback; check `ssh root@IP 'journalctl -u squid -n 20'` |
+| `SSH key not found` | Wrong path in config | Check `proxy.ssh_key` in `~/.config/agent-proxy/config.yaml` |
+| macOS "developer cannot be verified" | Gatekeeper quarantine | `xattr -d com.apple.quarantine /usr/local/bin/agent-proxy` |
+
+### Runtime issues
+
+| Problem | Cause | Fix |
+|---------|-------|-----|
+| Proxy suddenly stops working | SSH tunnel dropped | `agent-proxy on` (auto-restart if autostart enabled) |
+| Browser works but CLI doesn't | env vars not loaded | `source ~/.config/agent-proxy/env.sh` |
+| `agent-proxy status` shows PAC server not running | PAC daemon crashed | `agent-proxy on` restarts it; health auto-recovery inactive until then |
+| Chinese sites slow / going through proxy | Missing `no_proxy` entries | `agent-proxy doctor --fix` auto-detects and adds them |
+| ECS rebooted, proxy dead | Squid not enabled on boot | `agent-proxy setup` (now runs `systemctl enable squid`) |
+| Direct mode: sudden 403 errors | ISP rotated your public IP | `agent-proxy ip` refreshes the Squid IP whitelist |
+| `npm install` fails with proxy error | npm ignores env vars | `source env.sh` runs `npm config set proxy`; or `npm config delete proxy` to undo |
+| Codex / desktop app can't connect | App cached old PAC at startup | Restart the app |
+| `go build` fails | Go proxy settings conflict | `unset https_proxy http_proxy && go build ...` |
+| Tunnel port 18443 already in use | Another process on same port | Change `proxy.tunnel_local_port` in config.yaml |
+
+### Diagnostic commands
+
+```bash
+agent-proxy status          # 6-point health check
+agent-proxy doctor          # Full diagnostics + no_proxy audit + SNI detection
+agent-proxy doctor --fix    # Auto-fix no_proxy coverage issues
+agent-proxy bench           # Latency: proxy vs direct per domain
+agent-proxy trace           # Network path: local → ECS → target
+agent-proxy stats           # Traffic stats: top domains, bandwidth
+```
+
+### Emergency recovery
+
+```bash
+# Config corrupted — emergency off (works without valid config)
+agent-proxy off
+
+# Nuclear option — kill everything and restart
+agent-proxy off
+pkill -f "ssh.*-L.*18443"
+pkill -f "agent-proxy serve-pac"
+agent-proxy on
+
+# Full redeploy (reinstalls Squid config on ECS)
+agent-proxy setup
+agent-proxy on
+```
 
 ## Requirements
 

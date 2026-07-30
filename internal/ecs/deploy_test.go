@@ -11,7 +11,7 @@ func TestGenerateSquidConfigTunnelMode(t *testing.T) {
 	cfg := &config.Config{
 		Proxy: config.ProxyConfig{Port: 18443, Tunnel: true},
 	}
-	conf := generateSquidConfig(cfg, "")
+	conf := generateSquidConfig(cfg, "", "8.8.8.8 8.8.4.4")
 
 	// Tunnel mode: loopback-only listen
 	if !strings.Contains(conf, "http_port 127.0.0.1:18443") {
@@ -73,7 +73,7 @@ func TestGenerateSquidConfigDirectMode(t *testing.T) {
 	cfg := &config.Config{
 		Proxy: config.ProxyConfig{Port: 18443, Tunnel: false},
 	}
-	conf := generateSquidConfig(cfg, "203.0.113.1")
+	conf := generateSquidConfig(cfg, "203.0.113.1", "8.8.8.8 8.8.4.4")
 
 	// Direct mode: listen on all interfaces
 	if !strings.Contains(conf, "http_port 18443\n") {
@@ -95,7 +95,7 @@ func TestGenerateSquidConfigNoTrustedIP(t *testing.T) {
 	cfg := &config.Config{
 		Proxy: config.ProxyConfig{Port: 18443},
 	}
-	conf := generateSquidConfig(cfg, "")
+	conf := generateSquidConfig(cfg, "", "8.8.8.8 8.8.4.4")
 
 	if !strings.Contains(conf, "acl trusted_ip src 127.0.0.1\n") {
 		t.Error("should trust 127.0.0.1 even without public IP")
@@ -106,7 +106,7 @@ func TestGenerateSquidConfigSafePorts(t *testing.T) {
 	cfg := &config.Config{
 		Proxy: config.ProxyConfig{Port: 18443},
 	}
-	conf := generateSquidConfig(cfg, "")
+	conf := generateSquidConfig(cfg, "", "8.8.8.8 8.8.4.4")
 
 	if !strings.Contains(conf, "acl Safe_ports port 80 443 8443") {
 		t.Error("should define Safe_ports")
@@ -120,7 +120,7 @@ func TestGenerateSquidConfigPrivacy(t *testing.T) {
 	cfg := &config.Config{
 		Proxy: config.ProxyConfig{Port: 18443},
 	}
-	conf := generateSquidConfig(cfg, "")
+	conf := generateSquidConfig(cfg, "", "8.8.8.8 8.8.4.4")
 
 	if !strings.Contains(conf, "forwarded_for off") {
 		t.Error("should disable forwarded_for")

@@ -21,6 +21,7 @@ func Deploy(cfg *config.Config) error {
 		fn   func() error
 	}{
 		{"Connectivity", func() error { return sshRun(cfg, "echo ok") }},
+		{"Internet access", func() error { return checkECSInternet(cfg) }},
 		{"Install Squid", func() error { return installSquid(cfg) }},
 		{"System tuning", func() error {
 			return sshRun(cfg, `grep -q tcp_fastopen /etc/sysctl.conf 2>/dev/null || echo "net.ipv4.tcp_fastopen = 3" >> /etc/sysctl.conf; sysctl -w net.ipv4.tcp_fastopen=3 >/dev/null 2>&1`)
@@ -56,7 +57,8 @@ func RefreshIP(cfg *config.Config) error {
 	}
 	fmt.Printf("  Public IP: %s\n", ip)
 
-	conf := generateSquidConfig(cfg, ip)
+	dnsServers := fetchECSDNS(cfg)
+	conf := generateSquidConfig(cfg, ip, dnsServers)
 	return deploySquidConfig(cfg, conf)
 }
 
@@ -66,16 +68,62 @@ func CheckSSH(cfg *config.Config) error {
 
 func installSquid(cfg *config.Config) error {
 	cmd := `if command -v apt >/dev/null 2>&1; then
-		apt update -qq && apt install -y -qq squid >/dev/null 2>&1
+		apt update -qq && apt install -y -qq squid
 	elif command -v yum >/dev/null 2>&1; then
-		yum install -y -q squid >/dev/null 2>&1
+		yum install -y -q squid
 	elif command -v apk >/dev/null 2>&1; then
-		apk add --quiet squid >/dev/null 2>&1
+		apk add --quiet squid
 	else
 		echo "ERROR: unsupported package manager (need apt, yum, or apk)" >&2
 		exit 1
 	fi`
-	return sshRun(cfg, cmd)
+	if err := sshRun(cfg, cmd); err != nil {
+		return err
+	}
+	// Enable squid to start on boot
+	enableCmd := `if command -v systemctl >/dev/null 2>&1; then
+		systemctl enable squid >/dev/null 2>&1
+	elif command -v rc-update >/dev/null 2>&1; then
+		rc-update add squid default >/dev/null 2>&1
+	elif command -v chkconfig >/dev/null 2>&1; then
+		chkconfig squid on >/dev/null 2>&1
+	fi`
+	return sshRun(cfg, enableCmd)
+}
+
+// checkECSInternet verifies the ECS can reach the internet (needed for package install).
+func checkECSInternet(cfg *config.Config) error {
+	cmd := `curl -s --max-time 5 -o /dev/null http://archive.ubuntu.com 2>/dev/null || wget -q --timeout=5 -O /dev/null http://archive.ubuntu.com 2>/dev/null || exit 1`
+	if err := sshRun(cfg, cmd); err != nil {
+		return fmt.Errorf("ECS cannot reach the internet — check EIP/NAT gateway/security group outbound rules")
+	}
+	return nil
+}
+
+// restartSquidCmd returns the appropriate restart command for the ECS's init system.
+func restartSquidCmd() string {
+	return `if command -v systemctl >/dev/null 2>&1; then
+		systemctl restart squid && sleep 1 && systemctl is-active squid
+	elif command -v rc-service >/dev/null 2>&1; then
+		rc-service squid restart && sleep 1 && rc-service squid status
+	elif command -v service >/dev/null 2>&1; then
+		service squid restart && sleep 1 && service squid status
+	else
+		echo "ERROR: no init system found (need systemctl, rc-service, or service)" >&2
+		exit 1
+	fi`
+}
+
+// rollbackSquidCmd returns the appropriate rollback command.
+func rollbackSquidCmd() string {
+	return `if [ -f /etc/squid/squid.conf.bak ]; then
+		cp /etc/squid/squid.conf.bak /etc/squid/squid.conf
+		if command -v systemctl >/dev/null 2>&1; then systemctl restart squid
+		elif command -v rc-service >/dev/null 2>&1; then rc-service squid restart
+		elif command -v service >/dev/null 2>&1; then service squid restart
+		fi
+		echo ROLLBACK_OK
+	fi`
 }
 
 // writeSquidConfig generates and deploys the Squid configuration.
@@ -89,8 +137,23 @@ func writeSquidConfig(cfg *config.Config) error {
 		}
 		trustedIP = ip
 	}
-	conf := generateSquidConfig(cfg, trustedIP)
+	dnsServers := fetchECSDNS(cfg)
+	conf := generateSquidConfig(cfg, trustedIP, dnsServers)
 	return deploySquidConfig(cfg, conf)
+}
+
+// fetchECSDNS reads nameservers from the ECS's /etc/resolv.conf.
+// Falls back to 8.8.8.8 8.8.4.4 if unreadable.
+func fetchECSDNS(cfg *config.Config) string {
+	out, err := sshRunOutput(cfg, `grep '^nameserver' /etc/resolv.conf 2>/dev/null | head -2 | awk '{print $2}' | tr '\n' ' '`)
+	if err != nil {
+		return "8.8.8.8 8.8.4.4"
+	}
+	servers := strings.TrimSpace(out)
+	if servers == "" {
+		return "8.8.8.8 8.8.4.4"
+	}
+	return servers
 }
 
 // deploySquidConfig writes the Squid config transactionally:
@@ -136,11 +199,9 @@ func deploySquidConfig(cfg *config.Config, conf string) error {
 	}
 
 	// 5. Restart and health check
-	restartCmd := "systemctl restart squid && sleep 1 && systemctl is-active squid"
-	if err := sshRun(cfg, restartCmd); err != nil {
+	if err := sshRun(cfg, restartSquidCmd()); err != nil {
 		// Rollback: restore backup and restart
-		rollbackCmd := "if [ -f /etc/squid/squid.conf.bak ]; then cp /etc/squid/squid.conf.bak /etc/squid/squid.conf && systemctl restart squid && echo ROLLBACK_OK; fi"
-		rbOut, rbErr := sshRunOutput(cfg, rollbackCmd)
+		rbOut, rbErr := sshRunOutput(cfg, rollbackSquidCmd())
 		if rbErr == nil && strings.Contains(rbOut, "ROLLBACK_OK") {
 			return fmt.Errorf("squid restart failed — config rolled back successfully: %w", err)
 		}
@@ -176,7 +237,7 @@ func CheckSquidListenMode(cfg *config.Config) (bool, string, error) {
 	return allLoopback, strings.Join(details, "; "), nil
 }
 
-func generateSquidConfig(cfg *config.Config, trustedIP string) string {
+func generateSquidConfig(cfg *config.Config, trustedIP string, dnsServers string) string {
 	var b strings.Builder
 
 	// Listen address: loopback-only in tunnel mode, all interfaces in direct mode
@@ -239,7 +300,7 @@ func generateSquidConfig(cfg *config.Config, trustedIP string) string {
 
 	// DNS
 	b.WriteString("# DNS\n")
-	b.WriteString("dns_nameservers 8.8.8.8 8.8.4.4\n")
+	b.WriteString(fmt.Sprintf("dns_nameservers %s\n", dnsServers))
 	b.WriteString("visible_hostname agent-proxy\n\n")
 
 	// Performance
