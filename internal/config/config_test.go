@@ -261,6 +261,74 @@ func TestWriteEnvFileIncludesNpmProxy(t *testing.T) {
 	}
 }
 
+func TestWriteEnvFileWindowsFormats(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+	t.Setenv("USERPROFILE", tmpDir)
+
+	cfg := &Config{
+		Proxy:   ProxyConfig{Host: "1.2.3.4", Port: 18443},
+		NoProxy: []string{"localhost", "127.0.0.1"},
+	}
+	if err := cfg.WriteEnvFile(); err != nil {
+		t.Fatalf("WriteEnvFile: %v", err)
+	}
+
+	// env.bat
+	bat, err := os.ReadFile(EnvBatPath())
+	if err != nil {
+		t.Fatalf("env.bat not created: %v", err)
+	}
+	batStr := string(bat)
+	if !strings.Contains(batStr, "@echo off") {
+		t.Error("env.bat missing @echo off")
+	}
+	if !strings.Contains(batStr, "set https_proxy=http://1.2.3.4:18443") {
+		t.Error("env.bat missing https_proxy")
+	}
+	if !strings.Contains(batStr, "set no_proxy=localhost,127.0.0.1") {
+		t.Error("env.bat missing no_proxy")
+	}
+
+	// env.ps1
+	ps1, err := os.ReadFile(EnvPs1Path())
+	if err != nil {
+		t.Fatalf("env.ps1 not created: %v", err)
+	}
+	ps1Str := string(ps1)
+	if !strings.Contains(ps1Str, `$env:https_proxy = "http://1.2.3.4:18443"`) {
+		t.Error("env.ps1 missing https_proxy")
+	}
+	if !strings.Contains(ps1Str, `$env:no_proxy = "localhost,127.0.0.1"`) {
+		t.Error("env.ps1 missing no_proxy")
+	}
+}
+
+func TestRemoveEnvFiles(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+	t.Setenv("USERPROFILE", tmpDir)
+
+	cfg := &Config{
+		Proxy:   ProxyConfig{Host: "1.2.3.4", Port: 18443},
+		NoProxy: []string{"localhost"},
+	}
+	if err := cfg.WriteEnvFile(); err != nil {
+		t.Fatalf("WriteEnvFile: %v", err)
+	}
+	for _, p := range []string{EnvPath(), EnvBatPath(), EnvPs1Path()} {
+		if _, err := os.Stat(p); err != nil {
+			t.Fatalf("expected %s to exist: %v", p, err)
+		}
+	}
+	RemoveEnvFiles()
+	for _, p := range []string{EnvPath(), EnvBatPath(), EnvPs1Path()} {
+		if _, err := os.Stat(p); !os.IsNotExist(err) {
+			t.Errorf("expected %s to be removed", p)
+		}
+	}
+}
+
 func TestSaveAndLoad(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("HOME", tmpDir)

@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -220,7 +221,7 @@ func On(cfg *config.Config) error {
 	if err := cfg.WriteEnvFile(); err != nil {
 		return fail(fmt.Errorf("write env file: %w", err))
 	}
-	undo = append(undo, func() { os.Remove(config.EnvPath()) })
+	undo = append(undo, func() { config.RemoveEnvFiles() })
 
 	// 6. Register auto-start
 	if err := platform.InstallAutoStart(cfg); err != nil {
@@ -229,7 +230,6 @@ func On(cfg *config.Config) error {
 
 	fmt.Printf("\n✓ Proxy enabled\n")
 	fmt.Printf("  PAC (browser/desktop): %s\n", pacURL)
-	fmt.Printf("  CLI env:               %s\n", config.EnvPath())
 	fmt.Printf("  Proxy:                 %s:%d", cfg.Proxy.EffectiveHost(), cfg.Proxy.LocalPort())
 	if cfg.Proxy.Tunnel {
 		fmt.Printf(" (via SSH tunnel → %s:%d)", cfg.Proxy.Host, cfg.Proxy.Port)
@@ -237,7 +237,13 @@ func On(cfg *config.Config) error {
 	fmt.Println()
 	fmt.Printf("  Network service:       %s\n", service)
 	fmt.Printf("  Whitelist:             %d domains (presets: %v)\n", len(cfg.EffectiveWhitelist()), cfg.Presets)
-	fmt.Printf("\nCurrent terminal: source %s\n", config.EnvPath())
+	if runtime.GOOS == "windows" {
+		fmt.Printf("\nCurrent terminal (cmd):        %s\n", config.EnvBatPath())
+		fmt.Printf("Current terminal (PowerShell): . %s\n", config.EnvPs1Path())
+	} else {
+		fmt.Printf("  CLI env:               %s\n", config.EnvPath())
+		fmt.Printf("\nCurrent terminal: source %s\n", config.EnvPath())
+	}
 	return nil
 }
 
@@ -281,10 +287,8 @@ func Off(cfg *config.Config) error {
 		errs = append(errs, fmt.Sprintf("autostart: %v", err))
 	}
 
-	// 5. Remove CLI env file
-	if err := os.Remove(config.EnvPath()); err != nil && !os.IsNotExist(err) {
-		errs = append(errs, fmt.Sprintf("remove env.sh: %v", err))
-	}
+	// 5. Remove CLI env files
+	config.RemoveEnvFiles()
 
 	if len(errs) > 0 {
 		fmt.Printf("✓ Proxy disabled (with warnings)\n")

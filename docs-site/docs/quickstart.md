@@ -263,7 +263,7 @@ Here's a summary of everything `agent-proxy init` set up:
 | Config file | `~/.config/agent-proxy/config.yaml` | All settings (host, port, presets, no_proxy) |
 | SSH known_hosts | `~/.config/agent-proxy/known_hosts` | ECS host key for StrictHostKeyChecking |
 | PAC file | `~/.config/agent-proxy/proxy.pac` | Generated JavaScript for browser routing |
-| Env file | `~/.config/agent-proxy/env.sh` | Shell exports for CLI proxy |
+| Env file | `~/.config/agent-proxy/env.sh` | Shell exports for CLI proxy (also `env.bat`, `env.ps1` for Windows) |
 | PAC state | `~/.config/agent-proxy/pac-state.json` | Snapshot of original PAC for safe restore |
 | PID file | `~/.config/agent-proxy/pac-server.pid` | PAC daemon process tracking |
 | Nonce file | `~/.config/agent-proxy/pac-nonce` | PAC server identity verification |

@@ -17,7 +17,9 @@ All other data files live in the same directory:
 |------|---------|
 | `config.yaml` | Main configuration |
 | `proxy.pac` | Generated PAC file |
-| `env.sh` | Generated shell environment exports |
+| `env.sh` | Generated shell environment exports (POSIX) |
+| `env.bat` | Generated environment exports (Windows cmd) |
+| `env.ps1` | Generated environment exports (Windows PowerShell) |
 | `known_hosts` | Project-specific SSH host keys |
 | `pac-state.json` | Snapshot of original system PAC (for restore) |
 | `pac-server.pid` | PAC daemon PID |
@@ -264,9 +266,10 @@ agent-proxy does not use environment variables for configuration — all setting
 
 - When `tunnel: true` and `ssh_key` is empty, agent-proxy checks for `SSH_AUTH_SOCK`. If set, SSH will use the ssh-agent for authentication instead of a key file.
 
-The generated `env.sh` file **exports** (not reads) these variables for other tools:
+The generated env files **export** (not read) proxy variables for other tools. Three formats are generated: `env.sh` (POSIX), `env.bat` (Windows cmd), `env.ps1` (Windows PowerShell).
 
 ```bash
+# env.sh
 export https_proxy='http://127.0.0.1:18443'
 export http_proxy='http://127.0.0.1:18443'
 export no_proxy='localhost,127.0.0.1,...'
