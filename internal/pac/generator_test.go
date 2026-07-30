@@ -56,7 +56,7 @@ func TestGenerateCustomOnly(t *testing.T) {
 
 func TestWrite(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("HOME", tmpDir)
+	setTestHome(t, tmpDir)
 	cfg := &config.Config{
 		Proxy:         config.ProxyConfig{Host: "1.2.3.4", Port: 18443},
 		CustomDomains: []string{"example.com"},
@@ -252,7 +252,7 @@ func TestGenerateIPv6Host(t *testing.T) {
 
 func TestWriteCreatesDirectory(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("HOME", tmpDir)
+	setTestHome(t, tmpDir)
 
 	cfg := &config.Config{
 		Proxy:         config.ProxyConfig{Host: "1.2.3.4", Port: 18443},
@@ -269,7 +269,7 @@ func TestWriteCreatesDirectory(t *testing.T) {
 
 func TestWriteEmptyWhitelistFails(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("HOME", tmpDir)
+	setTestHome(t, tmpDir)
 
 	cfg := &config.Config{
 		Proxy: config.ProxyConfig{Host: "1.2.3.4", Port: 18443},

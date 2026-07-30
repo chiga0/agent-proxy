@@ -127,7 +127,7 @@ func TestAPIStatusReturnsValidJSON(t *testing.T) {
 
 func TestAPIStatusWithCustomConfig(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("HOME", tmpDir)
+	setTestHome(t, tmpDir)
 
 	// Write a specific config
 	cfg := &config.Config{
@@ -187,7 +187,7 @@ func TestAPIStatusWithCustomConfig(t *testing.T) {
 
 func TestAPIStatusConfigLoadError(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("HOME", tmpDir)
+	setTestHome(t, tmpDir)
 
 	// Write an invalid config file
 	configDir := filepath.Join(tmpDir, ".config", "agent-proxy")
@@ -215,7 +215,7 @@ func TestAPIStatusConfigLoadError(t *testing.T) {
 
 func TestAPIStatsReturnsJSON(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("HOME", tmpDir)
+	setTestHome(t, tmpDir)
 
 	// Write a valid config (stats handler needs config.Load to succeed)
 	cfg := &config.Config{
@@ -257,7 +257,7 @@ func TestAPIStatsReturnsJSON(t *testing.T) {
 
 func TestAPIStatsConfigLoadError(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("HOME", tmpDir)
+	setTestHome(t, tmpDir)
 
 	// Write an invalid config file
 	configDir := filepath.Join(tmpDir, ".config", "agent-proxy")

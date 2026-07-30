@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -12,9 +13,17 @@ import (
 	"github.com/chiga0/agent-proxy/internal/config"
 )
 
+// setTestHome redirects both HOME and USERPROFILE so os.UserHomeDir()
+// returns tmpDir on all platforms (Unix uses HOME, Windows uses USERPROFILE).
+func setTestHome(t *testing.T, tmpDir string) {
+	t.Helper()
+	t.Setenv("HOME", tmpDir)
+	t.Setenv("USERPROFILE", tmpDir)
+}
+
 func TestGenerateNonceAndReadNonce(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("HOME", tmpDir)
+	setTestHome(t, tmpDir)
 
 	nonce, err := generateNonce()
 	if err != nil {
@@ -35,14 +44,14 @@ func TestGenerateNonceAndReadNonce(t *testing.T) {
 	if err != nil {
 		t.Fatalf("nonce file should exist: %v", err)
 	}
-	if info.Mode().Perm() != 0600 {
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0600 {
 		t.Errorf("nonce file permissions = %o, want 600", info.Mode().Perm())
 	}
 }
 
 func TestReadNonceMissing(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("HOME", tmpDir)
+	setTestHome(t, tmpDir)
 
 	// No nonce file yet
 	if got := readNonce(); got != "" {
@@ -52,7 +61,7 @@ func TestReadNonceMissing(t *testing.T) {
 
 func TestNoncePath(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("HOME", tmpDir)
+	setTestHome(t, tmpDir)
 
 	expected := filepath.Join(tmpDir, ".config", "agent-proxy", "pac-nonce")
 	if got := noncePath(); got != expected {
@@ -62,7 +71,7 @@ func TestNoncePath(t *testing.T) {
 
 func TestPacHandlerSuccess(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("HOME", tmpDir)
+	setTestHome(t, tmpDir)
 
 	// Write a PAC file to disk
 	pacContent := "function FindProxyForURL(url, host) { return \"DIRECT\"; }"
@@ -104,7 +113,7 @@ func TestPacHandlerSuccess(t *testing.T) {
 
 func TestPacHandlerMissingFile(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("HOME", tmpDir)
+	setTestHome(t, tmpDir)
 
 	// No PAC file on disk
 	handler := pacHandler("some-nonce")
@@ -123,7 +132,7 @@ func TestPacHandlerMissingFile(t *testing.T) {
 
 func TestPacHandlerIncrementsCounter(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("HOME", tmpDir)
+	setTestHome(t, tmpDir)
 
 	// Write a PAC file
 	if err := os.MkdirAll(config.DataDir(), 0700); err != nil {
@@ -148,7 +157,7 @@ func TestPacHandlerIncrementsCounter(t *testing.T) {
 
 func TestServerRunningNoNonce(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("HOME", tmpDir)
+	setTestHome(t, tmpDir)
 
 	// No nonce file → ServerRunning should be false
 	if ServerRunning() {
@@ -173,7 +182,7 @@ func TestStartStopServer(t *testing.T) {
 	}
 
 	tmpDir := t.TempDir()
-	t.Setenv("HOME", tmpDir)
+	setTestHome(t, tmpDir)
 
 	// Write a PAC file so the handler can serve it
 	cfg := &config.Config{
@@ -251,7 +260,7 @@ func TestStopServerWithoutStart(t *testing.T) {
 
 func TestWatchConfigAndReloadPAC(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("HOME", tmpDir)
+	setTestHome(t, tmpDir)
 
 	// Write initial config + PAC
 	cfg := &config.Config{

@@ -332,7 +332,7 @@ func TestRemoveEnvFiles(t *testing.T) {
 func TestSaveAndLoad(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("HOME", tmpDir)
-	t.Setenv("USERPROFILE", tmpDir) // Windows uses USERPROFILE
+	t.Setenv("USERPROFILE", tmpDir)
 
 	cfg := DefaultConfig()
 	cfg.Proxy.Host = "10.0.0.1"
