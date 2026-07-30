@@ -6,7 +6,7 @@ Get from zero to a working selective proxy in about 5 minutes.
 
 ### Your ECS server
 
-You need a Linux server outside the firewall (Singapore, Tokyo, US-West, etc.) with:
+You need a Linux server outside the firewall (Tokyo, Singapore, etc.) with:
 
 | Requirement | Details |
 |-------------|---------|

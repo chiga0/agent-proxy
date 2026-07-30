@@ -38,7 +38,7 @@ If you're a developer in China (or behind a restrictive firewall), you've probab
                                      │ SSH (encrypted)
                                      ▼
 ┌────────────────────────────────────────────────────────────────┐
-│  Your ECS (Singapore / Tokyo / etc.)                           │
+│  Your ECS (Tokyo / Singapore)                                  │
 │                                                                │
 │  127.0.0.1:18443 ──▶ Squid (loopback only) ──▶ Target Site    │
 │                                                                │

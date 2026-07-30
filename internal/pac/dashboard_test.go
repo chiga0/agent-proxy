@@ -94,6 +94,15 @@ func TestDashboardHTMLContainsExpectedElements(t *testing.T) {
 }
 
 func TestAPIStatusReturnsValidJSON(t *testing.T) {
+	tmpDir := t.TempDir()
+	setTestHome(t, tmpDir)
+
+	// Create a valid config so /api/status doesn't 500 on validation
+	cfg := config.DefaultConfig()
+	cfg.Proxy.Host = "1.2.3.4"
+	cfg.Proxy.Tunnel = false // avoid ssh_key validation error
+	cfg.Save()
+
 	mux := http.NewServeMux()
 	registerDashboard(mux)
 

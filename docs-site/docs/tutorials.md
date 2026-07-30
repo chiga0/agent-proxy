@@ -14,7 +14,7 @@ This tutorial walks through provisioning a new Alibaba Cloud ECS and configuring
 
     | Setting | Recommended value | Why |
     |---------|-------------------|-----|
-    | Region | Singapore / Tokyo / US-West | Low latency from China, outside the firewall |
+    | Region | Tokyo (preferred) / Singapore | Low latency from China, outside the firewall |
     | Instance type | ecs.t6-c1m1.large (1 vCPU, 1 GB) | Squid needs ~30 MB RAM; this is plenty |
     | OS | Ubuntu 22.04 64-bit | Best tested with agent-proxy |
     | Disk | 40 GB ESSD | Logs grow slowly; 40 GB lasts months |

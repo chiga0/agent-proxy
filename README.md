@@ -26,7 +26,7 @@
                                      │ SSH (encrypted)
                                      ▼
 ┌────────────────────────────────────────────────────────────────┐
-│  Your ECS (Singapore / Tokyo / etc.)                           │
+│  Your ECS (Tokyo / Singapore)                                  │
 │                                                                │
 │  127.0.0.1:18443 ──▶ Squid (loopback only) ──▶ Target Site    │
 │                                                                │
@@ -57,7 +57,7 @@ Before setting up, ensure your overseas server meets these requirements:
 | **Security group** | Inbound: TCP 22 (SSH). Tunnel mode needs nothing else | Direct mode also needs TCP 18443 from your IP |
 | **DNS** | ECS can resolve public domains | Uses ECS's `/etc/resolv.conf` nameservers |
 
-> **Recommended regions:** Singapore, Tokyo, Hong Kong, US-West — low latency to both China and major AI/dev services.
+> **Recommended regions:** Tokyo (preferred), Singapore — low latency to both China and major AI/dev services.
 
 > **Tunnel mode (recommended):** Only SSH port 22 needs to be open. Squid listens on `127.0.0.1` only — zero public data ports.
 
