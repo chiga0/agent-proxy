@@ -5,21 +5,21 @@
 class AgentProxy < Formula
   desc "Domain-based selective proxy CLI for overseas ECS"
   homepage "https://github.com/chiga0/agent-proxy"
-  version "0.7.4"
+  version "0.7.5"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/chiga0/agent-proxy/releases/download/v0.7.4/agent-proxy_0.7.4_darwin_amd64.tar.gz"
-      sha256 "1ce34cf4ca7750bf7f5992e7a672d779c8867804572f16156a95f5479300727e"
+      url "https://github.com/chiga0/agent-proxy/releases/download/v0.7.5/agent-proxy_0.7.5_darwin_amd64.tar.gz"
+      sha256 "bf4ae8ac2f17536afd3abe7ec6fefe7a88c8e6b041fefe66ff4107e6d8959ce1"
 
       define_method(:install) do
         bin.install "agent-proxy"
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/chiga0/agent-proxy/releases/download/v0.7.4/agent-proxy_0.7.4_darwin_arm64.tar.gz"
-      sha256 "77649a8ee94599b690b59427743d1c410dcca422993d216eee844b3ea4c8d9a9"
+      url "https://github.com/chiga0/agent-proxy/releases/download/v0.7.5/agent-proxy_0.7.5_darwin_arm64.tar.gz"
+      sha256 "eec0f4ddd5943b419076d383defa3a4ea9f2c0a98c02620377e140490df1409b"
 
       define_method(:install) do
         bin.install "agent-proxy"
@@ -29,15 +29,15 @@ class AgentProxy < Formula
 
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://github.com/chiga0/agent-proxy/releases/download/v0.7.4/agent-proxy_0.7.4_linux_amd64.tar.gz"
-      sha256 "567b701799d6974577994f33949c5f99cc76617093eb9b44958faee81f3ca195"
+      url "https://github.com/chiga0/agent-proxy/releases/download/v0.7.5/agent-proxy_0.7.5_linux_amd64.tar.gz"
+      sha256 "1f4118b15b0107de0a5cfedaa8cd04d86637b82cd298da198844205e1d53b692"
       define_method(:install) do
         bin.install "agent-proxy"
       end
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/chiga0/agent-proxy/releases/download/v0.7.4/agent-proxy_0.7.4_linux_arm64.tar.gz"
-      sha256 "5d49652ae0fd89438cbe8d66a5dee85e56f9b04dd00967d5cb341bf46529cd5b"
+      url "https://github.com/chiga0/agent-proxy/releases/download/v0.7.5/agent-proxy_0.7.5_linux_arm64.tar.gz"
+      sha256 "2d510ab981e899f47c9dfe2e49fce32dff81263dae5ff58f258f6bf984073b50"
       define_method(:install) do
         bin.install "agent-proxy"
       end
