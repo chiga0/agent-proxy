@@ -170,7 +170,7 @@ func checkPACServer() CheckResult {
 	if pac.ServerRunning() {
 		return CheckResult{"PAC HTTP server", true, fmt.Sprintf("127.0.0.1:%d", config.PACPort)}
 	}
-	return CheckResult{"PAC HTTP server", false, "not running"}
+	return CheckResult{"PAC HTTP server", false, "not running — health auto-recovery inactive"}
 }
 
 func PrintStatus(results []CheckResult) {

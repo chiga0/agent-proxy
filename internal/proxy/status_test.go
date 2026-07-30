@@ -178,8 +178,8 @@ func TestCheckPACServerNotRunning(t *testing.T) {
 	if result.OK {
 		t.Error("PAC server should not be running in test")
 	}
-	if result.Detail != "not running" {
-		t.Errorf("Detail = %q, want 'not running'", result.Detail)
+	if result.Detail != "not running — health auto-recovery inactive" {
+		t.Errorf("Detail = %q, want 'not running — health auto-recovery inactive'", result.Detail)
 	}
 }
 
