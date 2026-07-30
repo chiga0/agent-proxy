@@ -1009,7 +1009,15 @@
 </tr>
 <tr>
 <td><code>env.sh</code></td>
-<td>Generated shell environment exports</td>
+<td>Generated shell environment exports (POSIX)</td>
+</tr>
+<tr>
+<td><code>env.bat</code></td>
+<td>Generated environment exports (Windows cmd)</td>
+</tr>
+<tr>
+<td><code>env.ps1</code></td>
+<td>Generated environment exports (Windows PowerShell)</td>
 </tr>
 <tr>
 <td><code>known_hosts</code></td>
@@ -1641,8 +1649,9 @@
 <ul>
 <li>When <code>tunnel: true</code> and <code>ssh_key</code> is empty, agent-proxy checks for <code>SSH_AUTH_SOCK</code>. If set, SSH will use the ssh-agent for authentication instead of a key file.</li>
 </ul>
-<p>The generated <code>env.sh</code> file <strong>exports</strong> (not reads) these variables for other tools:</p>
-<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">https_proxy</span><span class="o">=</span><span class="s1">&#39;http://127.0.0.1:18443&#39;</span>
+<p>The generated env files <strong>export</strong> (not read) proxy variables for other tools. Three formats are generated: <code>env.sh</code> (POSIX), <code>env.bat</code> (Windows cmd), <code>env.ps1</code> (Windows PowerShell).</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># env.sh</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">https_proxy</span><span class="o">=</span><span class="s1">&#39;http://127.0.0.1:18443&#39;</span>
 <span class="nb">export</span><span class="w"> </span><span class="nv">http_proxy</span><span class="o">=</span><span class="s1">&#39;http://127.0.0.1:18443&#39;</span>
 <span class="nb">export</span><span class="w"> </span><span class="nv">no_proxy</span><span class="o">=</span><span class="s1">&#39;localhost,127.0.0.1,...&#39;</span>
 <span class="nb">export</span><span class="w"> </span><span class="nv">NO_PROXY</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">no_proxy</span><span class="si">}</span><span class="s2">&quot;</span>
