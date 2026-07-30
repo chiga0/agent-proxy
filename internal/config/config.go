@@ -261,6 +261,15 @@ func Load() (*Config, error) {
 		}
 	}
 
+	// Merge new default no_proxy entries added in newer versions.
+	// Existing user entries are preserved; only missing defaults are appended.
+	if merged := mergeNoProxy(cfg.NoProxy, DefaultConfig().NoProxy); len(merged) > len(cfg.NoProxy) {
+		cfg.NoProxy = merged
+		if err := cfg.Save(); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to save merged no_proxy: %v\n", err)
+		}
+	}
+
 	// Validate config consistency (warn but don't block for backward compat)
 	if err := cfg.Validate(); err != nil && cfg.Proxy.Host != "" {
 		fmt.Fprintf(os.Stderr, "Warning: config validation: %v\n", err)
@@ -313,6 +322,22 @@ func (c *Config) Validate() error {
 		}
 	}
 	return nil
+}
+
+// mergeNoProxy returns existing entries plus any defaults not already present.
+func mergeNoProxy(existing, defaults []string) []string {
+	seen := make(map[string]bool, len(existing))
+	for _, e := range existing {
+		seen[e] = true
+	}
+	merged := make([]string, len(existing))
+	copy(merged, existing)
+	for _, d := range defaults {
+		if !seen[d] {
+			merged = append(merged, d)
+		}
+	}
+	return merged
 }
 
 func IsValidDomain(d string) bool {
@@ -395,5 +420,12 @@ func (c *Config) WriteEnvFile() error {
 	fmt.Fprintf(&b, "export http_proxy=%s\n", ShellQuote(c.ProxyURL()))
 	fmt.Fprintf(&b, "export no_proxy=%s\n", ShellQuote(c.NoProxyString()))
 	b.WriteString("export NO_PROXY=\"${no_proxy}\"\n")
+	// npm/yarn/pnpm don't read http_proxy env vars; configure them explicitly.
+	b.WriteString("\n# npm does not read http_proxy; set its own proxy config\n")
+	fmt.Fprintf(&b, "npm config set proxy %s 2>/dev/null\n", ShellQuote(c.ProxyURL()))
+	fmt.Fprintf(&b, "npm config set https-proxy %s 2>/dev/null\n", ShellQuote(c.ProxyURL()))
+	if err := os.MkdirAll(DataDir(), 0700); err != nil {
+		return fmt.Errorf("create config dir: %w", err)
+	}
 	return os.WriteFile(EnvPath(), []byte(b.String()), 0600)
 }
