@@ -45,6 +45,7 @@ func InstallAutoStart(cfg *config.Config) error {
 		if err := installTunnelAgent(cfg, dir); err != nil {
 			return fmt.Errorf("install tunnel agent: %w", err)
 		}
+		loadAgent(tunnelLabel, dir)
 	} else {
 		// Declarative cleanup: remove stale tunnel agent when tunnel is disabled
 		removeAgent(tunnelLabel, dir)
@@ -52,7 +53,13 @@ func InstallAutoStart(cfg *config.Config) error {
 	if err := installPACAgent(self, dir); err != nil {
 		return fmt.Errorf("install PAC agent: %w", err)
 	}
+	loadAgent(pacLabel, dir)
 	return nil
+}
+
+func loadAgent(label, dir string) {
+	path := filepath.Join(dir, label+".plist")
+	exec.Command("launchctl", "load", path).Run()
 }
 
 func removeAgent(label, dir string) {
@@ -156,6 +163,12 @@ func installPACAgent(self string, dir string) error {
 `
 	path := filepath.Join(dir, pacLabel+".plist")
 	return os.WriteFile(path, []byte(plist), 0644)
+}
+
+// IsAutoStartInstalled returns true if the PAC server LaunchAgent plist exists.
+func IsAutoStartInstalled() bool {
+	_, err := os.Stat(filepath.Join(launchAgentDir(), pacLabel+".plist"))
+	return err == nil
 }
 
 func UninstallAutoStart() error {

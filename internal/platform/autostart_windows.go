@@ -62,6 +62,12 @@ func createTask(name, command string) error {
 	return nil
 }
 
+// IsAutoStartInstalled returns true if the PAC server scheduled task exists.
+func IsAutoStartInstalled() bool {
+	err := exec.Command("schtasks", "/Query", "/TN", pacTaskName).Run()
+	return err == nil
+}
+
 func UninstallAutoStart() error {
 	var errs []string
 	for _, name := range []string{pacTaskName, tunnelTaskName} {

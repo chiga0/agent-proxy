@@ -115,6 +115,12 @@ WantedBy=default.target
 	return nil
 }
 
+// IsAutoStartInstalled returns true if the PAC server systemd unit exists.
+func IsAutoStartInstalled() bool {
+	_, err := os.Stat(filepath.Join(systemdUserDir(), "agent-proxy-pac.service"))
+	return err == nil
+}
+
 func UninstallAutoStart() error {
 	var errs []string
 	for _, name := range []string{"agent-proxy-tunnel", "agent-proxy-pac"} {

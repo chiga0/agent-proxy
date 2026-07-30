@@ -17,6 +17,7 @@ import (
 	"github.com/chiga0/agent-proxy/internal/config"
 	"github.com/chiga0/agent-proxy/internal/ecs"
 	"github.com/chiga0/agent-proxy/internal/pac"
+	"github.com/chiga0/agent-proxy/internal/platform"
 	"github.com/chiga0/agent-proxy/internal/rules"
 	"github.com/chiga0/agent-proxy/internal/proxy"
 	"github.com/chiga0/agent-proxy/internal/setup"
@@ -45,7 +46,7 @@ Quick start:
   agent-proxy status        Check health
   agent-proxy doctor        Full diagnostics`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			skip := map[string]bool{"version": true, "init": true, "serve-pac": true, "log": true}
+			skip := map[string]bool{"version": true, "init": true, "serve-pac": true, "log": true, "autostart": true}
 			if skip[cmd.Name()] {
 				return nil
 			}
@@ -93,7 +94,7 @@ Quick start:
 		cmdSetup(), cmdIP(), cmdBench(), cmdTrace(),
 		cmdVersion(), cmdServePAC(), cmdUpdate(), cmdTrustHost(),
 		cmdStats(), cmdLog(), cmdUpdateRules(),
-		cmdConfigValidate(),
+		cmdConfigValidate(), cmdAutostart(),
 	)
 
 	if err := root.Execute(); err != nil {
@@ -253,6 +254,17 @@ func cmdDoctor() *cobra.Command {
 						fmt.Println("✓")
 					}
 				}
+			}
+
+			// Auto-start check
+			fmt.Print("  → Auto-start... ")
+			if platform.IsAutoStartInstalled() {
+				fmt.Println("✓")
+			} else {
+				hasFailure = true
+				fmt.Println("✗ not installed")
+				fmt.Println("    Without auto-start, PAC server won't recover from crashes or reboots.")
+				fmt.Println("    Fix: agent-proxy autostart install")
 			}
 
 			fmt.Println()
@@ -421,7 +433,16 @@ func cmdInit() *cobra.Command {
 				return fmt.Errorf("enable proxy: %w", err)
 			}
 
-			// --- Step 9: Verify ---
+			// --- Step 9: Auto-start ---
+			fmt.Printf("\n─── Auto-start ───\n")
+			if err := platform.InstallAutoStart(cfg); err != nil {
+				fmt.Printf("  ⚠ Auto-start install failed: %v\n", err)
+				fmt.Println("    You can retry later: agent-proxy autostart install")
+			} else {
+				fmt.Println("  ✓ Auto-start installed (SSH tunnel + PAC server will start on login)")
+			}
+
+			// --- Step 10: Verify ---
 			fmt.Printf("\n─── Connectivity Check ───\n")
 			testDomains := []string{"google.com", "github.com", "youtube.com"}
 			for _, d := range testDomains {
@@ -1026,4 +1047,60 @@ After fetching, the PAC file and env.sh are regenerated automatically.`,
 			return nil
 		},
 	}
+}
+
+func cmdAutostart() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "autostart",
+		Short: "Manage auto-start on login (LaunchAgent / systemd / Task Scheduler)",
+		Long: `Register agent-proxy to start automatically on login so the SSH tunnel
+and PAC server survive reboots and process crashes.
+
+  agent-proxy autostart install    Register auto-start services
+  agent-proxy autostart uninstall  Remove auto-start services
+  agent-proxy autostart status     Show whether auto-start is installed`,
+	}
+
+	cmd.AddCommand(&cobra.Command{
+		Use:   "install",
+		Short: "Register auto-start services",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			c, err := config.LoadOrCreate()
+			if err != nil {
+				return fmt.Errorf("load config: %w (run 'agent-proxy init' first)", err)
+			}
+			if err := platform.InstallAutoStart(c); err != nil {
+				return err
+			}
+			fmt.Println("✓ Auto-start installed. SSH tunnel and PAC server will start on login.")
+			return nil
+		},
+	})
+
+	cmd.AddCommand(&cobra.Command{
+		Use:   "uninstall",
+		Short: "Remove auto-start services",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := platform.UninstallAutoStart(); err != nil {
+				return err
+			}
+			fmt.Println("✓ Auto-start removed.")
+			return nil
+		},
+	})
+
+	cmd.AddCommand(&cobra.Command{
+		Use:   "status",
+		Short: "Show auto-start status",
+		Run: func(cmd *cobra.Command, args []string) {
+			if platform.IsAutoStartInstalled() {
+				fmt.Println("✓ Auto-start is installed")
+			} else {
+				fmt.Println("✗ Auto-start is NOT installed")
+				fmt.Println("  Run: agent-proxy autostart install")
+			}
+		},
+	})
+
+	return cmd
 }
