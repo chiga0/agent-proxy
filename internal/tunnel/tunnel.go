@@ -13,14 +13,25 @@ import (
 	"github.com/chiga0/agent-proxy/internal/platform"
 )
 
-func controlSocket(cfg *config.Config) string {
-	// Expand the ControlPath template the same way OpenSSH does.
-	user := cfg.Proxy.SSHUserOrRoot()
+func controlSocketFor(cfg *config.Config, host, user string) string {
 	path := cfg.Proxy.SSHControlPath()
 	path = strings.ReplaceAll(path, "%r", user)
-	path = strings.ReplaceAll(path, "%h", cfg.Proxy.Host)
+	path = strings.ReplaceAll(path, "%h", host)
 	path = strings.ReplaceAll(path, "%p", strconv.Itoa(22))
 	return path
+}
+
+func controlSocket(cfg *config.Config) string {
+	return controlSocketFor(cfg, cfg.Proxy.Host, cfg.Proxy.SSHUserOrRoot())
+}
+
+// allControlSockets returns sockets for both primary and fallback hosts.
+func allControlSockets(cfg *config.Config) []string {
+	sockets := []string{controlSocket(cfg)}
+	if cfg.Proxy.HasFallback() {
+		sockets = append(sockets, controlSocketFor(cfg, cfg.Proxy.FallbackHost, cfg.Proxy.FallbackSSHUserOrRoot()))
+	}
+	return sockets
 }
 
 // Start ensures the SSH tunnel is running.
@@ -91,38 +102,48 @@ func startTunnel(cfg *config.Config, useFallback bool) (bool, error) {
 }
 
 // Stop terminates the SSH tunnel via the ControlMaster socket.
+// Tries both primary and fallback sockets.
 func Stop(cfg *config.Config) {
-	sock := controlSocket(cfg)
-	// Prefer graceful shutdown via ControlPath
-	if _, err := os.Stat(sock); err == nil {
-		exec.Command("ssh",
-			"-o", "ControlPath="+sock,
-			"-O", "exit",
-			cfg.Proxy.SSHTarget(),
-		).Run()
-		return
+	for _, sock := range allControlSockets(cfg) {
+		if _, err := os.Stat(sock); err == nil {
+			host := cfg.Proxy.Host // for -O exit target
+			exec.Command("ssh",
+				"-o", "ControlPath="+sock,
+				"-O", "exit",
+				host,
+			).Run()
+		}
 	}
-	// Fallback: find by pattern
+	// Fallback: find by pattern (covers both primary and fallback)
 	user := cfg.Proxy.SSHUserOrRoot()
-	pattern := fmt.Sprintf("ssh.*-L.*%d:127.0.0.1:%d.*%s@%s",
-		cfg.Proxy.LocalPort(), cfg.Proxy.Port, user, cfg.Proxy.Host)
-	for _, pid := range platform.FindPIDsByPattern(pattern) {
-		killIfSSH(pid)
+	patterns := []string{
+		fmt.Sprintf("ssh.*-L.*%d:127.0.0.1:%d.*%s@%s",
+			cfg.Proxy.LocalPort(), cfg.Proxy.Port, user, cfg.Proxy.Host),
+	}
+	if cfg.Proxy.HasFallback() {
+		patterns = append(patterns, fmt.Sprintf("ssh.*-L.*%d:127.0.0.1:%d.*%s@%s",
+			cfg.Proxy.LocalPort(), cfg.Proxy.Port, cfg.Proxy.FallbackSSHUserOrRoot(), cfg.Proxy.FallbackHost))
+	}
+	for _, pattern := range patterns {
+		for _, pid := range platform.FindPIDsByPattern(pattern) {
+			killIfSSH(pid)
+		}
 	}
 }
 
 // Running checks whether the tunnel is active via the ControlMaster socket.
-// A port listener alone is NOT sufficient — it may be another process.
+// Checks both primary and fallback sockets.
 func Running(cfg *config.Config) bool {
-	sock := controlSocket(cfg)
-	if _, err := os.Stat(sock); err == nil {
-		err := exec.Command("ssh",
-			"-o", "ControlPath="+sock,
-			"-O", "check",
-			cfg.Proxy.SSHTarget(),
-		).Run()
-		if err == nil {
-			return true
+	for _, sock := range allControlSockets(cfg) {
+		if _, err := os.Stat(sock); err == nil {
+			err := exec.Command("ssh",
+				"-o", "ControlPath="+sock,
+				"-O", "check",
+				cfg.Proxy.Host,
+			).Run()
+			if err == nil {
+				return true
+			}
 		}
 	}
 	return false

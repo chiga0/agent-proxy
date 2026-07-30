@@ -11,7 +11,7 @@ import (
 func TestFetchAndCache(t *testing.T) {
 	// Serve a test domain list
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("# comment\ngithub.com\nopenai.com\n\nfull:anthropic.com\ndomain:claude.ai\n"))
+		w.Write([]byte("# comment\ngithub.com\nopenai.com\n\nfull:anthropic.com\ndomain:claude.ai\nregexp:.*\\.cn$\nkeyword:google\n"))
 	}))
 	defer srv.Close()
 

@@ -1,6 +1,7 @@
 package pac
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -284,7 +285,7 @@ func TestWatchConfigAndReloadPAC(t *testing.T) {
 	}
 
 	// Start the watcher (infinite loop in goroutine — will be cleaned up on test exit)
-	go watchConfigAndReloadPAC()
+	go watchConfigAndReloadPAC(context.Background())
 
 	// Modify the config: add a new domain
 	cfg.CustomDomains = append(cfg.CustomDomains, "updated.example.com")

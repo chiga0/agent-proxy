@@ -288,12 +288,11 @@ func LoadOrCreate() (*Config, error) {
 	if err == nil {
 		return cfg, nil
 	}
-	if !os.IsNotExist(fmt.Errorf("%w", err)) {
-		// Distinguish "not exist" from parse errors
-		if _, statErr := os.Stat(ConfigPath()); statErr == nil {
-			return nil, err // file exists but failed to parse
-		}
+	// If the file exists but failed to parse, surface the error
+	if _, statErr := os.Stat(ConfigPath()); statErr == nil {
+		return nil, err
 	}
+	// File doesn't exist — create default
 	cfg = DefaultConfig()
 	if saveErr := cfg.Save(); saveErr != nil {
 		return nil, fmt.Errorf("create default config: %w", saveErr)

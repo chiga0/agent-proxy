@@ -178,7 +178,7 @@ func ServeForeground() error {
 	defer cancel()
 
 	// Start config watcher for hot-reload
-	go watchConfigAndReloadPAC()
+	go watchConfigAndReloadPAC(ctx)
 
 	// Start health check + auto-recovery loop
 	go health.Watch(ctx)
@@ -190,12 +190,16 @@ func ServeForeground() error {
 // watchConfigAndReloadPAC polls config.yaml mtime and regenerates the PAC file
 // when the config changes. The PAC HTTP handler reads the file on each request,
 // so the new PAC is served immediately without restart.
-func watchConfigAndReloadPAC() {
+func watchConfigAndReloadPAC(ctx context.Context) {
 	configPath := config.ConfigPath()
 	var lastMod time.Time
 
 	for {
-		time.Sleep(5 * time.Second)
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(5 * time.Second):
+		}
 
 		info, err := os.Stat(configPath)
 		if err != nil {

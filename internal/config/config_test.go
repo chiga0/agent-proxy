@@ -355,3 +355,39 @@ func TestSaveAndLoad(t *testing.T) {
 		t.Error("loaded config mismatch")
 	}
 }
+
+func TestLoadOrCreate(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("HOME", dir)
+
+	// No config file → LoadOrCreate creates default
+	cfg, err := LoadOrCreate()
+	if err != nil {
+		t.Fatalf("LoadOrCreate (no file): %v", err)
+	}
+	if cfg.Proxy.Port != 18443 {
+		t.Errorf("default port = %d, want 18443", cfg.Proxy.Port)
+	}
+	// File should now exist
+	if _, err := os.Stat(ConfigPath()); err != nil {
+		t.Error("LoadOrCreate should have created config file")
+	}
+
+	// Existing valid config → LoadOrCreate returns it
+	cfg.Proxy.Host = "1.2.3.4"
+	cfg.Save()
+	cfg2, err := LoadOrCreate()
+	if err != nil {
+		t.Fatalf("LoadOrCreate (existing): %v", err)
+	}
+	if cfg2.Proxy.Host != "1.2.3.4" {
+		t.Errorf("host = %q, want 1.2.3.4", cfg2.Proxy.Host)
+	}
+
+	// Corrupt config → LoadOrCreate returns error (not auto-create)
+	os.WriteFile(ConfigPath(), []byte("{{{invalid"), 0600)
+	_, err = LoadOrCreate()
+	if err == nil {
+		t.Error("LoadOrCreate should fail on corrupt config")
+	}
+}

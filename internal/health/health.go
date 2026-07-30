@@ -32,9 +32,6 @@ func ConsecutiveFailures() int64 { return consecutiveFailures.Load() }
 func LastCheckOK() bool          { return lastCheckOK.Load() }
 func LastRecovery() int64        { return lastRecovery.Load() }
 
-// probeClient is reused across checks to avoid per-interval Transport allocation.
-var probeClient = &http.Client{Timeout: probeTimeout}
-
 // Watch runs the health check loop. Blocking — call in a goroutine.
 // Stops when ctx is cancelled. Only active when tunnel mode is enabled.
 func Watch(ctx context.Context) {
@@ -90,8 +87,11 @@ func probe(cfg *config.Config) bool {
 	if err != nil {
 		return false
 	}
-	probeClient.Transport = &http.Transport{Proxy: http.ProxyURL(proxyURL)}
-	resp, err := probeClient.Get(probeURL)
+	client := &http.Client{
+		Timeout:   probeTimeout,
+		Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)},
+	}
+	resp, err := client.Get(probeURL)
 	if err != nil {
 		return false
 	}
