@@ -87,10 +87,15 @@ func (h HostConfig) Target() string {
 }
 
 func (h HostConfig) BaseArgs() []string {
+	sockDir := filepath.Join(DataDir(), "sockets")
+	os.MkdirAll(sockDir, 0700)
 	args := []string{
 		"-o", "StrictHostKeyChecking=yes",
 		"-o", "UserKnownHostsFile=" + KnownHostsPath(),
 		"-o", "ConnectTimeout=10",
+		"-o", "ControlMaster=auto",
+		"-o", "ControlPath=" + filepath.Join(sockDir, "%r@%h-%p"),
+		"-o", "ControlPersist=600",
 	}
 	if h.SSHKey != "" {
 		args = append(args, "-i", h.SSHKey)
