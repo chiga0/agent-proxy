@@ -37,3 +37,4 @@ env.sh
 proxy.pac
 *.pid
 agent-proxy
+.qwen/tmp/
