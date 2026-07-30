@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -78,10 +77,11 @@ func checkTunnel(cfg *config.Config) CheckResult {
 func checkForwarding(cfg *config.Config) CheckResult {
 	proxyURL, _ := url.Parse(cfg.ProxyURL())
 	client := &http.Client{
-		Timeout:   15 * time.Second,
+		Timeout:   20 * time.Second,
 		Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)},
 	}
-	resp, err := client.Get("https://ipinfo.io/json")
+	// Use /ip (plain text) instead of /json — smaller payload, faster response.
+	resp, err := client.Get("https://ipinfo.io/ip")
 	if err != nil {
 		detail := err.Error()
 		if strings.Contains(detail, "connection reset") {
@@ -94,11 +94,11 @@ func checkForwarding(cfg *config.Config) CheckResult {
 		return CheckResult{"Proxy forwarding", false, fmt.Sprintf("HTTP %d", resp.StatusCode)}
 	}
 	body, _ := io.ReadAll(resp.Body)
-	var info struct {
-		IP string `json:"ip"`
+	ip := strings.TrimSpace(string(body))
+	if ip == "" {
+		return CheckResult{"Proxy forwarding", false, "empty response from ipinfo.io"}
 	}
-	json.Unmarshal(body, &info)
-	return CheckResult{"Proxy forwarding", true, "exit IP: " + info.IP}
+	return CheckResult{"Proxy forwarding", true, "exit IP: " + ip}
 }
 
 // DetectSNIBlock tests whether TLS connections are being reset by GFW SNI filtering.
