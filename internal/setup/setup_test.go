@@ -3,6 +3,7 @@ package setup
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -47,7 +48,7 @@ func TestValidateSSHKeyFixesPermissions(t *testing.T) {
 	}
 
 	info, _ := os.Stat(keyPath)
-	if info.Mode().Perm() != 0600 {
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0600 {
 		t.Errorf("expected 0600 permissions, got 0%o", info.Mode().Perm())
 	}
 }
