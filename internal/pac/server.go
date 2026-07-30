@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/chiga0/agent-proxy/internal/config"
+	"github.com/chiga0/agent-proxy/internal/health"
 )
 
 var (
@@ -174,6 +175,9 @@ func ServeForeground() error {
 
 	// Start config watcher for hot-reload
 	go watchConfigAndReloadPAC()
+
+	// Start health check + auto-recovery loop
+	go health.Watch()
 
 	s := &http.Server{Handler: mux}
 	return s.Serve(ln)

@@ -3,9 +3,13 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"net"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,6 +17,7 @@ import (
 	"github.com/chiga0/agent-proxy/internal/config"
 	"github.com/chiga0/agent-proxy/internal/ecs"
 	"github.com/chiga0/agent-proxy/internal/pac"
+	"github.com/chiga0/agent-proxy/internal/rules"
 	"github.com/chiga0/agent-proxy/internal/proxy"
 	"github.com/chiga0/agent-proxy/internal/trace"
 	"github.com/chiga0/agent-proxy/internal/tunnel"
@@ -86,7 +91,7 @@ Quick start:
 		cmdInit(), cmdWhitelist(), cmdPreset(),
 		cmdSetup(), cmdIP(), cmdBench(), cmdTrace(),
 		cmdVersion(), cmdServePAC(), cmdUpdate(), cmdTrustHost(),
-		cmdStats(), cmdLog(),
+		cmdStats(), cmdLog(), cmdUpdateRules(),
 		cmdConfigValidate(),
 	)
 
@@ -1073,6 +1078,76 @@ latency issues and identifying routing bottlenecks.`,
 			trace.PrintTrace(r2)
 
 			fmt.Println()
+			return nil
+		},
+	}
+}
+
+func cmdUpdateRules() *cobra.Command {
+	return &cobra.Command{
+		Use:   "update-rules",
+		Short: "Fetch and cache remote domain rule lists",
+		Long: `Downloads domain lists from URLs configured in domain_rules and caches
+them locally. Cached "proxy" domains are added to the PAC whitelist;
+cached "direct" domains are added to no_proxy.
+
+Configure in config.yaml:
+
+  domain_rules:
+    - url: https://example.com/proxy-list.txt
+      action: proxy
+    - url: https://example.com/cn-domains.txt
+      action: direct
+
+After fetching, the PAC file and env.sh are regenerated automatically.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(cfg.DomainRules) == 0 {
+				fmt.Println("No domain_rules configured in config.yaml")
+				fmt.Println("Add domain_rules entries to subscribe to remote domain lists.")
+				return nil
+			}
+
+			sources := make(map[string]string, len(cfg.DomainRules))
+			for _, r := range cfg.DomainRules {
+				action := r.Action
+				if action == "" {
+					action = "proxy"
+				}
+				sources[r.URL] = action
+			}
+
+			// Rule lists are often hosted on blocked sites (GitHub etc.),
+			// so prefer fetching through the proxy when it's reachable.
+			// Fall back to direct for first-run (proxy not up yet) or
+			// lists hosted on accessible mirrors.
+			client := &http.Client{Timeout: 30 * time.Second}
+			proxyAddr := net.JoinHostPort(cfg.Proxy.EffectiveHost(), strconv.Itoa(cfg.Proxy.LocalPort()))
+			if conn, err := net.DialTimeout("tcp", proxyAddr, time.Second); err == nil {
+				conn.Close()
+				if proxyURL, err := url.Parse(cfg.ProxyURL()); err == nil {
+					client.Transport = &http.Transport{Proxy: http.ProxyURL(proxyURL)}
+					fmt.Println("  (fetching via proxy)")
+				}
+			} else {
+				fmt.Println("  (proxy not reachable, fetching direct)")
+			}
+
+			ok, err := rules.FetchAll(client, config.DataDir(), sources)
+			fmt.Printf("  Fetched %d/%d sources\n", ok, len(sources))
+			if err != nil {
+				fmt.Printf("  ⚠ Last error: %v\n", err)
+			}
+
+			files, proxyN, directN := rules.CacheInfo(config.DataDir())
+			fmt.Printf("  Cache: %d files, %d proxy domains, %d direct domains\n", files, proxyN, directN)
+
+			// Regenerate PAC + env.sh with new domains
+			if err := pac.Write(cfg); err != nil {
+				return fmt.Errorf("regenerate PAC: %w", err)
+			}
+			cfg.WriteEnvFile()
+			total := len(cfg.EffectiveWhitelist()) + proxyN
+			fmt.Printf("  ✓ PAC regenerated (%d total domains)\n", total)
 			return nil
 		},
 	}

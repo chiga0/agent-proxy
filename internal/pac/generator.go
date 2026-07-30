@@ -9,10 +9,22 @@ import (
 	"time"
 
 	"github.com/chiga0/agent-proxy/internal/config"
+	"github.com/chiga0/agent-proxy/internal/rules"
 )
 
 func Generate(cfg *config.Config) (string, error) {
 	domains := cfg.EffectiveWhitelist()
+	// Merge cached remote rule domains (action: proxy)
+	seen := make(map[string]bool, len(domains))
+	for _, d := range domains {
+		seen[d] = true
+	}
+	for _, d := range rules.CachedDomains(config.DataDir(), "proxy") {
+		if !seen[d] {
+			seen[d] = true
+			domains = append(domains, d)
+		}
+	}
 	if len(domains) == 0 {
 		return "", fmt.Errorf("whitelist is empty (no presets or custom domains enabled)")
 	}

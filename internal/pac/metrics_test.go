@@ -34,6 +34,9 @@ func TestMetricsEndpoint(t *testing.T) {
 		"agent_proxy_config_presets_total",
 		"agent_proxy_config_noproxy_total",
 		"agent_proxy_tunnel_enabled",
+		"agent_proxy_health_check_ok",
+		"agent_proxy_health_consecutive_failures",
+		"agent_proxy_health_last_recovery_unix",
 	}
 	for _, m := range expectedMetrics {
 		if !strings.Contains(body, m) {

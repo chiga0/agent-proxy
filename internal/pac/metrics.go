@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 
 	"github.com/chiga0/agent-proxy/internal/config"
+	"github.com/chiga0/agent-proxy/internal/health"
 )
 
 // pacRequestsTotal counts the total number of PAC file requests served.
@@ -57,5 +58,24 @@ func metricsHandler() http.HandlerFunc {
 		fmt.Fprintf(w, "# HELP agent_proxy_tunnel_enabled Whether tunnel mode is enabled.\n")
 		fmt.Fprintf(w, "# TYPE agent_proxy_tunnel_enabled gauge\n")
 		fmt.Fprintf(w, "agent_proxy_tunnel_enabled %d\n", tunnelEnabled)
+		fmt.Fprintf(w, "\n")
+
+		healthOK := 0
+		if health.LastCheckOK() {
+			healthOK = 1
+		}
+		fmt.Fprintf(w, "# HELP agent_proxy_health_check_ok Whether the last health check passed.\n")
+		fmt.Fprintf(w, "# TYPE agent_proxy_health_check_ok gauge\n")
+		fmt.Fprintf(w, "agent_proxy_health_check_ok %d\n", healthOK)
+		fmt.Fprintf(w, "\n")
+
+		fmt.Fprintf(w, "# HELP agent_proxy_health_consecutive_failures Consecutive health check failures.\n")
+		fmt.Fprintf(w, "# TYPE agent_proxy_health_consecutive_failures gauge\n")
+		fmt.Fprintf(w, "agent_proxy_health_consecutive_failures %d\n", health.ConsecutiveFailures())
+		fmt.Fprintf(w, "\n")
+
+		fmt.Fprintf(w, "# HELP agent_proxy_health_last_recovery_unix Unix timestamp of last auto-recovery (0 = never).\n")
+		fmt.Fprintf(w, "# TYPE agent_proxy_health_last_recovery_unix gauge\n")
+		fmt.Fprintf(w, "agent_proxy_health_last_recovery_unix %d\n", health.LastRecovery())
 	}
 }

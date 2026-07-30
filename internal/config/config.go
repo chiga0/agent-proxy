@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/chiga0/agent-proxy/internal/rules"
 	"gopkg.in/yaml.v3"
 )
 
@@ -26,10 +27,17 @@ const (
 var domainRe = regexp.MustCompile(`^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$`)
 
 type Config struct {
-	Proxy         ProxyConfig `yaml:"proxy"`
-	Presets       []string    `yaml:"presets"`
-	CustomDomains []string    `yaml:"custom_domains,omitempty"`
-	NoProxy       []string    `yaml:"no_proxy"`
+	Proxy         ProxyConfig  `yaml:"proxy"`
+	Presets       []string     `yaml:"presets"`
+	CustomDomains []string     `yaml:"custom_domains,omitempty"`
+	NoProxy       []string     `yaml:"no_proxy"`
+	DomainRules   []DomainRule `yaml:"domain_rules,omitempty"`
+}
+
+// DomainRule is a remote domain list subscription.
+type DomainRule struct {
+	URL    string `yaml:"url"`
+	Action string `yaml:"action,omitempty"` // "proxy" (default) or "direct"
 }
 
 type ProxyConfig struct {
@@ -351,7 +359,11 @@ func (c *Config) ProxyURL() string {
 }
 
 func (c *Config) NoProxyString() string {
-	return strings.Join(c.NoProxy, ",")
+	entries := c.NoProxy
+	if extra := rules.CachedDomains(DataDir(), "direct"); len(extra) > 0 {
+		entries = append(append([]string{}, entries...), extra...)
+	}
+	return strings.Join(entries, ",")
 }
 
 // ShellQuote wraps a string in single quotes for safe POSIX shell embedding.
