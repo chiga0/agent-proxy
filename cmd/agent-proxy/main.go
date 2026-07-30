@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -303,25 +302,24 @@ func cmdInit() *cobra.Command {
 			reader := bufio.NewReader(os.Stdin)
 			fmt.Print(`
   ┌─────────────────────────────────┐
-  │   agent-proxy 首次配置向导       │
+  │   agent-proxy setup wizard      │
   └─────────────────────────────────┘
 
 `)
 			cfg = config.DefaultConfig()
 
 			// --- Step 1: Server info ---
-			fmt.Print("服务器 IP: ")
+			fmt.Print("Server IP: ")
 			host, _ := reader.ReadString('\n')
 			cfg.Proxy.Host = strings.TrimSpace(host)
 			if cfg.Proxy.Host == "" {
 				return fmt.Errorf("server IP is required")
 			}
-			// Basic validation: reject URLs and spaces
 			if strings.Contains(cfg.Proxy.Host, "://") || strings.Contains(cfg.Proxy.Host, " ") {
 				return fmt.Errorf("invalid server address %q — enter IP or hostname only (no http:// prefix)", cfg.Proxy.Host)
 			}
 
-			fmt.Printf("SSH 用户 [root]: ")
+			fmt.Printf("SSH user [root]: ")
 			sshUser, _ := reader.ReadString('\n')
 			if u := strings.TrimSpace(sshUser); u != "" {
 				cfg.Proxy.SSHUser = u
@@ -329,7 +327,7 @@ func cmdInit() *cobra.Command {
 				cfg.Proxy.SSHUser = "root"
 			}
 
-			fmt.Printf("SSH 密钥路径 [~/.ssh/id_rsa]: ")
+			fmt.Printf("SSH key path [~/.ssh/id_rsa]: ")
 			sshKey, _ := reader.ReadString('\n')
 			sshKey = strings.TrimSpace(sshKey)
 			if sshKey == "" {
@@ -338,14 +336,13 @@ func cmdInit() *cobra.Command {
 			}
 			sshKey = expandHome(sshKey)
 
-			// Validate SSH key (may return a new path if auto-copied)
 			finalKey, err := validateSSHKey(sshKey)
 			if err != nil {
 				return err
 			}
 			cfg.Proxy.SSHKey = finalKey
 
-			fmt.Printf("代理端口 [%d]: ", cfg.Proxy.Port)
+			fmt.Printf("Proxy port [%d]: ", cfg.Proxy.Port)
 			port, _ := reader.ReadString('\n')
 			if p := strings.TrimSpace(port); p != "" {
 				var portNum int
@@ -356,43 +353,43 @@ func cmdInit() *cobra.Command {
 			}
 
 			// --- Step 2: SSH tunnel choice (BEFORE deploy so Squid is configured correctly) ---
-			fmt.Printf("\n─── SSH 隧道 ───\n")
-			fmt.Print("  启用 SSH 加密隧道? (中国用户推荐) [Y/n]: ")
+			fmt.Printf("\n─── SSH Tunnel ───\n")
+			fmt.Print("  Enable SSH encrypted tunnel? (recommended for China users) [Y/n]: ")
 			tunnelAns, _ := reader.ReadString('\n')
 			tunnelAns = strings.TrimSpace(strings.ToLower(tunnelAns))
 			if tunnelAns == "" || tunnelAns == "y" || tunnelAns == "yes" {
 				cfg.Proxy.Tunnel = true
 			} else {
 				cfg.Proxy.Tunnel = false
-				fmt.Println("  ⚠ 直连模式: Squid 将监听公网，仅靠 IP 白名单保护，无代理认证。")
-				fmt.Println("    建议确保 ECS 安全组限制 Squid 端口访问。")
+				fmt.Println("  ⚠ Direct mode: Squid will listen on public IP, protected only by IP whitelist.")
+				fmt.Println("    Ensure your ECS security group restricts access to the Squid port.")
 			}
 
 			// --- Step 3: SSH host key verification ---
-			fmt.Printf("\n─── 主机验证 ───\n")
+			fmt.Printf("\n─── Host Verification ───\n")
 			if err := verifyHostKey(cfg, reader); err != nil {
 				return err
 			}
 
 			// --- Step 4: SSH connectivity check ---
-			fmt.Printf("\n─── 连接检查 ───\n")
-			fmt.Print("  → SSH 连接... ")
+			fmt.Printf("\n─── Connectivity ───\n")
+			fmt.Print("  → SSH connection... ")
 			if err := ecs.CheckSSH(cfg); err != nil {
 				fmt.Println("✗")
 				return fmt.Errorf("SSH connection failed: %w\n  Fix: check IP, user, and key path", err)
 			}
 			fmt.Println("✓")
 
-			// --- Step 4: Deploy Squid (with tunnel choice already set) ---
-			fmt.Printf("\n─── 服务器部署 ───\n")
+			// --- Step 5: Deploy Squid (with tunnel choice already set) ---
+			fmt.Printf("\n─── Server Deployment ───\n")
 			if err := ecs.Deploy(cfg); err != nil {
 				return fmt.Errorf("deploy failed: %w", err)
 			}
 
-			// --- Step 5: Start SSH tunnel if enabled ---
+			// --- Step 6: Start SSH tunnel if enabled ---
 			if cfg.Proxy.Tunnel {
-				fmt.Printf("\n─── SSH 隧道 ───\n")
-				fmt.Print("  → 建立 SSH 隧道... ")
+				fmt.Printf("\n─── SSH Tunnel ───\n")
+				fmt.Print("  → Establishing SSH tunnel... ")
 				if _, err := tunnel.Start(cfg); err != nil {
 					fmt.Println("✗")
 					fmt.Printf("    Warning: %v\n", err)
@@ -402,23 +399,23 @@ func cmdInit() *cobra.Command {
 				}
 			}
 
-			// --- Step 6: Validate and save config ---
+			// --- Step 7: Validate and save config ---
 			if err := cfg.Validate(); err != nil {
 				return fmt.Errorf("config validation: %w", err)
 			}
 			if err := cfg.Save(); err != nil {
 				return err
 			}
-			fmt.Printf("\n  ✓ 配置已保存: %s\n", config.ConfigPath())
+			fmt.Printf("\n  ✓ Config saved: %s\n", config.ConfigPath())
 
-			// --- Step 7: Enable proxy ---
-			fmt.Printf("\n─── 本地启用 ───\n")
+			// --- Step 8: Enable proxy ---
+			fmt.Printf("\n─── Enable Proxy ───\n")
 			if err := proxy.On(cfg); err != nil {
 				return fmt.Errorf("enable proxy: %w", err)
 			}
 
-			// --- Step 8: Verify ---
-			fmt.Printf("\n─── 连通性验证 ───\n")
+			// --- Step 9: Verify ---
+			fmt.Printf("\n─── Connectivity Check ───\n")
 			testDomains := []string{"google.com", "github.com", "youtube.com"}
 			for _, d := range testDomains {
 				fmt.Printf("  → %-20s ", d)
@@ -431,10 +428,10 @@ func cmdInit() *cobra.Command {
 			}
 
 			fmt.Printf(`
-  🎉 配置完成！
-     将以下 source 语句加入 shell profile (~/.zshrc 或 ~/.bashrc) 后，新终端自动生效:
+  🎉 Setup complete!
+     Add the following to your shell profile (~/.zshrc or ~/.bashrc) for auto-activation:
      [ -f "%s" ] && source "%s"
-     当前终端执行: source %s
+     For the current terminal: source %s
 `, config.EnvPath(), config.EnvPath(), config.EnvPath())
 			return nil
 		},
@@ -471,7 +468,7 @@ func validateSSHKey(path string) (string, error) {
 
 	// Check permissions
 	if info.Mode().Perm()&0077 != 0 {
-		fmt.Printf("  → 修复密钥权限 (0%o → 0600)... ", info.Mode().Perm())
+		fmt.Printf("  → Fixing key permissions (0%o → 0600)... ", info.Mode().Perm())
 		if err := os.Chmod(path, 0600); err != nil {
 			fmt.Println("✗")
 			return "", fmt.Errorf("cannot fix key permissions: %w", err)
@@ -489,10 +486,10 @@ func validateSSHKey(path string) (string, error) {
 	for _, dir := range protected {
 		if strings.HasPrefix(path, dir) {
 			dest := home + "/.ssh/" + info.Name()
-			fmt.Printf("\n  ⚠ 密钥在 macOS 受保护目录 (%s)\n", dir)
-			fmt.Printf("    后台服务 (LaunchAgent) 无法访问此目录。\n")
-			fmt.Printf("    建议复制到: %s\n", dest)
-			fmt.Printf("    自动复制? [Y/n]: ")
+			fmt.Printf("\n  ⚠ Key is in a macOS protected directory (%s)\n", dir)
+			fmt.Printf("    Background services (LaunchAgent) cannot access this directory.\n")
+			fmt.Printf("    Recommended: copy to %s\n", dest)
+			fmt.Printf("    Copy automatically? [Y/n]: ")
 			reader := bufio.NewReader(os.Stdin)
 			ans, _ := reader.ReadString('\n')
 			ans = strings.TrimSpace(strings.ToLower(ans))
@@ -505,7 +502,7 @@ func validateSSHKey(path string) (string, error) {
 				if err := os.WriteFile(dest, data, 0600); err != nil {
 					return "", fmt.Errorf("copy key: %w", err)
 				}
-				fmt.Printf("    ✓ 已复制到 %s\n", dest)
+				fmt.Printf("    ✓ Copied to %s\n", dest)
 				return dest, nil
 			}
 			break
@@ -525,38 +522,13 @@ func verifyHostKey(cfg *config.Config, reader *bufio.Reader) error {
 	// Check if host is already in project known_hosts
 	if data, err := os.ReadFile(knownHosts); err == nil {
 		if strings.Contains(string(data), cfg.Proxy.Host) {
-			fmt.Printf("  ✓ 主机 %s 已在 known_hosts 中\n", cfg.Proxy.Host)
+			fmt.Printf("  ✓ Host %s already in known_hosts\n", cfg.Proxy.Host)
 			return nil
 		}
 	}
 
-	// Check system known_hosts for migration
-	home, _ := os.UserHomeDir()
-	systemKH := filepath.Join(home, ".ssh", "known_hosts")
-	if data, err := os.ReadFile(systemKH); err == nil {
-		for _, line := range strings.Split(string(data), "\n") {
-			if strings.HasPrefix(line, cfg.Proxy.Host+" ") || strings.HasPrefix(line, cfg.Proxy.Host+",") {
-				fmt.Printf("  → 在系统 known_hosts 中发现 %s 的密钥\n", cfg.Proxy.Host)
-				fmt.Printf("  迁移到项目专用 known_hosts? [Y/n]: ")
-				ans, _ := reader.ReadString('\n')
-				ans = strings.TrimSpace(strings.ToLower(ans))
-				if ans == "" || ans == "y" || ans == "yes" {
-					f, err := os.OpenFile(knownHosts, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
-					if err != nil {
-						return fmt.Errorf("open known_hosts: %w", err)
-					}
-					fmt.Fprintf(f, "%s\n", line)
-					f.Close()
-					fmt.Printf("  ✓ 已迁移到 %s\n", knownHosts)
-					return nil
-				}
-				break
-			}
-		}
-	}
-
 	// Fetch host key via ssh-keyscan
-	fmt.Printf("  → 获取 %s 主机密钥... ", cfg.Proxy.Host)
+	fmt.Printf("  → Fetching host key from %s... ", cfg.Proxy.Host)
 	out, err := exec.Command("ssh-keyscan", "-T", "5", cfg.Proxy.Host).Output()
 	if err != nil || len(out) == 0 {
 		fmt.Println("✗")
@@ -579,13 +551,13 @@ func verifyHostKey(cfg *config.Config, reader *bufio.Reader) error {
 		return fmt.Errorf("compute fingerprint: %s: %w", strings.TrimSpace(string(fpOut)), err)
 	}
 
-	fmt.Println("\n  主机密钥指纹:")
+	fmt.Println("\n  Host key fingerprint:")
 	for _, line := range strings.Split(strings.TrimSpace(string(fpOut)), "\n") {
 		fmt.Printf("    %s\n", strings.TrimSpace(line))
 	}
 
-	fmt.Printf("\n  请核对以上 SHA256 指纹与 ECS 控制台一致。\n")
-	fmt.Printf("  输入 yes 确认: ")
+	fmt.Printf("\n  Verify the SHA256 fingerprint above matches your ECS console.\n")
+	fmt.Printf("  Type yes to confirm: ")
 	ans, _ := reader.ReadString('\n')
 	ans = strings.TrimSpace(strings.ToLower(ans))
 	if ans != "yes" {
@@ -601,7 +573,7 @@ func verifyHostKey(cfg *config.Config, reader *bufio.Reader) error {
 	if _, err := f.Write(out); err != nil {
 		return fmt.Errorf("write known_hosts: %w", err)
 	}
-	fmt.Printf("  ✓ 已保存到 %s\n", knownHosts)
+	fmt.Printf("  ✓ Saved to %s\n", knownHosts)
 	return nil
 }
 
@@ -834,11 +806,10 @@ func cmdUpdate() *cobra.Command {
 func cmdTrustHost() *cobra.Command {
 	return &cobra.Command{
 		Use:   "trust-host",
-		Short: "Verify and trust the ECS host key (for upgrades or key rotation)",
+		Short: "Verify and trust the ECS host key",
 		Long: `Fetches the ECS host key, displays its SHA256 fingerprint for
 verification against the ECS console, and adds it to the project-specific
-known_hosts file. Run this after upgrading from a version that used
-~/.ssh/known_hosts, or after ECS host key rotation.`,
+known_hosts file. Run this after ECS host key rotation.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			reader := bufio.NewReader(os.Stdin)
 			return verifyHostKey(cfg, reader)

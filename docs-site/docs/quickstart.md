@@ -95,13 +95,13 @@ The interactive wizard walks you through everything. Here's what each step does 
 
 ```
   ┌─────────────────────────────────┐
-  │   agent-proxy 首次配置向导       │
+  │   agent-proxy setup wizard      │
   └─────────────────────────────────┘
 
-服务器 IP: 1.2.3.4
-SSH 用户 [root]:
-SSH 密钥路径 [~/.ssh/id_rsa]: ~/.ssh/id_ed25519
-代理端口 [18443]:
+Server IP: 1.2.3.4
+SSH user [root]:
+SSH key path [~/.ssh/id_rsa]: ~/.ssh/id_ed25519
+Proxy port [18443]:
 ```
 
 - **Server IP**: Your ECS public IP address (no `http://` prefix).
@@ -112,8 +112,8 @@ SSH 密钥路径 [~/.ssh/id_rsa]: ~/.ssh/id_ed25519
 ### 2b. SSH tunnel choice
 
 ```
-─── SSH 隧道 ───
-  启用 SSH 加密隧道? (中国用户推荐) [Y/n]:
+─── SSH Tunnel ───
+  Enable SSH encrypted tunnel? (recommended for China users) [Y/n]:
 ```
 
 Press Enter to accept the default (yes). This is **strongly recommended** for users in China:
@@ -127,15 +127,15 @@ If you choose "n" (direct mode), Squid listens on all interfaces and is protecte
 ### 2c. Host key verification
 
 ```
-─── 主机验证 ───
-  → 获取 1.2.3.4 主机密钥... ✓
+─── Host Verification ───
+  → Fetching host key from 1.2.3.4... ✓
 
-  主机密钥指纹:
+  Host key fingerprint:
     256 SHA256:AbCdEf123456789... (ED25519)
 
-  请核对以上 SHA256 指纹与 ECS 控制台一致。
-  输入 yes 确认: yes
-  ✓ 已保存到 ~/.config/agent-proxy/known_hosts
+  Verify the SHA256 fingerprint above matches your ECS console.
+  Type yes to confirm: yes
+  ✓ Saved to ~/.config/agent-proxy/known_hosts
 ```
 
 The wizard fetches your ECS host key and displays its SHA256 fingerprint. **Verify this matches your ECS console** before typing `yes`. This prevents man-in-the-middle attacks on your SSH connection.
@@ -145,15 +145,14 @@ The key is stored in a project-specific `known_hosts` file (`~/.config/agent-pro
 ### 2d. SSH connectivity + Squid deployment
 
 ```
-─── 连接检查 ───
-  → SSH 连接... ✓
+─── Connectivity ───
+  → SSH connection... ✓
 
-─── 服务器部署 ───
+─── Server Deployment ───
   → Connectivity... ✓
   → Install Squid... ✓
   → System tuning... ✓
   → Write Squid config... ✓
-  → Cleanup legacy... ✓
 ```
 
 The wizard SSHes into your ECS and:
@@ -162,17 +161,16 @@ The wizard SSHes into your ECS and:
 2. Enables TCP fast open for better performance
 3. Writes a deny-first Squid config (loopback-only in tunnel mode)
 4. Validates the config syntax, restarts Squid, and verifies it's running
-5. Cleans up any legacy Basic auth files from older versions
 
 ### 2e. Tunnel + local activation
 
 ```
-─── SSH 隧道 ───
-  → 建立 SSH 隧道... ✓
+─── SSH Tunnel ───
+  → Establishing SSH tunnel... ✓
 
-  ✓ 配置已保存: ~/.config/agent-proxy/config.yaml
+  ✓ Config saved: ~/.config/agent-proxy/config.yaml
 
-─── 本地启用 ───
+─── Enable Proxy ───
   → SSH tunnel... ✓
   → PAC server... ✓
 
@@ -187,12 +185,12 @@ The wizard SSHes into your ECS and:
 ### 2f. Connectivity verification
 
 ```
-─── 连通性验证 ───
+─── Connectivity Check ───
   → google.com           ✓ 200 0.35s
   → github.com           ✓ 200 0.28s
   → youtube.com          ✓ 200 0.41s
 
-  🎉 配置完成！
+  🎉 Setup complete!
 ```
 
 ## Step 3: Set up your shell profile
@@ -278,17 +276,11 @@ Here's a summary of everything `agent-proxy init` set up:
 ```bash
 # Self-update with SHA-256 verification
 agent-proxy update
-```
 
-### Upgrading from < v0.6.0
-
-Two extra steps are needed for older installations:
-
-```bash
-# Migrate SSH host key to project-specific known_hosts
+# Verify and trust the ECS SSH host key (after key rotation)
 agent-proxy trust-host
 
-# Rewrite ECS Squid config for loopback-only binding
+# Rewrite ECS Squid config (e.g., switching to tunnel mode)
 agent-proxy setup
 ```
 
@@ -297,4 +289,4 @@ agent-proxy setup
 - Browse the [Commands](commands.md) reference for all available commands
 - Customize your [Configuration](configuration.md) (add domains, adjust no_proxy)
 - Explore the [Web Dashboard](api.md#dashboard) at `http://127.0.0.1:18080/dashboard`
-- Set up [Monitoring](tutorials.md#tutorial-4-monitoring-with-prometheus-grafana) with Prometheus
+- Set up [Monitoring](tutorials.md#tutorial-3-monitoring-with-prometheus-grafana) with Prometheus

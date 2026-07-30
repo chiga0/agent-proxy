@@ -49,15 +49,6 @@ func loadPACStateFile() (pacStateFile, error) {
 	}
 	var m pacStateFile
 	if err := json.Unmarshal(data, &m); err != nil {
-		// Try legacy single-service format
-		var legacy struct {
-			Service     string `json:"service"`
-			OriginalURL string `json:"original_url"`
-			WasEnabled  bool   `json:"was_enabled"`
-		}
-		if json.Unmarshal(data, &legacy) == nil && legacy.Service != "" {
-			return pacStateFile{legacy.Service: {OriginalURL: legacy.OriginalURL, WasEnabled: legacy.WasEnabled}}, nil
-		}
 		return nil, fmt.Errorf("corrupted PAC state file: %w", err)
 	}
 	return m, nil

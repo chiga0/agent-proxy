@@ -57,11 +57,11 @@ agent-proxy init
 When prompted:
 
 ```
-服务器 IP: YOUR_ECS_IP
-SSH 用户 [root]:                    ← press Enter
-SSH 密钥路径 [~/.ssh/id_rsa]: ~/.ssh/ecs-singapore.pem
-代理端口 [18443]:                   ← press Enter
-启用 SSH 加密隧道? [Y/n]:          ← press Enter (yes)
+Server IP: YOUR_ECS_IP
+SSH user [root]:                    ← press Enter
+SSH key path [~/.ssh/id_rsa]: ~/.ssh/ecs-singapore.pem
+Proxy port [18443]:                 ← press Enter
+Enable SSH encrypted tunnel? (recommended for China users) [Y/n]: ← press Enter (yes)
 ```
 
 Verify the host key fingerprint against the Alibaba Cloud console (Instance → Security → Key Pair fingerprint), then type `yes`.
@@ -97,70 +97,7 @@ In tunnel mode, only SSH (port 22) needs to be open. Verify your security group:
 
 ---
 
-## Tutorial 2: Upgrading from v0.5.x to v0.7.x
-
-Versions before v0.6.0 used Basic auth and system `known_hosts`. This tutorial migrates cleanly.
-
-### Step 1: Update the binary
-
-```bash
-agent-proxy update
-agent-proxy version
-# Expected: agent-proxy v0.7.x
-```
-
-### Step 2: Migrate SSH host keys
-
-v0.6.0+ uses a project-specific `known_hosts` file instead of `~/.ssh/known_hosts`:
-
-```bash
-agent-proxy trust-host
-```
-
-If your ECS key is found in `~/.ssh/known_hosts`, the command offers to migrate it:
-
-```
-  → 在系统 known_hosts 中发现 1.2.3.4 的密钥
-  迁移到项目专用 known_hosts? [Y/n]: y
-  ✓ 已迁移到 /Users/you/.config/agent-proxy/known_hosts
-```
-
-### Step 3: Redeploy Squid (loopback-only)
-
-v0.6.0+ uses loopback-only Squid in tunnel mode (no public data port):
-
-```bash
-agent-proxy setup
-```
-
-This rewrites the Squid config, removing Basic auth and binding to `127.0.0.1` only.
-
-### Step 4: Clean up legacy config
-
-The config loader automatically:
-
-- Strips `proxy.user` and `proxy.password` fields (Basic auth removed)
-- Migrates flat `whitelist` arrays to `presets` + `custom_domains`
-
-Verify:
-
-```bash
-agent-proxy config-validate
-# Should show valid config with presets listed
-```
-
-### Step 5: Restart the proxy
-
-```bash
-agent-proxy off
-agent-proxy on
-agent-proxy doctor
-# Should show all checks passing, Squid loopback-only confirmed
-```
-
----
-
-## Tutorial 3: Multi-ECS Failover Setup
+## Tutorial 2: Multi-ECS Failover Setup
 
 Set up a secondary ECS that agent-proxy automatically falls back to when the primary is unreachable.
 
@@ -242,7 +179,7 @@ Expected output when primary is down:
 
 ---
 
-## Tutorial 4: Monitoring with Prometheus + Grafana
+## Tutorial 3: Monitoring with Prometheus + Grafana
 
 agent-proxy exposes Prometheus metrics on the PAC server. This tutorial sets up scraping and a dashboard.
 
@@ -345,7 +282,7 @@ groups:
 
 ---
 
-## Tutorial 5: Using the Web Dashboard
+## Tutorial 4: Using the Web Dashboard
 
 agent-proxy includes a self-contained web dashboard — no external dependencies, no build step.
 

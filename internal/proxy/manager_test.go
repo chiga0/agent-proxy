@@ -156,38 +156,6 @@ func TestLoadPACStateFileCorrupted(t *testing.T) {
 	}
 }
 
-func TestLoadPACStateFileLegacyFormat(t *testing.T) {
-	setupTestHome(t)
-
-	// Write legacy single-service format
-	legacy := map[string]interface{}{
-		"service":      "Wi-Fi",
-		"original_url": "http://legacy.pac",
-		"was_enabled":  true,
-	}
-	data, _ := json.Marshal(legacy)
-	os.MkdirAll(config.DataDir(), 0700)
-	os.WriteFile(pacStatePath(), data, 0600)
-
-	loaded, err := loadPACStateFile()
-	if err != nil {
-		t.Fatalf("loadPACStateFile() legacy error: %v", err)
-	}
-	if len(loaded) != 1 {
-		t.Fatalf("got %d services, want 1", len(loaded))
-	}
-	snap, ok := loaded["Wi-Fi"]
-	if !ok {
-		t.Fatal("missing Wi-Fi service in legacy migration")
-	}
-	if snap.OriginalURL != "http://legacy.pac" {
-		t.Errorf("OriginalURL = %q, want http://legacy.pac", snap.OriginalURL)
-	}
-	if !snap.WasEnabled {
-		t.Error("WasEnabled = false, want true")
-	}
-}
-
 func TestLoadPACStateFileNotExist(t *testing.T) {
 	setupTestHome(t)
 

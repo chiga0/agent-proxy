@@ -275,7 +275,7 @@ scrape_configs:
     metrics_path: /metrics
 ```
 
-See [Tutorial 4: Monitoring with Prometheus + Grafana](tutorials.md#tutorial-4-monitoring-with-prometheus-grafana) for a complete setup guide.
+See [Tutorial 3: Monitoring with Prometheus + Grafana](tutorials.md#tutorial-3-monitoring-with-prometheus-grafana) for a complete setup guide.
 
 ---
 

@@ -351,14 +351,6 @@ proxy:
 
 Useful when port 18443 is already in use by another service. The PAC file and env.sh will point to `127.0.0.1:28443`.
 
-## Config Migration
-
-agent-proxy automatically handles two legacy migrations on load:
-
-1. **`whitelist` → `custom_domains` + presets:** Old configs with a flat `whitelist` array are migrated to the preset system. Domains that match a preset are absorbed; the rest become `custom_domains`.
-
-2. **Basic auth removal:** Old configs with `proxy.user` and `proxy.password` fields (removed in v0.6.0) are automatically stripped and saved.
-
 ## Validation
 
 Validate your config without making changes:

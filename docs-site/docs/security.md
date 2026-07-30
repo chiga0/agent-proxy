@@ -29,7 +29,7 @@ We will acknowledge receipt within 48 hours and provide a timeline for a fix.
 | **Tampered release binaries** | SHA-256 checksums verified by installer (fail-closed); checksums signed with cosign |
 | **CI supply chain attacks** | GitHub Actions pinned to commit SHA; GoReleaser version pinned |
 | **Config file disclosure** | `0600` permissions on config, env.sh, known_hosts, PID files, PAC state |
-| **Legacy credential exposure** | Basic auth (`proxy.user`/`proxy.password`) removed entirely in v0.6.0; auto-stripped on config load |
+| **Legacy credential exposure** | Basic auth (`proxy.user`/`proxy.password`) removed entirely in v0.6.0; fields no longer exist in config schema |
 
 ### What we do NOT protect against
 

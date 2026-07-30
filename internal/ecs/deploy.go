@@ -26,11 +26,6 @@ func Deploy(cfg *config.Config) error {
 			return sshRun(cfg, `grep -q tcp_fastopen /etc/sysctl.conf 2>/dev/null || echo "net.ipv4.tcp_fastopen = 3" >> /etc/sysctl.conf; sysctl -w net.ipv4.tcp_fastopen=3 >/dev/null 2>&1`)
 		}},
 		{"Write Squid config", func() error { return writeSquidConfig(cfg) }},
-		// Note: writeSquidConfig → deploySquidConfig already restarts Squid.
-		// Clean up stale Basic auth artifacts from previous versions.
-		{"Cleanup legacy", func() error {
-			return sshRun(cfg, "rm -f /etc/squid/passwd")
-		}},
 	}
 
 	for _, s := range steps {

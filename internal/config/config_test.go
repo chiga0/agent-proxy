@@ -233,62 +233,6 @@ func TestValidate(t *testing.T) {
 	}
 }
 
-func TestMergeNoProxy(t *testing.T) {
-	existing := []string{"localhost", ".aliyun.com"}
-	defaults := []string{"localhost", ".aliyun.com", ".aliyuncs.com", ".new-domain.com"}
-	merged := mergeNoProxy(existing, defaults)
-	if len(merged) != 4 {
-		t.Fatalf("merged len = %d, want 4: %v", len(merged), merged)
-	}
-	// Existing entries preserved in order
-	if merged[0] != "localhost" || merged[1] != ".aliyun.com" {
-		t.Errorf("existing order changed: %v", merged[:2])
-	}
-	// New defaults appended
-	if merged[2] != ".aliyuncs.com" || merged[3] != ".new-domain.com" {
-		t.Errorf("new defaults not appended correctly: %v", merged[2:])
-	}
-	// Idempotent
-	merged2 := mergeNoProxy(merged, defaults)
-	if len(merged2) != len(merged) {
-		t.Errorf("second merge should be no-op, got len %d", len(merged2))
-	}
-}
-
-func TestLoadMergesNewNoProxyDefaults(t *testing.T) {
-	tmpDir := t.TempDir()
-	t.Setenv("HOME", tmpDir)
-	t.Setenv("USERPROFILE", tmpDir)
-
-	// Save a config with a subset of no_proxy (simulating older version)
-	cfg := DefaultConfig()
-	cfg.Proxy.Host = "10.0.0.1"
-	cfg.NoProxy = []string{"localhost", "127.0.0.1"} // missing most defaults
-	if err := cfg.Save(); err != nil {
-		t.Fatalf("Save: %v", err)
-	}
-
-	loaded, err := Load()
-	if err != nil {
-		t.Fatalf("Load: %v", err)
-	}
-
-	// Should have merged in the missing defaults
-	defaults := DefaultConfig().NoProxy
-	for _, d := range defaults {
-		found := false
-		for _, n := range loaded.NoProxy {
-			if n == d {
-				found = true
-				break
-			}
-		}
-		if !found {
-			t.Errorf("default no_proxy entry %q not merged", d)
-		}
-	}
-}
-
 func TestWriteEnvFileIncludesNpmProxy(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("HOME", tmpDir)

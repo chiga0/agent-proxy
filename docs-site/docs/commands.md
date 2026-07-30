@@ -225,7 +225,6 @@ agent-proxy setup
    - Atomic replace via `mv`
    - Restarts Squid and health-checks
    - **Rolls back automatically** if restart fails
-5. **Cleanup legacy** — removes old Basic auth password files
 
 **Sample output:**
 
@@ -236,7 +235,6 @@ Deploying to 1.2.3.4:18443...
   → Install Squid... ✓
   → System tuning... ✓
   → Write Squid config... ✓
-  → Cleanup legacy... ✓
 
 ✓ Setup complete. Next: agent-proxy on
 ```
@@ -253,25 +251,24 @@ agent-proxy trust-host
 
 **When to use:**
 
-- After upgrading from a version that used `~/.ssh/known_hosts`
 - After ECS host key rotation (e.g., server rebuild)
 - If you see `host not in project known_hosts` errors
 
 **Sample output:**
 
 ```
-  → 获取 1.2.3.4 主机密钥... ✓
+  → Fetching host key from 1.2.3.4... ✓
 
-  主机密钥指纹:
+  Host key fingerprint:
     256 SHA256:xR3jKq9mN2vB8wY5tL7pA1cD4fG6hJ0kM3nQ9sU2wX8 (ED25519)
     3072 SHA256:aB1cD2eF3gH4iJ5kL6mN7oP8qR9sT0uV1wX2yZ3aB4c (RSA)
 
-  请核对以上 SHA256 指纹与 ECS 控制台一致。
-  输入 yes 确认: yes
-  ✓ 已保存到 /Users/you/.config/agent-proxy/known_hosts
+  Verify the SHA256 fingerprint above matches your ECS console.
+  Type yes to confirm: yes
+  ✓ Saved to /Users/you/.config/agent-proxy/known_hosts
 ```
 
-If the host key is already in the project `known_hosts`, it reports success immediately. If found in the system `~/.ssh/known_hosts`, it offers to migrate the entry.
+If the host key is already in the project `known_hosts`, it reports success immediately.
 
 ---
 

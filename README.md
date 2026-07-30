@@ -186,10 +186,8 @@ no_proxy: [localhost, 127.0.0.1, .alibaba-inc.com, .baidu.com, ...]
 
 ```bash
 agent-proxy update          # Self-update with SHA-256 verification
-
-# After upgrading from < v0.6.0:
-agent-proxy trust-host      # Migrate SSH host key to project known_hosts
-agent-proxy setup           # Rewrite ECS Squid to loopback-only
+agent-proxy trust-host      # Verify and trust the ECS SSH host key
+agent-proxy setup           # Rewrite ECS Squid config (e.g., after mode change)
 ```
 
 ## Security

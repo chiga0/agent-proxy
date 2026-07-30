@@ -185,11 +185,9 @@ DNS resolution happens at connection time. This is useful if your ECS has a dyna
 
 - **Presets** are curated domain groups maintained by agent-proxy (`ai`, `dev`, `search`, `cloud`, `media`). They're enabled/disabled as groups via `agent-proxy preset enable/disable`.
 
-- **Custom domains** (formerly `whitelist`) are individual domains you add via `agent-proxy whitelist add`. They're always active as long as they're in the list.
+- **Custom domains** are individual domains you add via `agent-proxy whitelist add`. They're always active as long as they're in the list.
 
 The effective whitelist is the union of all enabled preset domains + all custom domains.
-
-Old configs with a flat `whitelist` array are automatically migrated to presets + custom domains on load.
 
 ---
 

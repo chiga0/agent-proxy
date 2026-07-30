@@ -28,8 +28,6 @@ type Config struct {
 	Presets       []string    `yaml:"presets"`
 	CustomDomains []string    `yaml:"custom_domains,omitempty"`
 	NoProxy       []string    `yaml:"no_proxy"`
-	// Legacy: migrated to CustomDomains on load
-	Whitelist []string `yaml:"whitelist,omitempty"`
 }
 
 type ProxyConfig struct {
@@ -226,51 +224,6 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("parse config: %w", err)
 	}
 
-	// Migrate legacy whitelist → custom_domains + default presets
-	if len(cfg.Whitelist) > 0 && len(cfg.Presets) == 0 {
-		cfg.Presets = DefaultPresets()
-		presetSet := make(map[string]bool)
-		for _, d := range PresetDomains(cfg.Presets) {
-			presetSet[d] = true
-		}
-		for _, d := range cfg.Whitelist {
-			if !presetSet[d] {
-				cfg.CustomDomains = append(cfg.CustomDomains, d)
-			}
-		}
-		cfg.Whitelist = nil
-		if err := cfg.Save(); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: failed to save migrated config: %v\n", err)
-		}
-	}
-
-	// Migrate legacy Basic auth credentials: detect and strip user/password
-	// fields that existed in versions prior to the security audit fix.
-	var raw map[string]interface{}
-	if yaml.Unmarshal(data, &raw) == nil {
-		if proxy, ok := raw["proxy"].(map[string]interface{}); ok {
-			_, hasUser := proxy["user"]
-			_, hasPass := proxy["password"]
-			if hasUser || hasPass {
-				if err := cfg.Save(); err != nil {
-					fmt.Fprintf(os.Stderr, "Warning: failed to remove legacy Basic auth credentials: %v\n", err)
-				} else {
-					fmt.Fprintf(os.Stderr, "Notice: removed legacy Basic auth credentials from config (no longer supported)\n")
-				}
-			}
-		}
-	}
-
-	// Merge new default no_proxy entries added in newer versions.
-	// Existing user entries are preserved; only missing defaults are appended.
-	if merged := mergeNoProxy(cfg.NoProxy, DefaultConfig().NoProxy); len(merged) > len(cfg.NoProxy) {
-		cfg.NoProxy = merged
-		if err := cfg.Save(); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: failed to save merged no_proxy: %v\n", err)
-		}
-	}
-
-	// Validate config consistency (warn but don't block for backward compat)
 	if err := cfg.Validate(); err != nil && cfg.Proxy.Host != "" {
 		fmt.Fprintf(os.Stderr, "Warning: config validation: %v\n", err)
 	}
@@ -322,22 +275,6 @@ func (c *Config) Validate() error {
 		}
 	}
 	return nil
-}
-
-// mergeNoProxy returns existing entries plus any defaults not already present.
-func mergeNoProxy(existing, defaults []string) []string {
-	seen := make(map[string]bool, len(existing))
-	for _, e := range existing {
-		seen[e] = true
-	}
-	merged := make([]string, len(existing))
-	copy(merged, existing)
-	for _, d := range defaults {
-		if !seen[d] {
-			merged = append(merged, d)
-		}
-	}
-	return merged
 }
 
 func IsValidDomain(d string) bool {
