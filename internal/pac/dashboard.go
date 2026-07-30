@@ -3,10 +3,21 @@ package pac
 import (
 	"encoding/json"
 	"net/http"
+	"sync"
+	"time"
 
 	"github.com/chiga0/agent-proxy/internal/config"
 	"github.com/chiga0/agent-proxy/internal/ecs"
 )
+
+// statsCache avoids triggering an SSH connection on every /api/stats request.
+var statsCache struct {
+	mu      sync.Mutex
+	body    []byte
+	expires time.Time
+}
+
+const statsCacheTTL = 60 * time.Second
 
 // registerDashboard adds the dashboard and API routes to the mux.
 // These endpoints do NOT require the nonce header.
@@ -68,6 +79,16 @@ func apiStatusHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiStatsHandler(w http.ResponseWriter, r *http.Request) {
+	statsCache.mu.Lock()
+	if statsCache.body != nil && time.Now().Before(statsCache.expires) {
+		body := statsCache.body
+		statsCache.mu.Unlock()
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(body)
+		return
+	}
+	statsCache.mu.Unlock()
+
 	cfg, err := config.Load()
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
@@ -99,8 +120,15 @@ func apiStatsHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	body, _ := json.Marshal(statsResponse{Domains: domains})
+
+	statsCache.mu.Lock()
+	statsCache.body = body
+	statsCache.expires = time.Now().Add(statsCacheTTL)
+	statsCache.mu.Unlock()
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(statsResponse{Domains: domains})
+	w.Write(body)
 }
 
 // dashboardHTML is the self-contained single-page dashboard (inline CSS + JS).

@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -173,11 +174,14 @@ func ServeForeground() error {
 	mux.HandleFunc("/metrics", metricsHandler())
 	registerDashboard(mux)
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	// Start config watcher for hot-reload
 	go watchConfigAndReloadPAC()
 
 	// Start health check + auto-recovery loop
-	go health.Watch()
+	go health.Watch(ctx)
 
 	s := &http.Server{Handler: mux}
 	return s.Serve(ln)
@@ -205,9 +209,11 @@ func watchConfigAndReloadPAC() {
 		// Config changed — reload and regenerate PAC + env.sh
 		cfg, err := config.Load()
 		if err != nil {
+			log.Printf("[config-watcher] load error: %v", err)
 			continue
 		}
 		if err := Write(cfg); err != nil {
+			log.Printf("[config-watcher] PAC write error: %v", err)
 			continue
 		}
 		cfg.WriteEnvFile() // best-effort env.sh hot-reload

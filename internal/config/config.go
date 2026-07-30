@@ -71,6 +71,54 @@ func (p *ProxyConfig) LocalPort() int {
 	return p.Port
 }
 
+// HostConfig is a resolved SSH endpoint (primary or fallback).
+type HostConfig struct {
+	Host    string
+	SSHKey  string
+	SSHUser string
+}
+
+func (h HostConfig) Target() string {
+	user := h.SSHUser
+	if user == "" {
+		user = "root"
+	}
+	return fmt.Sprintf("%s@%s", user, h.Host)
+}
+
+func (h HostConfig) BaseArgs() []string {
+	args := []string{
+		"-o", "StrictHostKeyChecking=yes",
+		"-o", "UserKnownHostsFile=" + KnownHostsPath(),
+		"-o", "ConnectTimeout=10",
+	}
+	if h.SSHKey != "" {
+		args = append(args, "-i", h.SSHKey)
+	}
+	return args
+}
+
+// Primary returns the resolved primary host config.
+func (p *ProxyConfig) Primary() HostConfig {
+	return HostConfig{Host: p.Host, SSHKey: p.SSHKey, SSHUser: p.SSHUser}
+}
+
+// Fallback returns the resolved fallback host config, or nil if not configured.
+func (p *ProxyConfig) Fallback() *HostConfig {
+	if p.FallbackHost == "" {
+		return nil
+	}
+	key := p.FallbackSSHKey
+	if key == "" {
+		key = p.SSHKey
+	}
+	user := p.FallbackSSHUser
+	if user == "" {
+		user = p.SSHUser
+	}
+	return &HostConfig{Host: p.FallbackHost, SSHKey: key, SSHUser: user}
+}
+
 // SSHUserOrRoot returns the SSH user, defaulting to "root".
 func (p *ProxyConfig) SSHUserOrRoot() string {
 	if p.SSHUser != "" {
@@ -87,20 +135,12 @@ func (p *ProxyConfig) SSHControlPath() string {
 // SSHBaseArgs returns common SSH connection arguments shared by tunnel,
 // deploy, autostart, and trace.
 func (p *ProxyConfig) SSHBaseArgs() []string {
-	args := []string{
-		"-o", "StrictHostKeyChecking=yes",
-		"-o", "UserKnownHostsFile=" + KnownHostsPath(),
-		"-o", "ConnectTimeout=10",
-	}
-	if p.SSHKey != "" {
-		args = append(args, "-i", p.SSHKey)
-	}
-	return args
+	return p.Primary().BaseArgs()
 }
 
 // SSHTarget returns the user@host string for SSH commands.
 func (p *ProxyConfig) SSHTarget() string {
-	return fmt.Sprintf("%s@%s", p.SSHUserOrRoot(), p.Host)
+	return p.Primary().Target()
 }
 
 // HasFallback returns true if a fallback host is configured.
@@ -118,29 +158,26 @@ func (p *ProxyConfig) FallbackSSHUserOrRoot() string {
 
 // FallbackSSHKeyOrPrimary returns the fallback SSH key, defaulting to primary.
 func (p *ProxyConfig) FallbackSSHKeyOrPrimary() string {
-	if p.FallbackSSHKey != "" {
-		return p.FallbackSSHKey
+	if fb := p.Fallback(); fb != nil {
+		return fb.SSHKey
 	}
 	return p.SSHKey
 }
 
 // FallbackSSHTarget returns the user@host for the fallback host.
 func (p *ProxyConfig) FallbackSSHTarget() string {
-	return fmt.Sprintf("%s@%s", p.FallbackSSHUserOrRoot(), p.FallbackHost)
+	if fb := p.Fallback(); fb != nil {
+		return fb.Target()
+	}
+	return ""
 }
 
 // FallbackSSHBaseArgs returns SSH args for the fallback host.
 func (p *ProxyConfig) FallbackSSHBaseArgs() []string {
-	args := []string{
-		"-o", "StrictHostKeyChecking=yes",
-		"-o", "UserKnownHostsFile=" + KnownHostsPath(),
-		"-o", "ConnectTimeout=10",
+	if fb := p.Fallback(); fb != nil {
+		return fb.BaseArgs()
 	}
-	key := p.FallbackSSHKeyOrPrimary()
-	if key != "" {
-		args = append(args, "-i", key)
-	}
-	return args
+	return p.SSHBaseArgs()
 }
 
 func homeDir() string {
@@ -223,17 +260,12 @@ func (c *Config) EffectiveWhitelist() []string {
 	return domains
 }
 
+// Load reads and parses the config file. Returns an error if the file
+// does not exist — daemon goroutines use this to avoid side effects.
 func Load() (*Config, error) {
 	path := ConfigPath()
 	data, err := os.ReadFile(path)
 	if err != nil {
-		if os.IsNotExist(err) {
-			cfg := DefaultConfig()
-			if err := cfg.Save(); err != nil {
-				return nil, fmt.Errorf("create default config: %w", err)
-			}
-			return cfg, nil
-		}
 		return nil, fmt.Errorf("read config: %w", err)
 	}
 
@@ -246,6 +278,26 @@ func Load() (*Config, error) {
 		fmt.Fprintf(os.Stderr, "Warning: config validation: %v\n", err)
 	}
 
+	return cfg, nil
+}
+
+// LoadOrCreate reads the config, creating a default one on first run.
+// Used by CLI entry points (PersistentPreRunE) for zero-config experience.
+func LoadOrCreate() (*Config, error) {
+	cfg, err := Load()
+	if err == nil {
+		return cfg, nil
+	}
+	if !os.IsNotExist(fmt.Errorf("%w", err)) {
+		// Distinguish "not exist" from parse errors
+		if _, statErr := os.Stat(ConfigPath()); statErr == nil {
+			return nil, err // file exists but failed to parse
+		}
+	}
+	cfg = DefaultConfig()
+	if saveErr := cfg.Save(); saveErr != nil {
+		return nil, fmt.Errorf("create default config: %w", saveErr)
+	}
 	return cfg, nil
 }
 
@@ -358,6 +410,7 @@ func (c *Config) ProxyURL() string {
 	return "http://" + net.JoinHostPort(c.Proxy.EffectiveHost(), strconv.Itoa(c.Proxy.LocalPort()))
 }
 
+// NoProxyString joins no_proxy entries. Note: reads cached rule files from disk.
 func (c *Config) NoProxyString() string {
 	entries := c.NoProxy
 	if extra := rules.CachedDomains(DataDir(), "direct"); len(extra) > 0 {

@@ -49,7 +49,7 @@ Quick start:
 				return nil
 			}
 			var err error
-			cfg, err = config.Load()
+			cfg, err = config.LoadOrCreate()
 			if err != nil {
 				// Emergency off: allow cleanup even with corrupted config
 				if cmd.Name() == "off" {
@@ -1146,8 +1146,7 @@ After fetching, the PAC file and env.sh are regenerated automatically.`,
 				return fmt.Errorf("regenerate PAC: %w", err)
 			}
 			cfg.WriteEnvFile()
-			total := len(cfg.EffectiveWhitelist()) + proxyN
-			fmt.Printf("  ✓ PAC regenerated (%d total domains)\n", total)
+			fmt.Printf("  ✓ PAC regenerated\n")
 			return nil
 		},
 	}

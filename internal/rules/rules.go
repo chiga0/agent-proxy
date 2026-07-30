@@ -68,8 +68,11 @@ func fetch(client *http.Client, url string) ([]string, error) {
 		if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "//") {
 			continue
 		}
-		// Strip v2fly-style prefixes: "full:", "domain:", "regexp:", "keyword:"
-		for _, prefix := range []string{"full:", "domain:", "regexp:", "keyword:"} {
+		// Strip v2fly-style prefixes; skip regexp/keyword (not expressible as PAC dnsDomainIs)
+		if strings.HasPrefix(line, "regexp:") || strings.HasPrefix(line, "keyword:") {
+			continue
+		}
+		for _, prefix := range []string{"full:", "domain:"} {
 			if strings.HasPrefix(line, prefix) {
 				line = strings.TrimPrefix(line, prefix)
 				break
