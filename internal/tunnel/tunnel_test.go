@@ -180,7 +180,7 @@ func TestPortOccupiedTrue(t *testing.T) {
 
 func TestPortOccupiedTunnelLocalPort(t *testing.T) {
 	// When tunnel mode is enabled, PortOccupied should check TunnelLocalPort
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	ln, err := net.Listen("tcp", "[::1]:0")
 	if err != nil {
 		t.Fatalf("failed to start listener: %v", err)
 	}

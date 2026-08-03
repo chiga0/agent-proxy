@@ -115,15 +115,15 @@ func TestEffectiveHost(t *testing.T) {
 		t.Errorf("EffectiveHost without tunnel = %q", p.EffectiveHost())
 	}
 	p.Tunnel = true
-	if p.EffectiveHost() != "127.0.0.1" {
-		t.Errorf("EffectiveHost with tunnel = %q, want 127.0.0.1", p.EffectiveHost())
+	if p.EffectiveHost() != "::1" {
+		t.Errorf("EffectiveHost with tunnel = %q, want ::1", p.EffectiveHost())
 	}
 }
 
 func TestProxyURLWithTunnel(t *testing.T) {
 	cfg := &Config{Proxy: ProxyConfig{Host: "1.2.3.4", Port: 18443, Tunnel: true}}
-	if cfg.ProxyURL() != "http://127.0.0.1:18443" {
-		t.Errorf("ProxyURL with tunnel = %q, want 127.0.0.1", cfg.ProxyURL())
+	if cfg.ProxyURL() != "http://[::1]:18443" {
+		t.Errorf("ProxyURL with tunnel = %q, want http://[::1]:18443", cfg.ProxyURL())
 	}
 }
 

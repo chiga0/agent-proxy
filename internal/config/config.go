@@ -57,7 +57,7 @@ type ProxyConfig struct {
 // EffectiveHost returns the proxy host for client connections.
 func (p *ProxyConfig) EffectiveHost() string {
 	if p.Tunnel {
-		return "127.0.0.1"
+		return "::1" // IPv6 loopback: avoids IPv4 loopback interception by enterprise security agents
 	}
 	return p.Host
 }
@@ -134,7 +134,7 @@ func (p *ProxyConfig) SSHUserOrRoot() string {
 
 // SSHControlPath returns the ControlPath socket for SSH connection multiplexing.
 func (p *ProxyConfig) SSHControlPath() string {
-	return filepath.Join(DataDir(), "ssh-ctrl-%r@%h:%p")
+	return filepath.Join(DataDir(), "sockets", "%r@%h-%p")
 }
 
 // SSHBaseArgs returns common SSH connection arguments shared by tunnel,

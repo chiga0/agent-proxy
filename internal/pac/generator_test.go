@@ -83,9 +83,9 @@ func TestGenerateTunnelMode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Generate: %v", err)
 	}
-	// In tunnel mode, EffectiveHost() returns 127.0.0.1
-	if !strings.Contains(pac, "PROXY 127.0.0.1:18443") {
-		t.Errorf("tunnel mode should use 127.0.0.1, got:\n%s", pac)
+	// In tunnel mode, EffectiveHost() returns ::1 (IPv6 loopback)
+	if !strings.Contains(pac, "PROXY [::1]:18443") {
+		t.Errorf("tunnel mode should use [::1], got:\n%s", pac)
 	}
 	if strings.Contains(pac, "remote.example.com") {
 		t.Error("tunnel mode should not contain the remote host in PROXY directive")
@@ -106,8 +106,8 @@ func TestGenerateTunnelCustomLocalPort(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Generate: %v", err)
 	}
-	if !strings.Contains(pac, "PROXY 127.0.0.1:9999") {
-		t.Errorf("tunnel with custom local port should use 127.0.0.1:9999, got:\n%s", pac)
+	if !strings.Contains(pac, "PROXY [::1]:9999") {
+		t.Errorf("tunnel with custom local port should use [::1]:9999, got:\n%s", pac)
 	}
 }
 

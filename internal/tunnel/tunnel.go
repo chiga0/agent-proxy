@@ -80,10 +80,7 @@ func startTunnel(cfg *config.Config, useFallback bool) (bool, error) {
 		"-o", "IPQoS=throughput",
 		"-o", "TCPKeepAlive=yes",
 		"-o", "BatchMode=yes",
-		"-o", "ControlMaster=auto",
-		"-o", "ControlPath="+cfg.Proxy.SSHControlPath(),
-		"-o", "ControlPersist=600",
-		"-L", fmt.Sprintf("%d:127.0.0.1:%d", cfg.Proxy.LocalPort(), cfg.Proxy.Port),
+		"-L", fmt.Sprintf("[::1]:%d:127.0.0.1:%d", cfg.Proxy.LocalPort(), cfg.Proxy.Port),
 		target,
 	)
 
@@ -92,13 +89,13 @@ func startTunnel(cfg *config.Config, useFallback bool) (bool, error) {
 		return false, fmt.Errorf("start SSH tunnel to %s: %s: %w", target, strings.TrimSpace(string(out)), err)
 	}
 
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 100; i++ {
 		time.Sleep(100 * time.Millisecond)
 		if Running(cfg) {
 			return true, nil
 		}
 	}
-	return false, fmt.Errorf("SSH tunnel to %s did not start within 2s", target)
+	return false, fmt.Errorf("SSH tunnel to %s did not start within 10s", target)
 }
 
 // Stop terminates the SSH tunnel via the ControlMaster socket.
@@ -153,7 +150,7 @@ func Running(cfg *config.Config) bool {
 // on the local tunnel port. Used for diagnostics only.
 func PortOccupied(cfg *config.Config) bool {
 	conn, err := net.DialTimeout("tcp",
-		net.JoinHostPort("127.0.0.1", strconv.Itoa(cfg.Proxy.LocalPort())), 500*time.Millisecond)
+		net.JoinHostPort(cfg.Proxy.EffectiveHost(), strconv.Itoa(cfg.Proxy.LocalPort())), 500*time.Millisecond)
 	if err != nil {
 		return false
 	}

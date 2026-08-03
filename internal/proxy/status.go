@@ -66,7 +66,7 @@ func checkPort(cfg *config.Config) CheckResult {
 
 func checkTunnel(cfg *config.Config) CheckResult {
 	if tunnel.Running(cfg) {
-		return CheckResult{"SSH tunnel", true, fmt.Sprintf("127.0.0.1:%d → %s:%d", cfg.Proxy.LocalPort(), cfg.Proxy.Host, cfg.Proxy.Port)}
+		return CheckResult{"SSH tunnel", true, fmt.Sprintf("%s:%d → %s:%d", cfg.Proxy.EffectiveHost(), cfg.Proxy.LocalPort(), cfg.Proxy.Host, cfg.Proxy.Port)}
 	}
 	if tunnel.PortOccupied(cfg) {
 		return CheckResult{"SSH tunnel", false, fmt.Sprintf("port %d occupied by another process — not our tunnel", cfg.Proxy.LocalPort())}
