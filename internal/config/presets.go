@@ -65,8 +65,12 @@ var Presets = map[string]PresetInfo{
 	"search": {
 		Description: "Search engines and knowledge bases",
 		Domains: []string{
-			// Google services blocked in China (specific subdomains only)
-			// CDN domains (gstatic.com, googleusercontent.com) go direct for speed
+			// Google base domain + CDN (all blocked in China, must proxy)
+			"google.com",
+			"gstatic.com",
+			"googleusercontent.com",
+			"google.com.hk",
+			// Google services
 			"mail.google.com",
 			"docs.google.com",
 			"drive.google.com",
