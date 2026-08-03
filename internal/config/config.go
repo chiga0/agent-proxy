@@ -52,6 +52,7 @@ type ProxyConfig struct {
 	// "ipv6" (default): listen on [::1], avoids IPv4 interception by security agents.
 	// "ipv4": listen on 127.0.0.1.
 	// "dual": listen on both.
+	// "auto": try ipv6 first, fall back to ipv4 if data link check fails.
 	TunnelListen string `yaml:"tunnel_listen,omitempty"`
 
 	// Fallback host for automatic failover when primary is unreachable.

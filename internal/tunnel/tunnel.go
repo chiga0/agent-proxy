@@ -104,11 +104,19 @@ func Stop(cfg *config.Config) {
 	for _, sock := range allControlSockets(cfg) {
 		if _, err := os.Stat(sock); err == nil {
 			host := cfg.Proxy.Host // for -O exit target
-			exec.Command("ssh",
+			cmd := exec.Command("ssh",
 				"-o", "ControlPath="+sock,
 				"-O", "exit",
 				host,
-			).Run()
+			)
+			// Timeout to prevent hanging on dead connections
+			done := make(chan error, 1)
+			go func() { done <- cmd.Run() }()
+			select {
+			case <-done:
+			case <-time.After(5 * time.Second):
+				cmd.Process.Kill()
+			}
 		}
 	}
 	// Fallback: find by pattern (covers both primary and fallback)
@@ -116,10 +124,17 @@ func Stop(cfg *config.Config) {
 	patterns := []string{
 		fmt.Sprintf("ssh.*-L.*%d:127.0.0.1:%d.*%s@%s",
 			cfg.Proxy.LocalPort(), cfg.Proxy.Port, user, cfg.Proxy.Host),
+		// IPv6 listen format
+		fmt.Sprintf("ssh.*-L.*\\[::1\\]:%d:127.0.0.1:%d.*%s@%s",
+			cfg.Proxy.LocalPort(), cfg.Proxy.Port, user, cfg.Proxy.Host),
 	}
 	if cfg.Proxy.HasFallback() {
-		patterns = append(patterns, fmt.Sprintf("ssh.*-L.*%d:127.0.0.1:%d.*%s@%s",
-			cfg.Proxy.LocalPort(), cfg.Proxy.Port, cfg.Proxy.FallbackSSHUserOrRoot(), cfg.Proxy.FallbackHost))
+		patterns = append(patterns,
+			fmt.Sprintf("ssh.*-L.*%d:127.0.0.1:%d.*%s@%s",
+				cfg.Proxy.LocalPort(), cfg.Proxy.Port, cfg.Proxy.FallbackSSHUserOrRoot(), cfg.Proxy.FallbackHost),
+			fmt.Sprintf("ssh.*-L.*\\[::1\\]:%d:127.0.0.1:%d.*%s@%s",
+				cfg.Proxy.LocalPort(), cfg.Proxy.Port, cfg.Proxy.FallbackSSHUserOrRoot(), cfg.Proxy.FallbackHost),
+		)
 	}
 	for _, pattern := range patterns {
 		for _, pid := range platform.FindPIDsByPattern(pattern) {
