@@ -118,6 +118,46 @@ func TestEffectiveHost(t *testing.T) {
 	if p.EffectiveHost() != "::1" {
 		t.Errorf("EffectiveHost with tunnel = %q, want ::1", p.EffectiveHost())
 	}
+	p.TunnelListen = "ipv4"
+	if p.EffectiveHost() != "127.0.0.1" {
+		t.Errorf("EffectiveHost with tunnel_listen=ipv4 = %q, want 127.0.0.1", p.EffectiveHost())
+	}
+	p.TunnelListen = "dual"
+	if p.EffectiveHost() != "::1" {
+		t.Errorf("EffectiveHost with tunnel_listen=dual = %q, want ::1", p.EffectiveHost())
+	}
+}
+
+func TestTunnelListenArgs(t *testing.T) {
+	p := ProxyConfig{Host: "1.2.3.4", Port: 18443, Tunnel: true}
+
+	// default: ipv6
+	args := p.TunnelListenArgs()
+	if len(args) != 2 || args[1] != "[::1]:18443:127.0.0.1:18443" {
+		t.Errorf("TunnelListenArgs default = %v", args)
+	}
+
+	// ipv4
+	p.TunnelListen = "ipv4"
+	args = p.TunnelListenArgs()
+	if len(args) != 2 || args[1] != "127.0.0.1:18443:127.0.0.1:18443" {
+		t.Errorf("TunnelListenArgs ipv4 = %v", args)
+	}
+
+	// dual
+	p.TunnelListen = "dual"
+	args = p.TunnelListenArgs()
+	if len(args) != 4 {
+		t.Errorf("TunnelListenArgs dual should have 4 elements, got %d: %v", len(args), args)
+	}
+
+	// custom local port
+	p.TunnelListen = ""
+	p.TunnelLocalPort = 9999
+	args = p.TunnelListenArgs()
+	if args[1] != "[::1]:9999:127.0.0.1:18443" {
+		t.Errorf("TunnelListenArgs with custom port = %v", args)
+	}
 }
 
 func TestProxyURLWithTunnel(t *testing.T) {

@@ -266,11 +266,17 @@ proxy:
   ssh_key: ~/.ssh/key.pem
   ssh_user: root
   tunnel: true              # SSH tunnel (recommended)
+  tunnel_listen: ipv6       # ipv6 (default) | ipv4 | dual
 
 presets: [ai, dev, search, cloud, media]
 custom_domains: []
 no_proxy: [localhost, 127.0.0.1, .alibaba-inc.com, .baidu.com, ...]
 ```
+
+> **`tunnel_listen` note:** Controls the SSH tunnel listen address.
+> - `ipv6` (default): listens on `[::1]`. Recommended — some enterprise security agents intercept SSH forwarding on IPv4 loopback.
+> - `ipv4`: listens on `127.0.0.1`. Use if IPv6 is unavailable.
+> - `dual`: listens on both. Use for maximum compatibility.
 
 > **`no_proxy` note:** Domain suffixes (`.example.com`) have the broadest cross-client compatibility. IP wildcards (`10.*`) behave differently across curl, Go, Python, Node, and Java.
 

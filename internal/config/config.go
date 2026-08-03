@@ -48,6 +48,12 @@ type ProxyConfig struct {
 	Tunnel          bool   `yaml:"tunnel,omitempty"`
 	TunnelLocalPort int    `yaml:"tunnel_local_port,omitempty"`
 
+	// TunnelListen controls the listen address for the SSH tunnel.
+	// "ipv6" (default): listen on [::1], avoids IPv4 interception by security agents.
+	// "ipv4": listen on 127.0.0.1.
+	// "dual": listen on both.
+	TunnelListen string `yaml:"tunnel_listen,omitempty"`
+
 	// Fallback host for automatic failover when primary is unreachable.
 	FallbackHost    string `yaml:"fallback_host,omitempty"`
 	FallbackSSHKey  string `yaml:"fallback_ssh_key,omitempty"`
@@ -57,7 +63,12 @@ type ProxyConfig struct {
 // EffectiveHost returns the proxy host for client connections.
 func (p *ProxyConfig) EffectiveHost() string {
 	if p.Tunnel {
-		return "::1" // IPv6 loopback: avoids IPv4 loopback interception by enterprise security agents
+		switch p.TunnelListen {
+		case "ipv4":
+			return "127.0.0.1"
+		default: // "ipv6" or "dual" prefer IPv6 to avoid interception
+			return "::1"
+		}
 	}
 	return p.Host
 }
@@ -69,6 +80,23 @@ func (p *ProxyConfig) LocalPort() int {
 		return p.TunnelLocalPort
 	}
 	return p.Port
+}
+
+// TunnelListenArgs returns the -L argument(s) for SSH tunnel based on TunnelListen setting.
+func (p *ProxyConfig) TunnelListenArgs() []string {
+	port := p.LocalPort()
+	remote := fmt.Sprintf("127.0.0.1:%d", p.Port)
+	switch p.TunnelListen {
+	case "ipv4":
+		return []string{"-L", fmt.Sprintf("127.0.0.1:%d:%s", port, remote)}
+	case "dual":
+		return []string{
+			"-L", fmt.Sprintf("[::1]:%d:%s", port, remote),
+			"-L", fmt.Sprintf("127.0.0.1:%d:%s", port, remote),
+		}
+	default: // "ipv6" or empty
+		return []string{"-L", fmt.Sprintf("[::1]:%d:%s", port, remote)}
+	}
 }
 
 // HostConfig is a resolved SSH endpoint (primary or fallback).

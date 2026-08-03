@@ -80,9 +80,9 @@ func startTunnel(cfg *config.Config, useFallback bool) (bool, error) {
 		"-o", "IPQoS=throughput",
 		"-o", "TCPKeepAlive=yes",
 		"-o", "BatchMode=yes",
-		"-L", fmt.Sprintf("[::1]:%d:127.0.0.1:%d", cfg.Proxy.LocalPort(), cfg.Proxy.Port),
-		target,
 	)
+	args = append(args, cfg.Proxy.TunnelListenArgs()...)
+	args = append(args, target)
 
 	cmd := exec.Command("ssh", args...)
 	if out, err := cmd.CombinedOutput(); err != nil {
