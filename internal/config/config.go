@@ -268,6 +268,8 @@ func DefaultConfig() *Config {
 			"172.28.*", "172.29.*", "172.30.*", "172.31.*",
 			"192.168.*",
 			".alibaba-inc.com", ".aliyun.com", ".aliyuncs.com", ".aliyun-inc.com", ".aliyunportal.com", ".taobao.org",
+			// Alibaba Cloud AI services (explicit entries for clients with limited no_proxy wildcard support)
+			".dashscope.aliyuncs.com", ".maas.aliyuncs.com", ".bailian.aliyuncs.com",
 			".antgroup.com", ".alipay.com", ".dingtalk.com",
 			".baidu.com", ".qq.com", ".tencent.com",
 			".bilibili.com", ".zhihu.com",
