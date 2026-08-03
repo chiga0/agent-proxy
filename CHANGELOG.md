@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.6] - 2026-08-03
+
+
+### Added
+
+- SSH ControlMaster connection reuse in BaseArgs
+- Add tunnel_listen config for IPv4/IPv6/dual listen mode
+
+### Fixed
+
+- Gofmt main.go, scope .gitignore to root binary only
+- Dashboard test config isolation, recommend Tokyo/Singapore only
+- Skip Unix permission check on Windows in setup test
+- Align ControlPath, increase tunnel timeout, use IPv6 loopback
+- Faster health recovery, fix Stop() pattern for IPv6, add timeout
+- Add Alibaba Cloud AI service domains to default no_proxy
 ## [0.7.5] - 2026-07-30
 
 
