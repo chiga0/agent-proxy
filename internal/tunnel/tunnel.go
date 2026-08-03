@@ -72,12 +72,12 @@ func startTunnel(cfg *config.Config, useFallback bool) (bool, error) {
 
 	args = append(args,
 		"-f", "-N",
-		"-o", "ServerAliveInterval=30",
-		"-o", "ServerAliveCountMax=3",
+		"-o", "ServerAliveInterval=15",
+		"-o", "ServerAliveCountMax=2",
 		"-o", "ExitOnForwardFailure=yes",
 		"-o", "Ciphers=aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com",
 		"-o", "Compression=no",
-		"-o", "IPQoS=throughput",
+		"-o", "IPQoS=none",
 		"-o", "TCPKeepAlive=yes",
 		"-o", "BatchMode=yes",
 	)
