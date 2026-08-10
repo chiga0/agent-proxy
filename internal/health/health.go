@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	checkInterval    = 15 * time.Second
+	checkInterval    = 5 * time.Second
 	failureThreshold = 2
 	probeURL         = "http://www.google.com/generate_204"
-	probeTimeout     = 5 * time.Second
+	probeTimeout     = 3 * time.Second
 	maxBackoff       = 10 * time.Minute
 )
 

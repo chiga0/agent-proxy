@@ -156,6 +156,14 @@ func StopServer() {
 func ServeForeground() error {
 	addr := fmt.Sprintf("127.0.0.1:%d", config.PACPort)
 
+	// Persist daemon logs (health watchdog, reloads) for diagnostics.
+	if logFile, err := os.OpenFile(
+		filepath.Join(config.DataDir(), "pac-server.log"),
+		os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644); err == nil {
+		log.SetOutput(logFile)
+	}
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+
 	// Bind first to guarantee single instance
 	ln, err := net.Listen("tcp", addr)
 	if err != nil {
