@@ -122,7 +122,7 @@ func installTunnelAgent(cfg *config.Config, dir string) error {
         <string>-o</string>
         ` + plistString("ControlPath="+cfg.Proxy.SSHControlPath()) + `
         <string>-o</string>
-        <string>ControlPersist=600</string>
+        <string>ControlPersist=yes</string>
         <string>-L</string>
         ` + plistString(fmt.Sprintf("%d:127.0.0.1:%d", localPort, remotePort)) + `
         ` + plistString(fmt.Sprintf("%s@%s", user, cfg.Proxy.Host)) + `

@@ -125,7 +125,7 @@ func TestInstallTunnelUnit(t *testing.T) {
 		"ExitOnForwardFailure=yes",
 		"StrictHostKeyChecking=yes",
 		"BatchMode=yes",
-		"ControlPersist=600",
+		"ControlPersist=yes",
 		"-L 22:127.0.0.1:22",
 		"root@proxy.example.com",
 		"Restart=always",

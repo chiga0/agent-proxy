@@ -63,10 +63,10 @@ func startTunnel(cfg *config.Config, useFallback bool) (bool, error) {
 	var target string
 
 	if useFallback {
-		args = cfg.Proxy.FallbackSSHBaseArgs()
+		args = cfg.Proxy.FallbackSSHTunnelBaseArgs()
 		target = cfg.Proxy.FallbackSSHTarget()
 	} else {
-		args = cfg.Proxy.SSHBaseArgs()
+		args = cfg.Proxy.SSHTunnelBaseArgs()
 		target = cfg.Proxy.SSHTarget()
 	}
 

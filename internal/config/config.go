@@ -116,6 +116,18 @@ func (h HostConfig) Target() string {
 }
 
 func (h HostConfig) BaseArgs() []string {
+	return h.sshArgs("600")
+}
+
+// TunnelBaseArgs returns SSH args for the long-lived tunnel.
+// ControlPersist=yes keeps the master alive indefinitely (no idle
+// kill), so the tunnel never drops during browser idle periods.
+// Lifecycle is managed by launchd/systemd or the tunnel process itself.
+func (h HostConfig) TunnelBaseArgs() []string {
+	return h.sshArgs("yes")
+}
+
+func (h HostConfig) sshArgs(controlPersist string) []string {
 	sockDir := filepath.Join(DataDir(), "sockets")
 	os.MkdirAll(sockDir, 0700)
 	args := []string{
@@ -124,7 +136,7 @@ func (h HostConfig) BaseArgs() []string {
 		"-o", "ConnectTimeout=10",
 		"-o", "ControlMaster=auto",
 		"-o", "ControlPath=" + filepath.Join(sockDir, "%r@%h-%p"),
-		"-o", "ControlPersist=600",
+		"-o", "ControlPersist=" + controlPersist,
 	}
 	if h.SSHKey != "" {
 		args = append(args, "-i", h.SSHKey)
@@ -170,6 +182,19 @@ func (p *ProxyConfig) SSHControlPath() string {
 // deploy, autostart, and trace.
 func (p *ProxyConfig) SSHBaseArgs() []string {
 	return p.Primary().BaseArgs()
+}
+
+// SSHTunnelBaseArgs returns SSH args for the long-lived tunnel (no idle kill).
+func (p *ProxyConfig) SSHTunnelBaseArgs() []string {
+	return p.Primary().TunnelBaseArgs()
+}
+
+// FallbackSSHTunnelBaseArgs returns tunnel SSH args for the fallback host.
+func (p *ProxyConfig) FallbackSSHTunnelBaseArgs() []string {
+	if fb := p.Fallback(); fb != nil {
+		return fb.TunnelBaseArgs()
+	}
+	return p.SSHTunnelBaseArgs()
 }
 
 // SSHTarget returns the user@host string for SSH commands.

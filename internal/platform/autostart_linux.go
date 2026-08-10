@@ -73,7 +73,7 @@ Description=agent-proxy SSH tunnel
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/ssh -i %s -N -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=%s -o BatchMode=yes -o Ciphers=aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com -o Compression=no -o ControlMaster=auto -o ControlPath=%s -o ControlPersist=600 -L %d:127.0.0.1:%d %s@%s
+ExecStart=/usr/bin/ssh -i %s -N -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=%s -o BatchMode=yes -o Ciphers=aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com -o Compression=no -o ControlMaster=auto -o ControlPath=%s -o ControlPersist=yes -L %d:127.0.0.1:%d %s@%s
 Restart=always
 RestartSec=5
 

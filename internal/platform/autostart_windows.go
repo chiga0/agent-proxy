@@ -31,7 +31,7 @@ func InstallAutoStart(cfg *config.Config) error {
 	if cfg.Proxy.Tunnel && cfg.Proxy.SSHKey != "" {
 		user := cfg.Proxy.SSHUserOrRoot()
 		sshArgs := fmt.Sprintf(
-			`ssh -i "%s" -N -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="%s" -o BatchMode=yes -o ControlMaster=auto -o ControlPath="%s" -o ControlPersist=600 -L %d:127.0.0.1:%d %s@%s`,
+			`ssh -i "%s" -N -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile="%s" -o BatchMode=yes -o ControlMaster=auto -o ControlPath="%s" -o ControlPersist=yes -L %d:127.0.0.1:%d %s@%s`,
 			cfg.Proxy.SSHKey, config.KnownHostsPath(), cfg.Proxy.SSHControlPath(), cfg.Proxy.LocalPort(), cfg.Proxy.Port, user, cfg.Proxy.Host,
 		)
 		if err := createTask(tunnelTaskName, sshArgs); err != nil {

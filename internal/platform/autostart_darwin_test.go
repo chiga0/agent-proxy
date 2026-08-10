@@ -155,7 +155,7 @@ func TestInstallTunnelAgent(t *testing.T) {
 		"<string>ExitOnForwardFailure=yes</string>",
 		"<string>StrictHostKeyChecking=yes</string>",
 		"<string>BatchMode=yes</string>",
-		"<string>ControlPersist=600</string>",
+		"<string>ControlPersist=yes</string>",
 		"<string>-L</string>",
 		"<string>22:127.0.0.1:22</string>",
 		"<string>root@proxy.example.com</string>",
