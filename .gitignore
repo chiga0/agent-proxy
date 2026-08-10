@@ -38,3 +38,8 @@ proxy.pac
 *.pid
 /agent-proxy
 .qwen/tmp/
+
+# Node tooling residue (not part of this Go project)
+node_modules/
+package.json
+package-lock.json
