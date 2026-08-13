@@ -102,9 +102,9 @@ func installTunnelAgent(cfg *config.Config, dir string) error {
         ` + plistString(cfg.Proxy.SSHKey) + `
         <string>-N</string>
         <string>-o</string>
-        <string>ServerAliveInterval=30</string>
+        <string>ServerAliveInterval=15</string>
         <string>-o</string>
-        <string>ServerAliveCountMax=3</string>
+        <string>ServerAliveCountMax=2</string>
         <string>-o</string>
         <string>ExitOnForwardFailure=yes</string>
         <string>-o</string>

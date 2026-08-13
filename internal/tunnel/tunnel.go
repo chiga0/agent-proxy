@@ -34,6 +34,22 @@ func allControlSockets(cfg *config.Config) []string {
 	return sockets
 }
 
+// CleanStaleSockets removes ControlMaster socket files whose master is no
+// longer alive. A stale socket is poisonous: new ssh processes refuse to
+// become a master ("ControlSocket ... already exists, disabling multiplexing"),
+// so the tunnel may forward traffic but never recreates the socket — leaving
+// `ssh -O check/exit` and Running() permanently broken.
+func CleanStaleSockets(cfg *config.Config) {
+	for _, sock := range allControlSockets(cfg) {
+		if _, err := os.Stat(sock); err != nil {
+			continue
+		}
+		if exec.Command("ssh", "-o", "ControlPath="+sock, "-O", "check", cfg.Proxy.Host).Run() != nil {
+			os.Remove(sock)
+		}
+	}
+}
+
 // Start ensures the SSH tunnel is running.
 // Tries primary host first; if it fails and a fallback is configured, tries fallback.
 // Returns (true, nil) if started, (false, nil) if already running.
@@ -41,6 +57,10 @@ func Start(cfg *config.Config) (bool, error) {
 	if Running(cfg) {
 		return false, nil
 	}
+
+	// A dead master leaves a stale socket behind; without cleanup the new ssh
+	// would disable multiplexing and Running() would never observe success.
+	CleanStaleSockets(cfg)
 
 	// Try primary
 	started, err := startTunnel(cfg, false)
@@ -140,6 +160,10 @@ func Stop(cfg *config.Config) {
 		for _, pid := range platform.FindPIDsByPattern(pattern) {
 			killIfSSH(pid)
 		}
+	}
+	// Remove socket files so the next ssh can become ControlMaster again.
+	for _, sock := range allControlSockets(cfg) {
+		os.Remove(sock)
 	}
 }
 
