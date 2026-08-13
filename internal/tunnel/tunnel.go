@@ -13,6 +13,25 @@ import (
 	"github.com/chiga0/agent-proxy/internal/platform"
 )
 
+// sshCommand builds an ssh subprocess with a sanitized environment.
+// Warp terminal exports WARP_USE_SSH_WRAPPER=1, making its ssh wrapper
+// intercept connections; that breaks tunnel startup and control-socket
+// operations (-O check/exit) with "Bad file descriptor". Strip the wrapper
+// variables so subprocess ssh always behaves like plain OpenSSH.
+func sshCommand(args ...string) *exec.Cmd {
+	cmd := exec.Command("ssh", args...)
+	env := make([]string, 0, len(os.Environ()))
+	for _, kv := range os.Environ() {
+		if strings.HasPrefix(kv, "WARP_USE_SSH_WRAPPER=") ||
+			strings.HasPrefix(kv, "WARP_SSH_REUSE_CONTROL_MASTER=") {
+			continue
+		}
+		env = append(env, kv)
+	}
+	cmd.Env = env
+	return cmd
+}
+
 func controlSocketFor(cfg *config.Config, host, user string) string {
 	path := cfg.Proxy.SSHControlPath()
 	path = strings.ReplaceAll(path, "%r", user)
@@ -44,7 +63,7 @@ func CleanStaleSockets(cfg *config.Config) {
 		if _, err := os.Stat(sock); err != nil {
 			continue
 		}
-		if exec.Command("ssh", "-o", "ControlPath="+sock, "-O", "check", cfg.Proxy.Host).Run() != nil {
+		if sshCommand("-o", "ControlPath="+sock, "-O", "check", cfg.Proxy.Host).Run() != nil {
 			os.Remove(sock)
 		}
 	}
@@ -104,7 +123,7 @@ func startTunnel(cfg *config.Config, useFallback bool) (bool, error) {
 	args = append(args, cfg.Proxy.TunnelListenArgs()...)
 	args = append(args, target)
 
-	cmd := exec.Command("ssh", args...)
+	cmd := sshCommand(args...)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return false, fmt.Errorf("start SSH tunnel to %s: %s: %w", target, strings.TrimSpace(string(out)), err)
 	}
@@ -124,7 +143,7 @@ func Stop(cfg *config.Config) {
 	for _, sock := range allControlSockets(cfg) {
 		if _, err := os.Stat(sock); err == nil {
 			host := cfg.Proxy.Host // for -O exit target
-			cmd := exec.Command("ssh",
+			cmd := sshCommand(
 				"-o", "ControlPath="+sock,
 				"-O", "exit",
 				host,
@@ -186,7 +205,7 @@ func killTunnelProcesses(cfg *config.Config) {
 func Running(cfg *config.Config) bool {
 	for _, sock := range allControlSockets(cfg) {
 		if _, err := os.Stat(sock); err == nil {
-			err := exec.Command("ssh",
+			err := sshCommand(
 				"-o", "ControlPath="+sock,
 				"-O", "check",
 				cfg.Proxy.Host,
