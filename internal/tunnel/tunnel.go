@@ -139,7 +139,25 @@ func Stop(cfg *config.Config) {
 			}
 		}
 	}
-	// Fallback: find by pattern (covers both primary and fallback)
+	killTunnelProcesses(cfg)
+	// Remove socket files so the next ssh can become ControlMaster again.
+	for _, sock := range allControlSockets(cfg) {
+		os.Remove(sock)
+	}
+}
+
+// KillForRestart terminates a broken tunnel process without starting a new
+// one, for use when an OS supervisor (launchd / systemd / scheduled task)
+// owns the tunnel lifecycle and will respawn it. Stale control sockets are
+// cleaned first so the respawned ssh can become ControlMaster again.
+func KillForRestart(cfg *config.Config) {
+	CleanStaleSockets(cfg)
+	killTunnelProcesses(cfg)
+}
+
+// killTunnelProcesses kills tunnel ssh processes by command-line pattern
+// (covers both primary and fallback hosts).
+func killTunnelProcesses(cfg *config.Config) {
 	user := cfg.Proxy.SSHUserOrRoot()
 	patterns := []string{
 		fmt.Sprintf("ssh.*-L.*%d:127.0.0.1:%d.*%s@%s",
@@ -160,10 +178,6 @@ func Stop(cfg *config.Config) {
 		for _, pid := range platform.FindPIDsByPattern(pattern) {
 			killIfSSH(pid)
 		}
-	}
-	// Remove socket files so the next ssh can become ControlMaster again.
-	for _, sock := range allControlSockets(cfg) {
-		os.Remove(sock)
 	}
 }
 

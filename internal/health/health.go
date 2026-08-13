@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/chiga0/agent-proxy/internal/config"
+	"github.com/chiga0/agent-proxy/internal/platform"
 	"github.com/chiga0/agent-proxy/internal/tunnel"
 )
 
@@ -100,6 +101,21 @@ func probe(cfg *config.Config) bool {
 }
 
 func recoverTunnel(cfg *config.Config) {
+	// When an OS supervisor (launchd / systemd / scheduled task) owns the
+	// tunnel process, it respawns ssh on death. Starting our own instance
+	// here would race that respawn and can produce split-brain listeners
+	// (one ssh bound to IPv4, another to IPv6, neither fully functional).
+	// Only clean stale sockets and kill the broken process; the supervisor
+	// brings the tunnel back.
+	if platform.IsAutoStartInstalled() {
+		log.Printf("[health] killing broken tunnel (supervisor will respawn)...")
+		tunnel.KillForRestart(cfg)
+		consecutiveFailures.Store(0)
+		recoveryFailures.Store(0)
+		lastRecovery.Store(time.Now().Unix())
+		return
+	}
+
 	log.Printf("[health] attempting tunnel restart...")
 
 	tunnel.Stop(cfg)
