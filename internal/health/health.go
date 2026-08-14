@@ -69,9 +69,15 @@ func Watch(ctx context.Context) {
 
 		if n >= failureThreshold {
 			recoverTunnel(cfg)
-			// Back off after failed recovery to avoid infinite SSH retry loop
+			// Back off exponentially after failed recovery: churning ssh
+			// reconnects against a hostile environment (e.g. endpoint-security
+			// strict period) only extends the strict period.
 			if rf := recoveryFailures.Load(); rf > 0 {
-				backoff = checkInterval * time.Duration(rf)
+				shift := rf
+				if shift > 11 {
+					shift = 11
+				}
+				backoff = checkInterval << uint(shift)
 				if backoff > maxBackoff {
 					backoff = maxBackoff
 				}
@@ -111,8 +117,18 @@ func recoverTunnel(cfg *config.Config) {
 		log.Printf("[health] killing broken tunnel (supervisor will respawn)...")
 		tunnel.KillForRestart(cfg)
 		consecutiveFailures.Store(0)
-		recoveryFailures.Store(0)
 		lastRecovery.Store(time.Now().Unix())
+		// Circuit breaker: if the respawned tunnel is still broken, the
+		// environment is killing sessions faster than we recover; back off
+		// instead of churning ssh connections.
+		time.Sleep(5 * time.Second)
+		if probe(cfg) {
+			recoveryFailures.Store(0)
+			log.Printf("[health] supervisor respawn healthy")
+		} else {
+			rf := recoveryFailures.Add(1)
+			log.Printf("[health] respawn still broken (%d consecutive) — backing off", rf)
+		}
 		return
 	}
 
@@ -141,7 +157,9 @@ func recoverTunnel(cfg *config.Config) {
 	time.Sleep(2 * time.Second)
 	if probe(cfg) {
 		log.Printf("[health] post-recovery check passed")
+		recoveryFailures.Store(0)
 	} else {
-		log.Printf("[health] post-recovery check still failing — may need manual intervention")
+		rf := recoveryFailures.Add(1)
+		log.Printf("[health] post-recovery check still failing (%d consecutive) — backing off", rf)
 	}
 }
